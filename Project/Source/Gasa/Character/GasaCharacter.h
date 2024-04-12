@@ -9,12 +9,12 @@ class GASA_API AGasaCharacter : public ACharacter
 {
 	GENERATED_BODY()
 public:
-	AGasaCharacter();
-
 #pragma region Combat
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 #pragma endregion Combat
+	
+	AGasaCharacter();
 	
 #pragma region Actor
 	void BeginPlay() override;

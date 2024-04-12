@@ -13,6 +13,8 @@ public class Gasa : ModuleRules
     #region Engine
         PrivateIncludePathModuleNames.AddRange(new string[] {
             "Core",
+            "Engine",
+            "EnhancedInput",
         });
         PrivateDependencyModuleNames.AddRange(new string[] {
             "Core",
