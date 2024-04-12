@@ -15,3 +15,6 @@ Project/.vsconfig
 *.target
 *.modules
 Project/.idea
+
+Project/Saved/Screenshots
+*/Binaries/Win64/*.patch_*.*

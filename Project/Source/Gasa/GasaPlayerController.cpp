@@ -11,6 +11,11 @@ AGasaPlayerController::AGasaPlayerController()
 
 void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 {
+	APawn* pawn = GetPawn<APawn>();
+	if (pawn == nullptr )
+		return;
+	
+// Note(Ed): I did the follow optimization for practice, they are completely unnecessary for this context.
 #if 0
 	FVector2D AxisV     = ActionValue.Get<FVector2D>();
 	FRotator ControlRot = GetControlRotation();
@@ -19,31 +24,31 @@ void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 	FVector FwdDir   = FRotationMatrix(YawRot).GetUnitAxis(EAxis::X);
 	FVector RightDir = FRotationMatrix(YawRot).GetUnitAxis(EAxis::Y);
 
-	APawn* Pawn = GetPawn<APawn>();
-	if (Pawn)
-	{
-		Pawn->AddMovementInput(FwdDir,   AxisV.Y);
-		Pawn->AddMovementInput(RightDir, AxisV.X);
-	}
+	PPawn->AddMovementInput(FwdDir,   AxisV.Y);
+	PPawn->AddMovementInput(RightDir, AxisV.X);
 #else
 	FVector2f AxisV = FVector2f(ActionValue.Get<FVector2D>());
-	FQuat // FQuat isomorphic to FRotor (Hypothetical Def)
-	ControlRotor = GetControlRotation().Quaternion();
+
+	FQuat4f // FQuat isomorphic to FRotor (Hypothetical Def)
+	ControlRotor = FQuat4f(GetControlRotation().Quaternion());
 	// ControlRotor.Normalize();  // The Quaternion should always be a versor with UE...
 
-	FQuat4f
-	YawRotor = FQuat4f(FVector3f::UpVector, ControlRotor.GetAngle());
+	FVector3f HorizontalForward = ControlRotor.RotateVector(FVector3f::ForwardVector);
+	// HorizontalForward.Normalize();
+
+	// TODO(Ed): Profile which is faster just to know... (atan2 vs FindBetweenVectors)
+	// HorizontalForward.Z = 0;
+	// FQuat4f
+	// YawRotor = FQuat4f::FindBetweenVectors(FVector3f::ForwardVector, HorizontalForward);
 	// YawRotor.Normalize(); // The Quaternion should always be a versor with UE...
 
-	FVector3f FwdDir   = YawRotor.RotateVector(FVector3f::ForwardVector);
-	FVector3f RightDir = YawRotor.RotateVector(FVector3f::RightVector);
+	// Need only one axis of rotation so this might be a possible optimization
+	float   YawAngle = FMath::Atan2(HorizontalForward.Y, HorizontalForward.X);
+	FQuat4f YawRotor = FQuat4f(FVector3f::UpVector, YawAngle);
 
-	APawn* PPawn = GetPawn<APawn>();
-	if (PPawn)
-	{
-		PPawn->AddMovementInput(FVector(FwdDir),   AxisV.Y);
-		PPawn->AddMovementInput(FVector(RightDir), AxisV.X);
-	}
+	// Rotate the combined input by the yaw rotor to get the movement direction
+	FVector MoveDir = (FVector) YawRotor.RotateVector( FVector3f(AxisV.Y, AxisV.X, 0.f));
+	pawn->AddMovementInput( MoveDir );
 #endif
 }
 

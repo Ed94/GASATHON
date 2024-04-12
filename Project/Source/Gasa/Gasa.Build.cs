@@ -55,6 +55,6 @@ public class Gasa : ModuleRules
         }
     #endregion Plugins
     
-		PublicIncludePathModuleNames.Add("Gasa");
+		PublicIncludePaths.Add("Gasa");
     }
 }
