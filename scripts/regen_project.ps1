@@ -6,7 +6,7 @@ $path_root    = split-path -Parent -Path $path_scripts
 $path_ue      = join-path '../../Surgo' 'UE'
 $path_project = join-path $path_root 'Project'
 
-$uproject = join-path $path_project 'GASATHON.uproject'
+$uproject = join-path $path_project 'Gasa.uproject'
 
 $UBT = join-path $path_ue 'Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.exe'
 
