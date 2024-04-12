@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GasaCommon.h"
 #include "GameFramework/Character.h"
 
 #include "GasaCharacter.generated.h"
@@ -9,6 +10,14 @@ class GASA_API AGasaCharacter : public ACharacter
 {
 	GENERATED_BODY()
 public:
+#pragma region Camera
+	UPROPERTY(EditAnywhere, Category="Camera")
+	UCameraComponent* Camera;
+	
+	UPROPERTY(EditAnywhere, Category="Camera")
+	USpringArmComponent* CamSpringArm;
+#pragma endregion Camera
+	
 #pragma region Combat
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
