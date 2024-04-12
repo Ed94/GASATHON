@@ -9,3 +9,8 @@ Project/Saved/Config/WindowsEditor
 Project/Saved/Config/WorldState
 Project/Saved/AutoScreenshot.png
 Project/Platforms
+Project/.vs
+Project/.vsconfig
+*.sln
+*.target
+*.modules
