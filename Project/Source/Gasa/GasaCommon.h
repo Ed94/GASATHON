@@ -1,5 +1,7 @@
-﻿// #define private protected
-
+﻿
 #include "CoreMinimal.h"
+// #define private protected
 
-class UInputMappingContext;
+class  UInputAction;
+struct FInputActionValue;
+class  UInputMappingContext;
