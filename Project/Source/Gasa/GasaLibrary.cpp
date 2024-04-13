@@ -36,9 +36,30 @@ AGasaPlayerController* UGasaLib::GetPrimaryGasaPlayerController(UObject* Context
 #pragma endregion Game
 
 #pragma region Logging
+DEFINE_LOG_CATEGORY_STATIC(LogGasaBP, Log, All);
+
 void UGasaLib::Log(UObject* Context, FString Message, EGasaVerbosity Verbosity, bool bPrintToScreen)
 {
-	Gasa::Log(Message, Verbosity, LogGasa, false, 0, "", TCHAR_TO_ANSI( *Context->GetName() ));
+	#if !UE_BUILD_SHIPPING && !NO_LOGGING
+	{
+		ELogVerbosity::Type EngineVerbosity = (ELogVerbosity::Type) Verbosity;
+	
+		static UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
+		static UE::Logging::Private::FStaticBasicLogRecord
+		LOG_Static(TEXT("%s -- %s"), __builtin_FILE(), __builtin_LINE(), EngineVerbosity, LOG_Dynamic);
+
+		if ((EngineVerbosity & ELogVerbosity::VerbosityMask) <= ELogVerbosity::COMPILED_IN_MINIMUM_VERBOSITY)
+		{
+			if ((EngineVerbosity & ELogVerbosity::VerbosityMask) <= LogGasaBP.GetVerbosity())
+			{
+				if ( ! LogGasaBP.IsSuppressed(EngineVerbosity))
+				{
+					BasicLog( LogGasaBP, &LOG_Static, *Message, *Context->GetName() );
+				}
+			}
+		}
+	}
+	#endif
 	if (bPrintToScreen)
 	{
 		if (GAreScreenMessagesEnabled)
