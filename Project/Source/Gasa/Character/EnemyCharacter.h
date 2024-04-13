@@ -9,5 +9,5 @@ class GASA_API AEnemyCharacter : public AGasaCharacter
 {
 	GENERATED_BODY()
 public:
-	
+	AEnemyCharacter();
 };

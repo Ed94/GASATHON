@@ -15,6 +15,8 @@ AGasaCharacter::AGasaCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	HighlightColor = FLinearColor(0.8, 0.32, 0.05f, 1.f);
+
 	UCharacterMovementComponent*
 	Movement = GetCharacterMovement();
 	Movement->bOrientRotationToMovement = true;
@@ -68,7 +70,7 @@ void AGasaCharacter::Tick(float DeltaSeconds)
 				, Capsule->GetScaledCapsuleHalfHeight()
 				, Capsule->GetScaledCapsuleRadius()
 				, Capsule->GetComponentRotation()
-				, FLinearColor(0.8, 0.32, 0.05f, 1.f)
+				, HighlightColor
 				, 0.f
 				, 1.f
 			);
