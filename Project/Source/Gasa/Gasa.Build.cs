@@ -23,6 +23,7 @@ public class Gasa : ModuleRules
             
             "AIModule",
             "CoreUObject", 
+            "DeveloperSettings",
             "Engine", 
             "EnhancedInput",
             "GameplayAbilities",

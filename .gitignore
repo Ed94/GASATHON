@@ -18,3 +18,5 @@ Project/.idea
 
 Project/Saved/Screenshots
 */Binaries/Win64/*.patch_*.*
+Project/Saved/ImGui
+Project/Saved/ImGui/imgui.ini
