@@ -20,3 +20,8 @@ Project/Saved/Screenshots
 */Binaries/Win64/*.patch_*.*
 Project/Saved/ImGui
 Project/Saved/ImGui/imgui.ini
+GasaGen_*.pdb
+Project/Binaries/GasaGen.exe
+Project/Binaries/GasaGen.map
+Project/Binaries/GasaGen.obj
+Project/Binaries/vc140.pdb
