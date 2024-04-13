@@ -1,6 +1,7 @@
 ﻿#include "GasaPlayerState.h"
 
 #include "AbilitySystem/GasaAbilitySystemComponent.h"
+#include "AbilitySystem/GasaAttributeSet.h"
 
 AGasaPlayerState::AGasaPlayerState()
 {
@@ -8,7 +9,7 @@ AGasaPlayerState::AGasaPlayerState()
 	AbilitySystem->SetIsReplicated(true);
 	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 	
-	Attributes = CreateDefaultSubobject<UAttributeSet>("Attributes");
+	Attributes = CreateDefaultSubobject<UGasaAttributeSet>("Attributes");
 	
 	// Replication
 	NetUpdateFrequency = 100.f;

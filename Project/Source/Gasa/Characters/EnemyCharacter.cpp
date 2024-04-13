@@ -3,4 +3,6 @@
 AEnemyCharacter::AEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bAutoAbilitySystem = true;
 }

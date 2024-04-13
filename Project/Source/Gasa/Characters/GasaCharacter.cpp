@@ -8,6 +8,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 #include "AbilitySystem/GasaAbilitySystemComponent.h"
+#include "AbilitySystem/GasaAttributeSet.h"
 #include "Game/GasaLevelScriptActor.h"
 
 void AGasaCharacter::SetHighlight(EHighlight Desired)
@@ -45,7 +46,7 @@ AGasaCharacter::AGasaCharacter()
 		AbilitySystem->SetIsReplicated(true);
 		AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 		
-		Attributes = CreateDefaultSubobject<UAttributeSet>("Attributes");
+		Attributes = CreateDefaultSubobject<UGasaAttributeSet>("Attributes");
 	}
 }
 
@@ -71,6 +72,12 @@ void AGasaCharacter::OnRep_PlayerState()
 void AGasaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (bAutoAbilitySystem)
+	{
+		// TODO(Ed): Do we need to do this for enemies?
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
 }
 
 void AGasaCharacter::Tick(float DeltaSeconds)
