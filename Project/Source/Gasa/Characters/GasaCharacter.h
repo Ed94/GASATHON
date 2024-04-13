@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 
 #include "GasaCommon.h"
+#include "Game/GasaPlayerState.h"
 
 #include "GasaCharacter.generated.h"
 
@@ -57,10 +58,18 @@ public:
 
 	AGasaCharacter();
 
+	FORCEINLINE AGasaPlayerState* GetGasaPlayerState() { return GetPlayerState<AGasaPlayerState>(); }
+	
 #pragma region IAbilitySystem
 	FORCEINLINE UAttributeSet*           GetAttributes()                            { return Attributes; }
 	FORCEINLINE UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 #pragma endregion IAbilitySystem
+
+#pragma region Pawn
+	void PossessedBy(AController* NewController) override;
+
+	void OnRep_PlayerState() override;
+#pragma endregion Pawn
 	
 #pragma region Actor
 	void BeginPlay() override;

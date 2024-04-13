@@ -8,6 +8,10 @@
 #define internal      static
 #define local_persist static
 
+#pragma region Math
+#define m_pow2( value ) (value * value)
+#pragma endregion Math
+
 #pragma region Engine Forwards
 struct FInputActionValue;
 
@@ -130,3 +134,22 @@ namespace Gasa
 #define GASA_Verbose(Message)     UE_LOG( Gasa, Verbose,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
 #define GASA_VeryVerbose(Message) UE_LOG( Gasa, VeryVerbose, TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
 #pragma endregion Logging
+
+#pragma region Timing
+namespace Gasa
+{
+	constexpr float _24Hz  = .042f;
+	constexpr float _30Hz  = .033f;
+	constexpr float _42Hz  = .024f;
+	constexpr float _45Hz  = .022f;
+	constexpr float _50Hz  = .020f;
+	constexpr float _60Hz  = .016f;
+	constexpr float _72Hz  = .014f;
+	constexpr float _80Hz  = .013f;
+	constexpr float _90Hz  = .011f;
+	constexpr float _100Hz = .010f;
+	constexpr float _120Hz = .083f;
+	constexpr float _240Hz = .004f;
+	constexpr float _480Hz = .002f;
+}
+#pragma endregion Timing

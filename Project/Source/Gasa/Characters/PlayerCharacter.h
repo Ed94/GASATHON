@@ -10,5 +10,9 @@ class GASA_API APlayerCharacter : public AGasaCharacter
 	GENERATED_BODY()
 public:
 
-	APlayerCharacter();	
+	APlayerCharacter();
+
+#pragma region Pawn
+	void OnRep_PlayerState() override;
+#pragma endregion Pawn
 };

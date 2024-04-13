@@ -1,8 +1,10 @@
 ﻿#include "GasaPlayerController.h"
 
+#include "AbilitySystemComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GasaPlayerState.h"
 #include "Actors/CameraMount.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/GasaCharacter.h"
@@ -67,6 +69,15 @@ void AGasaPlayerController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	Cam->AttachToActor(InPawn, FAttachmentTransformRules::KeepRelativeTransform);
+
+	AGasaPlayerState* PS      = GetPlayerState();
+	AGasaCharacter* character = Cast<AGasaCharacter>(InPawn);
+	// Net Owner setup ability system
+	{
+		character->AbilitySystem = PS->AbilitySystem;
+		character->Attributes    = PS->Attributes;
+		character->AbilitySystem->InitAbilityActorInfo(PS, character);
+	}
 }
 
 void AGasaPlayerController::OnUnPossess()

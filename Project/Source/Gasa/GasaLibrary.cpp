@@ -86,5 +86,5 @@ float              UGasaLib::printToScreenDuration = 10.0f;
 #pragma region Timing
 // Protected
 
-float UGasaLib::timingRate_Std = UGasaLib::_60Hz;
+float UGasaLib::timingRate_Std = Gasa::_60Hz;
 #pragma endregion Timing

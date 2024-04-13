@@ -1,10 +1,10 @@
 ﻿#pragma once
 
 #include "GasaCommon.h"
+#include "GasaPlayerState.h"
 #include "GameFramework/PlayerController.h"
 
 #include "GasaPlayerController.generated.h"
-
 
 UCLASS(Blueprintable)
 class GASA_API AGasaPlayerController : public APlayerController
@@ -48,11 +48,16 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputAction> IA_Move;
+	
+	void Move(FInputActionValue const& ActionValue);
 #pragma endregion Input
 	
 	AGasaPlayerController();
 
-	void Move(FInputActionValue const& ActionValue);
+	AGasaPlayerState* GetPlayerState()
+	{
+		return Cast<AGasaPlayerState>( PlayerState );
+	}
 	
 #pragma region PlayerController
 	void OnPossess(APawn* InPawn) override;
