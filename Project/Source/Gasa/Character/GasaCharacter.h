@@ -17,6 +17,8 @@ class GASA_API AGasaCharacter : public ACharacter
 {
 	GENERATED_BODY()
 public:
+	// TODO(Ed): Either make a toggle ore move to player controller if it gets expensive
+	// There is no need to have this lodged int PlayerCharacter anyway. It can attach to pawn on posses.
 #pragma region Camera
 	UPROPERTY(EditAnywhere, Category="Camera")
 	UCameraComponent* Camera;
@@ -32,13 +34,19 @@ public:
 
 	// This will be implemented in the base until it needs to be lifted into an abstraction.
 #pragma region Highlighting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Highlighting")
 	EHighlight HighlightState;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Highlighting")
+	FLinearColor HighlightColor;
+
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
 	void SetHighlight( EHighlight Desired );
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
 	FORCEINLINE void Highlight() { SetHighlight(EHighlight::Enabled); };
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
 	FORCEINLINE void Dehighlight() { SetHighlight(EHighlight::Disabled); };
 #pragma endregion Highlighting
 	

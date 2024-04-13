@@ -13,10 +13,10 @@ public:
 #pragma region Cog
     // To make sure it doesn't get garbage collected.
     UPROPERTY()
-    TObjectPtr<UObject> CogWindowManagerRef = nullptr;
+    TObjectPtr<UObject> CogWindowManagerRef;
 	
 #if ENABLE_COG
-	TObjectPtr<UCogWindowManager> CogWindowManager = nullptr;
+	TObjectPtr<UCogWindowManager> CogWindowManager;
 #endif // ENABLE_COG
 #pragma endregion Cog
 
