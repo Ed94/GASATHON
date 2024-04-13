@@ -1,11 +1,14 @@
 #include "GasaCharacter.h"
 
-#include "Game/GasaLevelScriptActor.h"
+#include "AbilitySystemComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+
+#include "AbilitySystem/GasaAbilitySystemComponent.h"
+#include "Game/GasaLevelScriptActor.h"
 
 void AGasaCharacter::SetHighlight(EHighlight Desired)
 {
@@ -35,6 +38,14 @@ AGasaCharacter::AGasaCharacter()
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
 	Weapon->SetupAttachment(mesh, FName("WeaponAttach"));
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (bAutoAbilitySystem)
+	{
+		AbilitySystem = CreateDefaultSubobject<UGasaAbilitySystemComp>("Ability System");
+		AbilitySystem->SetIsReplicated(true);
+		
+		Attributes = CreateDefaultSubobject<UAttributeSet>("Attributes");
+	}
 }
 
 void AGasaCharacter::BeginPlay()
