@@ -11,13 +11,37 @@ class GASA_API AGasaPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
+#pragma region Camera
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ACameraMount> CamClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<ACameraMount> Cam;
+#pragma endregion Camera
 
+		// This will be implemented in the base until it needs to be lifted into an abstraction.
+#if 0
+#pragma region Highlighting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Highlighting")
+	EHighlight HighlightState;
+	
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
+	void SetHighlight( EHighlight Desired );
+
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
+	FORCEINLINE void Highlight() { SetHighlight(EHighlight::Enabled); };
+	
+	UFUNCTION(BlueprintCallable, Category="Highlighting")
+	FORCEINLINE void Dehighlight() { SetHighlight(EHighlight::Disabled); };
+#pragma endregion Highlighting
+#endif
+	
 #pragma region Input
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AGasaCharacter* HoverPrev;
+	TObjectPtr<AGasaCharacter> HoverPrev;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AGasaCharacter* HoverCurr;
+	TObjectPtr<AGasaCharacter> HoverCurr;
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputMappingContext> IMC;
@@ -31,6 +55,10 @@ public:
 	void Move(FInputActionValue const& ActionValue);
 	
 #pragma region PlayerController
+	void OnPossess(APawn* InPawn) override;
+
+	void OnUnPossess() override;
+	
 	void PlayerTick(float DeltaTime) override;
 	
 	void SetupInputComponent() override;
@@ -38,5 +66,9 @@ public:
 
 #pragma region Actor
 	void BeginPlay() override;
+
+	void PostInitializeComponents() override;
+
+	void Tick(float DeltaSeconds) override;
 #pragma endregion Actor
 };

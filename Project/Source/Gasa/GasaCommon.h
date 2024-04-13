@@ -1,22 +1,32 @@
 ﻿
+#pragma once
+
 #include "CoreMinimal.h"
 // #define private protected
 
-#include "CogCommon.h"
+#define global        
+#define internal      static
+#define local_persist static
 
 #pragma region Engine Forwards
-class  UCameraComponent;
-class  UInputAction;
 struct FInputActionValue;
-class  UInputMappingContext;
-class  USpringArmComponent;
+
+class UCameraComponent;
+class UInputAction;
+class UInputMappingContext;
+class USpringArmComponent;
 #pragma endregion Engine Forwards
 
 #pragma region Engine Plugin Forwards
 class UCogWindowManager;
 #pragma endregion Engine Plugin Forwards
 
-#pragma region Gasa Forwards
-class AGasaCharacter;
-#pragma endregion Gasa Forwards
+// Gasa
 
+#pragma region Forwards
+class ACameraMount;
+class AGasaCharacter;
+class AGasaLevelScriptActor;
+
+class UGasaDevOptions;
+#pragma endregion Forwards

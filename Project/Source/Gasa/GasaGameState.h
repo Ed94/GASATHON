@@ -28,3 +28,11 @@ public:
 	void Tick(float DeltaSeconds) override;
 #pragma endregion GameState	
 };
+
+namespace Gasa
+{
+	FORCEINLINE
+	AGasaGameState* GetGameState(UObject* Context) {
+		return Context->GetWorld()->GetGameState<AGasaGameState>();
+	}
+}

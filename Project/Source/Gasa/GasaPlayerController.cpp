@@ -3,10 +3,19 @@
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Character/GasaCharacter.h"
+#include "Actors/CameraMount.h"
+#include "Camera/CameraComponent.h"
+#include "Characters/GasaCharacter.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 AGasaPlayerController::AGasaPlayerController()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	bAutoManageActiveCameraTarget = false;
+
+	// Replication
 	bReplicates = true;
 }
 
@@ -51,6 +60,18 @@ void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 	FVector MoveDir = (FVector) YawRotor.RotateVector( FVector3f(AxisV.Y, AxisV.X, 0.f));
 	pawn->AddMovementInput( MoveDir );
 #endif
+}
+
+void AGasaPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	Cam->AttachToActor(InPawn, FAttachmentTransformRules::KeepRelativeTransform);
+}
+
+void AGasaPlayerController::OnUnPossess()
+{
+	Super::OnUnPossess();
 }
 
 #pragma region PlayerController
@@ -110,6 +131,7 @@ void AGasaPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	check(IMC);
+	
 	UEnhancedInputLocalPlayerSubsystem*
 	EILP_Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	check(EILP_Subsystem);
@@ -122,5 +144,41 @@ void AGasaPlayerController::BeginPlay()
 		MouseMode.SetHideCursorDuringCapture(false);
 		SetInputMode(MouseMode);
 	}
+}
+
+void AGasaPlayerController::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	Cam = GetWorld()->SpawnActor<ACameraMount>(CamClass, FActorSpawnParameters() );
+	SetViewTarget(Cam);
+}
+
+void AGasaPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+#if 0
+	switch (HighlightState)
+	{
+		case EHighlight::Disabled:
+		break;
+		case EHighlight::Enabled:
+		{
+			UCapsuleComponent* Capsule = GetCapsuleComponent();
+				
+			UKismetSystemLibrary::DrawDebugCapsule(this
+				, Capsule->GetComponentLocation()
+				, Capsule->GetScaledCapsuleHalfHeight()
+				, Capsule->GetScaledCapsuleRadius()
+				, Capsule->GetComponentRotation()
+				, HighlightColor
+				, 0.f
+				, 1.f
+			);
+		}
+		break;
+	}
+#endif
 }
 #pragma endregion Actor
