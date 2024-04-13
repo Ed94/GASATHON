@@ -13,6 +13,8 @@ public:
 	APlayerCharacter();
 
 #pragma region Pawn
+	void PossessedBy(AController* NewController) override;
+	
 	void OnRep_PlayerState() override;
 #pragma endregion Pawn
 };

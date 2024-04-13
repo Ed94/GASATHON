@@ -73,6 +73,7 @@ void AGasaPlayerController::OnPossess(APawn* InPawn)
 	AGasaPlayerState* PS      = GetPlayerState();
 	AGasaCharacter* character = Cast<AGasaCharacter>(InPawn);
 	// Net Owner setup ability system
+	if (0)
 	{
 		character->AbilitySystem = PS->AbilitySystem;
 		character->Attributes    = PS->Attributes;

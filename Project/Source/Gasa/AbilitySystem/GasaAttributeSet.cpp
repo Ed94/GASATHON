@@ -7,6 +7,10 @@
 
 UGasaAttributeSet::UGasaAttributeSet()
 {
+	InitHealth( 100.f );
+	InitMaxHealth( 100.f );
+	InitMana( ( 50.f ) );
+	InitMaxMana( 50.f );
 }
 
 void UGasaAttributeSet::Client_OnRep_Health( FGameplayAttributeData& PrevHealth )
