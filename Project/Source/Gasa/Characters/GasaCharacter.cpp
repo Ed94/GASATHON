@@ -43,11 +43,31 @@ AGasaCharacter::AGasaCharacter()
 	{
 		AbilitySystem = CreateDefaultSubobject<UGasaAbilitySystemComp>("Ability System");
 		AbilitySystem->SetIsReplicated(true);
+		AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 		
 		Attributes = CreateDefaultSubobject<UAttributeSet>("Attributes");
 	}
 }
 
+#pragma region Pawn
+void AGasaCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (bAutoAbilitySystem)
+	{
+		// TODO(Ed): Do we need to do this for enemies?
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AGasaCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+}
+#pragma endregion Pawn
+
+#pragma region Actor
 void AGasaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -96,3 +116,4 @@ void AGasaCharacter::Tick(float DeltaSeconds)
 		break;
 	}
 }
+#pragma endregion Actor
