@@ -92,22 +92,22 @@ namespace Gasa
 		, const ANSICHAR*   File      = __builtin_FILE()
 		, const ANSICHAR*   Func      = __builtin_FUNCTION() )
 	{
-	#if !UE_BUILD_SHIPPING || !NO_LOGGING
+	#if !UE_BUILD_SHIPPING && !NO_LOGGING
 		ELogVerbosity::Type EngineVerbosity = (ELogVerbosity::Type) Verbosity;
 		
-		static ::UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
-		static ::UE::Logging::Private::FStaticBasicLogRecord
+		static UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
+		static UE::Logging::Private::FStaticBasicLogRecord
 		LOG_Static(TEXT("%s -- %hs %hs(%d)"), File, Line, EngineVerbosity, LOG_Dynamic);
 
-		if ((EngineVerbosity & ::ELogVerbosity::VerbosityMask) <= ::ELogVerbosity::COMPILED_IN_MINIMUM_VERBOSITY)
+		if ((EngineVerbosity & ELogVerbosity::VerbosityMask) <= ELogVerbosity::COMPILED_IN_MINIMUM_VERBOSITY)
 		{
-			if ((EngineVerbosity & ::ELogVerbosity::VerbosityMask) <= Category.GetVerbosity())
+			if ((EngineVerbosity & ELogVerbosity::VerbosityMask) <= Category.GetVerbosity())
 			{
 				if ( ! Category.IsSuppressed(EngineVerbosity))
 				{
 					if (DumpStack)
 						FDebug::DumpStackTraceToLog(EngineVerbosity);
-					::UE::Logging::Private::BasicLog(Category, &LOG_Static, *Message, File, Func, Line);
+					BasicLog(Category, &LOG_Static, *Message, File, Func, Line);
 				}
 			}
 		}
