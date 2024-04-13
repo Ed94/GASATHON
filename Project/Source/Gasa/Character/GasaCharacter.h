@@ -5,6 +5,13 @@
 
 #include "GasaCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class EHighlight : uint8
+{
+	Disabled,
+	Enabled,
+};
+
 UCLASS(Abstract)
 class GASA_API AGasaCharacter : public ACharacter
 {
@@ -25,10 +32,11 @@ public:
 
 	// This will be implemented in the base until it needs to be lifted into an abstraction.
 #pragma region Highlighting
-	void SetHighlight( EHighlight desired );
+	EHighlight HighlightState;
+	void SetHighlight( EHighlight Desired );
 
 	UFUNCTION(BlueprintCallable)
-	FORCEINLINE void Highlight() { SetHighlight(EHighlight::Disabled); };
+	FORCEINLINE void Highlight() { SetHighlight(EHighlight::Enabled); };
 	
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void Dehighlight() { SetHighlight(EHighlight::Disabled); };
@@ -38,5 +46,7 @@ public:
 	
 #pragma region Actor
 	void BeginPlay() override;
+
+	void Tick(float DeltaSeconds) override;
 #pragma endregion Actor
 };

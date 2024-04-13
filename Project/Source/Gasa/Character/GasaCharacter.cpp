@@ -1,12 +1,14 @@
 #include "GasaCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
-void AGasaCharacter::SetHighlight(EHighlight desired)
+void AGasaCharacter::SetHighlight(EHighlight Desired)
 {
-	
+	HighlightState = Desired;
 }
 
 AGasaCharacter::AGasaCharacter()
@@ -47,4 +49,30 @@ AGasaCharacter::AGasaCharacter()
 void AGasaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AGasaCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	switch (HighlightState)
+	{
+		case EHighlight::Disabled:
+		break;
+		case EHighlight::Enabled:
+		{
+			UCapsuleComponent* Capsule = GetCapsuleComponent();
+				
+			UKismetSystemLibrary::DrawDebugCapsule(this
+				, Capsule->GetComponentLocation()
+				, Capsule->GetScaledCapsuleHalfHeight()
+				, Capsule->GetScaledCapsuleRadius()
+				, Capsule->GetComponentRotation()
+				, FLinearColor(0.8, 0.32, 0.05f, 1.f)
+				, 0.f
+				, 1.f
+			);
+		}
+		break;
+	}
 }

@@ -10,6 +10,8 @@ public class Gasa : ModuleRules
 {
     public Gasa(ReadOnlyTargetRules Target) : base(Target)
     {
+	    bUseUnity = false;
+	    
     #region Engine
         PrivateIncludePathModuleNames.AddRange(new string[] {
             "Core",
@@ -29,12 +31,18 @@ public class Gasa : ModuleRules
             "InputCore", 
             "NetCore",
             "Niagara",
+            "UMG",
         });
     #endregion Engine
     
     #region Plugins
 		if (Target.Configuration != UnrealTargetConfiguration.Shipping && Target.Type != TargetRules.TargetType.Server)
         {
+	        PrivateDefinitions.AddRange(new string[]
+	        {
+		        "ENABLE_COG=true",
+	        });
+	       
 	        PrivateIncludePathModuleNames.AddRange( new string[]
 	        {
 		        "CogCommon",
