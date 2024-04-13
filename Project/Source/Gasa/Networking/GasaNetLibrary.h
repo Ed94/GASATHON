@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-
 namespace Gasa
 {
 	constexpr float NetCullDist_Default   = 225000000.0f;
@@ -11,5 +10,8 @@ namespace Gasa
 	constexpr float NetCullDist_Distant   = 7000.0f  * 7000.0f;
 	constexpr float NetCullDist_Far       = 8500.0f  * 8500.0f;
 	constexpr float NetCullDist_VeryFar   = 10000.0f * 10000.0f;
-	constexpr float NetCullDist_VisualMax = 15000.0f * 15000.0f;	
+	constexpr float NetCullDist_VisualMax = 15000.0f * 15000.0f;
+
+	#define DOREPLIFETIME_DEFAULT_GAS(Class, ReplicatedVar) \
+		DOREPLIFETIME_CONDITION_NOTIFY(Class, ReplicatedVar, COND_None, REPNOTIFY_Always)
 }
