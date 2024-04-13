@@ -3,4 +3,6 @@
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	bAutoAbilitySystem = false;
 }

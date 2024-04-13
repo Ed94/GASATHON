@@ -11,6 +11,11 @@
 #pragma region Engine Forwards
 struct FInputActionValue;
 
+class IAbilitySystemInterface;
+
+class UAbilitySystemComponent;
+class UAbilitySystemInterface;
+class UAttributeSet;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
@@ -31,9 +36,11 @@ class AGasaGameState;
 class AGasaLevelScriptActor;
 class AGasaPlayerController;
 
+class UGasaAbilitySystemComp;
 class UGasaDevOptions;
 #pragma endregion Forwards
 
+#pragma region Logging
 // Straight from the Engine
 UENUM(BlueprintType)
 enum class EGasaVerbosity : uint8
@@ -122,3 +129,4 @@ namespace Gasa
 #define GASA_Log(Message)         UE_LOG( Gasa, Log,         TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
 #define GASA_Verbose(Message)     UE_LOG( Gasa, Verbose,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
 #define GASA_VeryVerbose(Message) UE_LOG( Gasa, VeryVerbose, TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#pragma endregion Logging

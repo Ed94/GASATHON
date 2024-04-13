@@ -1,7 +1,9 @@
 #pragma once
 
-#include "GasaCommon.h"
+#include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+
+#include "GasaCommon.h"
 
 #include "GasaCharacter.generated.h"
 
@@ -14,9 +16,21 @@ enum class EHighlight : uint8
 
 UCLASS(Abstract)
 class GASA_API AGasaCharacter : public ACharacter
+	, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 public:
+#pragma region Ability System
+	UPROPERTY(EditAnywhere, Category="Ability System")
+	bool bAutoAbilitySystem = true;
+	
+	UPROPERTY(EditAnywhere, Category="Ability System")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
+
+	UPROPERTY(EditAnywhere, Category="Ability System")
+	TObjectPtr<UAttributeSet> Attributes;
+#pragma endregion Ability System
+	
 #pragma region Combat
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
@@ -42,6 +56,11 @@ public:
 #pragma endregion Highlighting
 
 	AGasaCharacter();
+
+#pragma region IAbilitySystem
+	FORCEINLINE UAttributeSet*           GetAttributes()                            { return Attributes; }
+	FORCEINLINE UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
+#pragma endregion IAbilitySystem
 	
 #pragma region Actor
 	void BeginPlay() override;
@@ -49,3 +68,11 @@ public:
 	void Tick(float DeltaSeconds) override;
 #pragma endregion Actor
 };
+
+namespace Gasa
+{
+	// UGasaAbilitySystemComp* GetAbilitySystem(AGasaCharacter* Object)
+	// {
+	// 	
+	// }
+}
