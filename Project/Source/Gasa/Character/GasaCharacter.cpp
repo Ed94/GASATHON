@@ -4,6 +4,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
+void AGasaCharacter::SetHighlight(EHighlight desired)
+{
+	
+}
+
 AGasaCharacter::AGasaCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
