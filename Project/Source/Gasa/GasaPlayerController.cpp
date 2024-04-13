@@ -3,6 +3,7 @@
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Character/GasaCharacter.h"
 
 AGasaPlayerController::AGasaPlayerController()
 {
@@ -53,6 +54,44 @@ void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 }
 
 #pragma region PlayerController
+void AGasaPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	// Cursor Trace
+	for (int32 do_once = 0; do_once != 1; ++ do_once)
+	{
+		FHitResult CursorHit;
+		GetHitResultUnderCursor(ECC_Pawn, false, CursorHit);
+		if (! CursorHit.bBlockingHit)
+			break;
+
+		HoverPrev = HoverCurr;
+		HoverCurr = Cast<AGasaCharacter>(CursorHit.GetActor());
+		if (HoverPrev == nullptr)
+		{
+			// We didn't have a prev to de-highlight so we just need to highlight newly detected character.
+			if (HoverCurr)
+				HoverCurr->Highlight();
+
+			// No matter what we need to not go to the next case as there is no previous.
+			break;
+		}
+		//else Previous is valid...
+
+		// We are no longer hovering the previous with no new character, we just need to de-highlight previous.		
+		if ( HoverCurr == nullptr )
+			HoverPrev->Dehighlight();
+
+		// We had a prev and curr change between frames. They both don't match; we need to switch highlighting.
+		else if ( HoverPrev != HoverCurr )
+		{
+			HoverPrev->Dehighlight();
+			HoverCurr->Highlight();
+		}
+	}
+}
+
 void AGasaPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();

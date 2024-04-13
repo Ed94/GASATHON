@@ -13,6 +13,12 @@ class GASA_API AGasaPlayerController : public APlayerController
 public:
 
 #pragma region Input
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	AGasaCharacter* HoverPrev;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	AGasaCharacter* HoverCurr;
+	
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputMappingContext> IMC;
 
@@ -25,6 +31,8 @@ public:
 	void Move(FInputActionValue const& ActionValue);
 	
 #pragma region PlayerController
+	void PlayerTick(float DeltaTime) override;
+	
 	void SetupInputComponent() override;
 #pragma endregion PlayerController
 

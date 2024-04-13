@@ -10,5 +10,5 @@ class GASA_API APlayerCharacter : public AGasaCharacter
 	GENERATED_BODY()
 public:
 
-	
+	APlayerCharacter();	
 };
