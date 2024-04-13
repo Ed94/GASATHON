@@ -208,12 +208,24 @@ int gen_main()
 				);
 			}
 
+			CodeNS ns_gasa = parse_namespace( code(
+				namespace Gasa
+				{
+					inline
+					UGasaAttributeSet const* GetAttributeSet( UAbilitySystemComponent* ASC )
+					{
+						return Cast<UGasaAttributeSet>(ASC->GetAttributeSet( UGasaAttributeSet::StaticClass() ));
+					}
+				}
+			));
+
 			header.print( Include_AttributeSet);
 			header.print( Include_AbilitySystemComponent);
 			header.print( Include_GasaAttributeSet_Generated);
 			header.print( fmt_newline);
 			header.print(umeta_uclass);
 			header.print(GasaAttributeSet);
+			header.print(ns_gasa);
 		}
 		header.write();
 	}

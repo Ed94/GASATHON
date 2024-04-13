@@ -23,6 +23,7 @@ class UAttributeSet;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class USphereComponent;
 class USpringArmComponent;
 #pragma endregion Engine Forwards
 
@@ -41,6 +42,7 @@ class AGasaLevelScriptActor;
 class AGasaPlayerController;
 
 class UGasaAbilitySystemComp;
+class UGasaAttributeSet;
 class UGasaDevOptions;
 #pragma endregion Forwards
 

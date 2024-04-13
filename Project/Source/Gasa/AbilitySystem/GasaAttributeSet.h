@@ -147,3 +147,12 @@ public:
 	void GetLifetimeReplicatedProps( TArray< FLifetimeProperty >& OutLifetimeProps ) const override;
 #pragma endregion UObject
 };
+
+namespace Gasa
+{
+	inline UGasaAttributeSet const* GetAttributeSet( UAbilitySystemComponent* ASC )
+	{
+		return Cast< UGasaAttributeSet >( ASC->GetAttributeSet( UGasaAttributeSet::StaticClass() ) );
+	}
+
+}
