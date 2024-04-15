@@ -105,7 +105,7 @@ function run-gengasa
 
 	$path_AbilitySystem = join-path $path_gasa 'AbilitySystem'
 	$include  = @(
-		'GasaAttributeSet.h', 'GasaAttributeSet.cpp'
+		'GasaAttributeSet.h', 'GasaAttributeSet.cpp', 'LETS_SEE.h'
 	)
 	format-cpp $path_AbilitySystem $include $null
 }

@@ -70,9 +70,9 @@ using LogFailType = sw ( * )( char const*, ... );
 enum class AccessSpec : u32
 {
 	Default,
-	Public,
-	Protected,
 	Private,
+	Protected,
+	Public,
 
 	Num_AccessSpec,
 	Invalid,
@@ -82,9 +82,9 @@ inline char const* to_str( AccessSpec type )
 {
 	local_persist char const* lookup[ ( u32 )AccessSpec::Num_AccessSpec ] = {
 		"",
-		"public",
-		"protected",
 		"private",
+		"protected",
+		"public",
 	};
 
 	if ( type > AccessSpec::Public )
@@ -814,6 +814,7 @@ struct AST
 
 			union
 			{
+				AST* Macro;           // Parameter
 				AST* BitfieldSize;    // Variable (Class/Struct Data Member)
 				AST* Params;          // Constructor, Function, Operator, Template, Typename
 			};
@@ -2014,7 +2015,7 @@ struct AST_Constructor
 	Code           Next;
 	parser::Token* Tok;
 	Code           Parent;
-	char           _PAD_NAME_[ sizeof( StringCached ) ];
+	StringCached   Name;
 	CodeT          Type;
 	char           _PAD_UNUSED_[ sizeof( ModuleFlag ) + sizeof( u32 ) ];
 };
@@ -2616,11 +2617,11 @@ struct AST_Param
 
 		struct
 		{
-			char     _PAD_PROPERTIES_2_[ sizeof( AST* ) * 3 ];
+			char     _PAD_PROPERTIES_1_[ sizeof( AST* ) * 3 ];
 			CodeType ValueType;
-			char     _PAD_PROPERTIES_[ sizeof( AST* ) ];
+			Code     Macro;
 			Code     Value;
-			char     _PAD_PROPERTIES_3_[ sizeof( AST* ) ];
+			char     _PAD_PROPERTIES_2_[ sizeof( AST* ) ];
 		};
 	};
 
