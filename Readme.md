@@ -10,6 +10,7 @@ Implementation design perfs:
   * Lift to more specific or generalized code-pathsonly when necessary
   * Minimize distinct code-paths
   * Use classes as "filters", keep things "mega-structed"
+    * Use composition for large sets of entiites (when possible).
   * Never pre-emtively make interfaces or interface-like patterns
 * Keep everything data-wise in the runtime unless there is a measurable performance cost.
 * Some exploratory optimizations for educational purposes.

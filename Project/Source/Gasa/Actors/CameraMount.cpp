@@ -3,7 +3,6 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
-
 ACameraMount::ACameraMount()
 {
 	PrimaryActorTick.bCanEverTick = true;

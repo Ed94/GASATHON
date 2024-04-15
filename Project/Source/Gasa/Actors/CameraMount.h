@@ -22,4 +22,3 @@ public:
 	void PostInitializeComponents() override;
 #pragma endregion Actor
 };
-

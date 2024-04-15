@@ -21,7 +21,6 @@ public:
 	FGameplayAttributeData MaxMana;
 
 	UGasaAttributeSet();
-
 	UFUNCTION()
 	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
 	UFUNCTION()
