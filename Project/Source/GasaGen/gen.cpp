@@ -7294,6 +7294,115 @@ namespace parser
 
 	constexpr bool strip_formatting_dont_preserve_newlines = false;
 
+	internal inline
+	bool is_constructor_definition()
+	{
+		/*
+			To check if a definition is for a constructor we can go straight to the opening parenthesis for its parameters
+			From There we work backwards to see if we come across two identifiers with the same name between an member access
+			:: operator, there can be template parameters on the left of the :: so we ignore those.
+			Whats important is that	its back to back.
+
+			This has multiple possible faults. What we parse using this method may not filter out if something has a "return type"
+			This is bad since technically you could have a namespace nested into another namespace with the same name.
+			If this awful pattern is done the only way to distiguish with this coarse parse is to know there is no return type defined.
+
+			TODO(Ed): We could fix this by attempting to parse a type, but we would have to have a way to have it soft fail and rollback.
+		*/
+		TokArray tokens = Context.Tokens;
+
+		s32   idx = tokens.Idx;
+		Token nav = tokens[ idx ];
+		for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[ idx ] )
+		{
+			if ( nav.Text[0] == '<' )
+			{
+				// Skip templated expressions as they mey have expressions with the () operators
+				s32 capture_level  = 0;
+				s32 template_level = 0;
+				for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[idx] )
+				{
+					if (nav.Text[ 0 ] == '<')
+						++ template_level;
+
+					if (nav.Text[ 0 ] == '>')
+						-- template_level;
+					if (nav.Type == TokType::Operator && nav.Text[1] == '>')
+						-- template_level;
+
+					if ( nav.Type == ETokType::Capture_Start)
+					{
+						if (template_level != 0 )
+							++ capture_level;
+						else
+							break;
+					}
+
+					if ( template_level != 0 && nav.Type == ETokType::Capture_End)
+						-- capture_level;
+				}
+			}
+
+			if ( nav.Type == TokType::Capture_Start )
+				break;
+		}
+
+		-- idx;
+		Token tok_right = tokens[idx];
+		Token tok_left  = NullToken;
+
+		if (tok_right.Type != TokType::Identifier)
+		{
+			// We're not dealing with a constructor if there is no identifier right before the opening of a parameter's scope.
+			return false;
+		}
+
+		-- idx;
+		tok_left = tokens[idx];
+		// <Attributes> <Specifiers> ... <Identifier>
+
+		if ( tok_left.Type != TokType::Access_StaticSymbol )
+			return false;
+
+		-- idx;
+		tok_left = tokens[idx];
+		// <Attributes> <Specifiers> ... :: <Identifier>
+
+		// We search toward the left until we find the next valid identifier
+		s32 capture_level  = 0;
+		s32 template_level = 0;
+		while ( idx != tokens.Idx )
+		{
+			if (tok_left.Text[ 0 ] == '<')
+				++ template_level;
+
+			if (tok_left.Text[ 0 ] == '>')
+				-- template_level;
+			if (tok_left.Type == TokType::Operator && tok_left.Text[1] == '>')
+				-- template_level;
+
+			if ( template_level != 0 && tok_left.Type == ETokType::Capture_Start)
+				++ capture_level;
+
+			if ( template_level != 0 && tok_left.Type == ETokType::Capture_End)
+				-- capture_level;
+
+			if ( capture_level == 0 && template_level == 0  && tok_left.Type == TokType::Identifier )
+				break;
+
+			-- idx;
+			tok_left = tokens[idx];
+		}
+
+		bool is_same = str_compare( tok_right.Text, tok_left.Text, tok_right.Length ) == 0;
+		if (tok_left.Type == TokType::Identifier && is_same)
+		{
+			// We have found the pattern we desired
+			// <Name> :: <Name> (
+			return true;
+		}
+	}
+
 	/*
 	    This function was an attempt at stripping formatting from any c++ code.
 	    It has edge case failures that prevent it from being used in function bodies.
@@ -7835,6 +7944,7 @@ namespace parser
 	internal neverinline CodeBody parse_class_struct_body( TokType which, Token name )
 	{
 		using namespace ECode;
+
 		push_scope();
 
 		eat( TokType::BraceCurly_Open );
@@ -7856,7 +7966,7 @@ namespace parser
 
 			bool expects_function     = false;
 
-			Context.Scope->Start      = currtok_noskip;
+			// Context.Scope->Start      = currtok_noskip;
 
 			if ( currtok_noskip.Type == TokType::Preprocess_Hash )
 				eat( TokType::Preprocess_Hash );
@@ -8576,6 +8686,8 @@ namespace parser
 	{
 		using namespace ECode;
 
+		push_scope();
+
 		if ( which != Namespace_Body && which != Global_Body && which != Export_Body && which != Extern_Linkage_Body )
 			return CodeInvalid;
 
@@ -8594,7 +8706,7 @@ namespace parser
 
 			bool expects_function     = false;
 
-			Context.Scope->Start      = currtok_noskip;
+			// Context.Scope->Start      = currtok_noskip;
 
 			if ( currtok_noskip.Type == TokType::Preprocess_Hash )
 				eat( TokType::Preprocess_Hash );
@@ -8788,6 +8900,7 @@ namespace parser
 								StrC spec_str = ESpecifier::to_str( spec );
 
 								log_failure( "Invalid specifier %.*s for variable\n%s", spec_str.Len, spec_str, Context.to_string() );
+								Context.pop();
 								return CodeInvalid;
 						}
 
@@ -8817,6 +8930,14 @@ namespace parser
 				case TokType::Type_double :
 				case TokType::Type_int :
 				{
+					// Possible constructor implemented at global file scope.
+					if (is_constructor_definition())
+					{
+						member = parse_constructor( specifiers );
+						// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
+						break;
+					}
+
 					bool found_operator_cast_outside_class_implmentation = false;
 					s32  idx                 = Context.Tokens.Idx;
 
@@ -8855,6 +8976,7 @@ namespace parser
 			if ( member == Code::Invalid )
 			{
 				log_failure( "Failed to parse member\n%s", Context.to_string() );
+				Context.pop();
 				return CodeInvalid;
 			}
 
@@ -8866,6 +8988,7 @@ namespace parser
 			eat( TokType::BraceCurly_Close );
 		// { <Body> }
 
+		Context.pop();
 		return result;
 	}
 
@@ -10980,90 +11103,20 @@ namespace parser
 				// <export> template< <Parameters> > <Attributes> <Specifiers>
 			}
 
+
+			bool has_context         = Context.Scope && Context.Scope->Prev;
+			bool is_in_global_nspace = has_context && str_compare( Context.Scope->Prev->ProcName, "parse_global_nspace" ) == 0;
+
 			// Possible constructor implemented at global file scope.
+			if (is_in_global_nspace && is_constructor_definition())
 			{
-				/*
-					To check if a definition is for a constructor we can go straight to the opening parenthesis for its parameters
-					From There we work backwards to see if we come across two identifiers with the same name between an member access
-					:: operator, there can be template parameters on the left of the :: so we ignore those.
-					Whats important is that	its back to back.
-
-					This has multiple possible faults. What we parse using this method may not filter out if something has a "return type"
-					This is bad since technically you could have a namespace nested into another namespace with the same name.
-					If this awful pattern is done the only way to distiguish with this coarse parse is to know there is no return type defined.
-
-					We could fix this by attempting to parse a type, but we would have to have a way to have it soft fail and rollback.
-				*/
-				TokArray tokens = Context.Tokens;
-
-				s32 idx         = tokens.Idx;
-				s32 level       = 0;
-				for ( ; idx < tokens.Arr.num(); idx++ )
-				{
-					if ( level == 0 && tokens[ idx ].Type == TokType::Capture_Start )
-						break;
-				}
-
-				-- idx;
-				Token tok_right = tokens[idx];
-				Token tok_left  = NullToken;
-
-				if (tok_right.Type != TokType::Identifier)
-				{
-					// We're not dealing with a constructor if there is no identifier right before the opening of a parameter's scope.
-					break;
-				}
-
-				-- idx;
-				tok_left = tokens[idx];
-				// <Attributes> <Specifiers> ... <Identifier>
-
-				if ( tok_left.Type != TokType::Access_StaticSymbol )
-					break;
-
-				-- idx;
-				tok_left = tokens[idx];
-				// <Attributes> <Specifiers> ... :: <Identifier>
-
-				// We search toward the left until we find the next valid identifier
-				s32 capture_level  = 0;
-				s32 template_level = 0;
-				while ( idx != tokens.Idx )
-				{
-					if (tok_left.Text[ 0 ] == '<')
-						++ template_level;
-
-					if (tok_left.Text[ 0 ] == '>')
-						-- template_level;
-					if (tok_left.Type == TokType::Operator && tok_left.Text[1] == '>')
-						-- template_level;
-
-					if ( template_level != 0 && tok_left.Type == ETokType::Capture_Start)
-						++ capture_level;
-
-					if ( template_level != 0 && tok_left.Type == ETokType::Capture_End)
-						-- capture_level;
-
-					if ( capture_level == 0 && template_level == 0  && tok_left.Type == TokType::Identifier )
-						break;
-
-					-- idx;
-					tok_left = tokens[idx];
-				}
-
-				bool is_same = str_compare( tok_right.Text, tok_left.Text, tok_right.Length ) == 0;
-				if (tok_left.Type == TokType::Identifier && is_same)
-				{
-					// We have found the pattern we desired
-					// <Name> :: <Name> (
-
-					definition = parse_constructor( specifiers );
-					// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
-					break;
-				}
+				definition = parse_constructor( specifiers );
+				// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
+				break;
 			}
 
-			// User Defined operator casts
+			// Possible user Defined operator casts
+			if (is_in_global_nspace)
 			{
 				bool found_operator_cast_outside_class_implmentation = false;
 				s32  idx = Context.Tokens.Idx;
