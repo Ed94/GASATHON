@@ -1742,6 +1742,8 @@ void CodeDestructor::to_string_fwd( String& result )
 
 		if ( ast->Specs.has( ESpecifier::Pure ) )
 			result.append( " = 0;" );
+		else if (ast->Body)
+			result.append_fmt( " = %S;", ast->Body.to_string() );
 	}
 	else
 		result.append_fmt( "~%S();", ast->Parent->Name );
@@ -1905,7 +1907,7 @@ void CodeFriend::to_string( String& result )
 {
 	result.append_fmt( "friend %S", ast->Declaration->to_string() );
 
-	if ( result[ result.length() - 1 ] != ';' )
+	if ( ast->Declaration->Type != ECode::Function && result[ result.length() - 1 ] != ';' )
 	{
 		result.append( ";" );
 	}
@@ -2023,13 +2025,18 @@ void CodeFn::to_string_fwd( String& result )
 	{
 		for ( SpecifierT spec : ast->Specs )
 		{
-			if ( ESpecifier::is_trailing( spec ) )
+			if ( ESpecifier::is_trailing( spec ) && ! spec != ESpecifier::Pure )
 			{
 				StrC spec_str = ESpecifier::to_str( spec );
 				result.append_fmt( " %.*s", spec_str.Len, spec_str.Ptr );
 			}
 		}
 	}
+
+	if ( ast->Specs.has( ESpecifier::Pure ) )
+		result.append( " = 0;" );
+	else if (ast->Body)
+		result.append_fmt( " = %S;", ast->Body.to_string() );
 
 	if ( ast->InlineCmt )
 		result.append_fmt( ";  %S", ast->InlineCmt->Content );
@@ -3408,7 +3415,6 @@ OpValidateResult operator__validate( OperatorT op, CodeParam params_code, CodeTy
 
 		case Unary_Plus :
 		case Unary_Minus :
-		case BNot :
 			if ( ! params_code )
 				is_member_symbol = true;
 
@@ -3444,6 +3450,38 @@ OpValidateResult operator__validate( OperatorT op, CodeParam params_code, CodeTy
 				}
 			}
 			break;
+		case BNot:
+		{
+			// Some compilers let you do this...
+			// if ( ! ret_type.is_equal( t_bool) )
+			// {
+			// 	log_failure( "gen::def_operator: return type is not a boolean - %s", params_code.debug_str() );
+			// 	return OpValidateResult::Fail;
+			// }
+
+			if ( ! params_code )
+				is_member_symbol = true;
+
+			else
+			{
+				if ( params_code->Type != ECode::Parameters )
+				{
+					log_failure( "gen::def_operator: params is not of Parameters type - %s", params_code.debug_str() );
+					return OpValidateResult::Fail;
+				}
+
+				if ( params_code->NumEntries > 1 )
+				{
+					log_failure(
+					    "gen::def_operator: operator%s may not have more than one parameter - param count: %d",
+					    to_str( op ),
+					    params_code->NumEntries
+					);
+					return OpValidateResult::Fail;
+				}
+			}
+			break;
+		}
 
 		case Add :
 		case Subtract :
@@ -3577,6 +3615,11 @@ OpValidateResult operator__validate( OperatorT op, CodeParam params_code, CodeTy
 		case FunctionCall :
 		case Comma :
 			check_params();
+			break;
+
+		case New:
+		case Delete:
+			// This library doesn't support validating new and delete yet.
 			break;
 #undef specs
 	}
@@ -5611,7 +5654,8 @@ namespace parser
 	Entry( UMG_API, "UMG_API" ) \
 	Entry( COREUOBJECT_API, "COREUOBJECT_API" ) \
 	Entry( ENGINE_API, "ENGINE_API" ) \
-	Entry( GASA_API, "GASA_API" )
+	Entry( GASA_API, "GASA_API" ) \
+	Entry( GAMEPLAYABILITIES_API, "GAMEPLAYABILITIES_API" )
 
 		enum Type : u32
 		{
@@ -5717,6 +5761,7 @@ namespace parser
 			COREUOBJECT_API,
 			ENGINE_API,
 			GASA_API,
+			GAMEPLAYABILITIES_API,
 			NumTokens
 		};
 
@@ -5825,6 +5870,7 @@ namespace parser
 				{ sizeof( "COREUOBJECT_API" ),     "COREUOBJECT_API"     },
 				{ sizeof( "ENGINE_API" ),          "ENGINE_API"          },
 				{ sizeof( "GASA_API" ),            "GASA_API"            },
+				{ sizeof( "GAMEPLAYABILITIES_API" ), "GAMEPLAYABILITIES_API" },
 			};
 			return lookup[ type ];
 		}
@@ -5992,7 +6038,7 @@ namespace parser
 				while ( Arr[ idx ].Type == TokType::NewLine )
 					idx++;
 
-				return Arr[ idx ];
+				return Arr[ idx + 1 ];
 			}
 
 			return Arr[ idx + 1 ];
@@ -8359,8 +8405,7 @@ namespace parser
 		}
 		if ( tok.Type == TokType::Identifier )
 		{
-			tok                 = tokens[ idx - 2 ];
-
+			tok = tokens[ idx - 2 ];
 			bool is_indirection = tok.Type == TokType::Ampersand || tok.Type == TokType::Star;
 			bool ok_to_parse    = false;
 
@@ -8378,10 +8423,12 @@ namespace parser
 				ok_to_parse = true;
 			}
 			else if ( tok.Type == TokType::Assign_Classifer
-				&& tokens[idx - 4].Type == TokType::Decl_Class
-				&& tokens[idx - 5].Type == which )
+			&& (	( tokens[idx - 5].Type == which && tokens[idx - 4].Type == TokType::Decl_Class )
+				||	( tokens[idx - 4].Type == which))
+			)
 			{
-				// Its a forward declaration of an enum class
+				// Its a forward declaration of an enum
+				// <enum>         <type_identifier> : <identifier>;
 				// <enum> <class> <type_identifier> : <identifier>;
 				ok_to_parse = true;
 				Code result = parse_enum();
@@ -8404,6 +8451,27 @@ namespace parser
 
 			Code result = parse_operator_function_or_variable( false, { nullptr }, { nullptr } );
 			// <Attributes> <Specifiers> <ReturnType/ValueType> <operator <Op>, or Name> ...
+			Context.pop();
+			return result;
+		}
+		else if ( tok.Type >= TokType::Type_Unsigned && tok.Type <= TokType::Type_MS_W64 )
+		{
+			tok = tokens[ idx - 2 ];
+
+			if ( tok.Type != TokType::Assign_Classifer
+			|| (	( tokens[idx - 5].Type != which && tokens[idx - 4].Type != TokType::Decl_Class )
+				&&	( tokens[idx - 4].Type != which))
+			)
+			{
+				log_failure( "Unsupported or bad member definition after %s declaration\n%s", to_str(which), Context.to_string() );
+				Context.pop();
+				return CodeInvalid;
+			}
+
+			// Its a forward declaration of an enum class
+			// <enum>         <type_identifier> : <identifier>;
+			// <enum> <class> <type_identifier> : <identifier>;
+			Code result = parse_enum();
 			Context.pop();
 			return result;
 		}
@@ -8579,6 +8647,20 @@ namespace parser
 				return CodeInvalid;
 			}
 			// <Attributes> <Specifiers> <ReturnType> <Name> ( <Paraemters> ) <Specifiers> { <Body> }
+		}
+		else if ( check(TokType::Operator) && currtok.Text[0] == '=' )
+		{
+			eat(TokType::Operator);
+			specifiers.append( ESpecifier::Pure );
+
+			eat( TokType::Number);
+			Token stmt_end = currtok;
+			eat( TokType::Statement_End );
+			// <Attributes> <Specifiers> <ReturnType> <Name> ( <Paraemters> ) <Specifiers> = 0;
+
+			if ( currtok_noskip.Type == TokType::Comment && currtok_noskip.Line == stmt_end.Line )
+				inline_cmt = parse_comment();
+			// <Attributes> <Specifiers> <ReturnType> <Name> ( <Paraemters> ) <Specifiers>; <InlineCmt>
 		}
 		else
 		{
@@ -9111,6 +9193,8 @@ namespace parser
 
 		Context.Scope->Name = currtok;
 
+		bool was_new_or_delete = false;
+
 		OperatorT op        = Invalid;
 		switch ( currtok.Text[ 0 ] )
 		{
@@ -9301,18 +9385,71 @@ namespace parser
 			break;
 			default :
 			{
-				break;
+				StrC str_new    = to_str(OperatorT::New);
+				StrC str_delete = to_str(OperatorT::Delete);
+				if ( str_compare( currtok.Text, str_new.Ptr, max(str_new.Len - 1, currtok.Length)) == 0)
+				{
+					op = OperatorT::New;
+					eat( ETokType::Identifier );
+					was_new_or_delete = true;
+
+					s32 idx = Context.Tokens.Idx + 1;
+					{
+						while ( Context.Tokens[ idx ].Type == TokType::NewLine )
+							idx++;
+					}
+					Token next = Context.Tokens[idx];
+					if ( currtok.Type == TokType::Operator && str_compare(currtok.Text, "[]", 2) == 0)
+					{
+						eat(ETokType::Operator);
+						op = OperatorT::NewArray;
+					}
+					else if ( currtok.Type == TokType::BraceSquare_Open && next.Type == TokType::BraceSquare_Close)
+					{
+						eat(ETokType::BraceSquare_Open);
+						eat(ETokType::BraceSquare_Close);
+						op = OperatorT::NewArray;
+					}
+				}
+				else if ( str_compare( currtok.Text, str_delete.Ptr, max(str_delete.Len - 1, currtok.Length )) == 0)
+				{
+					op = OperatorT::Delete;
+					eat(ETokType::Identifier);
+					was_new_or_delete = true;
+
+					s32 idx = Context.Tokens.Idx + 1;
+					{
+						while ( Context.Tokens[ idx ].Type == TokType::NewLine )
+							idx++;
+					}
+					Token next = Context.Tokens[idx];
+					if ( currtok.Type == TokType::Operator && str_compare(currtok.Text, "[]", 2) == 0)
+					{
+						eat(ETokType::Operator);
+						op = OperatorT::DeleteArray;
+					}
+					else if ( currtok.Type == TokType::BraceSquare_Open && next.Type == TokType::BraceSquare_Close)
+					{
+						eat(ETokType::BraceSquare_Open);
+						eat(ETokType::BraceSquare_Close);
+						op = OperatorT::DeleteArray;
+					}
+				}
+				else
+				{
+					if ( op == Invalid )
+					{
+						log_failure( "Invalid operator '%s'\n%s", prevtok.Text, Context.to_string() );
+						Context.pop();
+						return CodeInvalid;
+					}
+				}
 			}
+			break;
 		}
 
-		if ( op == Invalid )
-		{
-			log_failure( "Invalid operator '%s'\n%s", currtok.Text, Context.to_string() );
-			Context.pop();
-			return CodeInvalid;
-		}
-
-		eat( currtok.Type );
+		if ( ! was_new_or_delete)
+			eat( currtok.Type );
 		// <ExportFlag> <Attributes> <Specifiers> <ReturnType> <Qualifier::...> operator <Op>
 
 		// Parse Params
@@ -10288,19 +10425,26 @@ namespace parser
 
 		if ( check( TokType::Operator ) && currtok.Text[ 0 ] == '=' )
 		{
-			eat( TokType::Operator );
 			// <Virtual Specifier> ~<Name>() =
 
-			if ( left && currtok.Text[ 0 ] == '0' )
+			bool skip_formatting = true;
+			Token next = Context.Tokens.next(skip_formatting);
+			if ( left && next.Text[ 0 ] == '0' )
 			{
+				eat( TokType::Operator );
 				eat( TokType::Number );
 				// <Virtual Specifier> ~<Name>() = 0
 
 				specifiers.append( ESpecifier::Pure );
 			}
+			else if ( left && str_compare( next.Text, "default", sizeof("default") - 1 ) == 0)
+			{
+				body = parse_assignment_expression();
+				// <Virtual Specifier> ~<
+			}
 			else
 			{
-				log_failure( "Pure specifier expected due to '=' token\n%s", Context.to_string() );
+				log_failure( "Pure or default specifier expected due to '=' token\n%s", Context.to_string() );
 				return CodeInvalid;
 			}
 
@@ -10326,7 +10470,7 @@ namespace parser
 		if ( specifiers )
 			result->Specs = specifiers;
 
-		if ( body )
+		if ( body && body->Type == ECode::Function_Body )
 		{
 			result->Body = body;
 			result->Type = ECode::Destructor;
@@ -10640,36 +10784,40 @@ namespace parser
 			Context.Scope->Name = name;
 			// friend <ReturnType> <Name>
 
+			function = parse_function_after_name( ModuleFlag::None, NoCode, NoCode, type, name );
+
 			// Parameter list
-			CodeParam params = parse_params();
+			// CodeParam params = parse_params();
 			// friend <ReturnType> <Name> ( <Parameters> )
 
-			function             = make_code();
-			function->Type       = Function_Fwd;
-			function->Name       = get_cached_string( name );
-			function->ReturnType = type;
+			// function             = make_code();
+			// function->Type       = Function_Fwd;
+			// function->Name       = get_cached_string( name );
+			// function->ReturnType = type;
 
-			if ( params )
-				function->Params = params;
+			// if ( params )
+				// function->Params = params;
 		}
 
-		Token stmt_end = currtok;
-		eat( TokType::Statement_End );
-		// friend <Type>;
-		// friend <ReturnType> <Name> ( <Parameters> );
-
 		CodeComment inline_cmt = NoCode;
-		if ( currtok_noskip.Type == TokType::Comment && currtok_noskip.Line == stmt_end.Line )
-			inline_cmt = parse_comment();
-		// friend <Type>; <InlineCmt>
-		// friend <ReturnType> <Name> ( <Parameters> ); <InlineCmt>
+		if ( function && function->Type == ECode::Function_Fwd )
+		{
+			Token stmt_end = currtok;
+			eat( TokType::Statement_End );
+			// friend <Type>;
+			// friend <ReturnType> <Name> ( <Parameters> );
+
+			if ( currtok_noskip.Type == TokType::Comment && currtok_noskip.Line == stmt_end.Line )
+				inline_cmt = parse_comment();
+			// friend <Type>; <InlineCmt>
+			// friend <ReturnType> <Name> ( <Parameters> ); <InlineCmt>
+		}
 
 		CodeFriend result = ( CodeFriend )make_code();
 		result->Type      = Friend;
 
 		if ( function )
 			result->Declaration = function;
-
 		else
 			result->Declaration = type;
 

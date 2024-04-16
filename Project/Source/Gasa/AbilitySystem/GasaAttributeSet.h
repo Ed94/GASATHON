@@ -143,7 +143,8 @@ public:
 
 #pragma region UObject
 
-	void GetLifetimeReplicatedProps( TArray< FLifetimeProperty >& OutLifetimeProps ) const override;
+	void GetLifetimeReplicatedProps( TArray< FLifetimeProperty >& OutLifetimeProps ) const override = 0;
+	;
 #pragma endregion UObject
 };
 
