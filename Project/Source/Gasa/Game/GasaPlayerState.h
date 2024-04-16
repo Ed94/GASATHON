@@ -32,7 +32,7 @@ public:
 	FORCEINLINE UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 #pragma endregion IAbilitySystem
 
-#pragma region
-	
-#pragma endregion 
+// #pragma region
+// 	
+// #pragma endregion 
 };

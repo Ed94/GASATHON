@@ -32,6 +32,7 @@ public class Gasa : ModuleRules
             "InputCore", 
             "NetCore",
             "Niagara",
+            "SlateCore",
             "UMG",
         });
     #endregion Engine

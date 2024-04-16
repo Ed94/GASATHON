@@ -1161,7 +1161,7 @@ struct CodeSpecifiers
 	{
 		for ( s32 idx = 0; idx < raw()->NumEntries; idx++ )
 		{
-			if ( raw()->ArrSpecs[ raw()->NumEntries ] == spec )
+			if ( raw()->ArrSpecs[ idx ] == spec )
 				return idx;
 		}
 

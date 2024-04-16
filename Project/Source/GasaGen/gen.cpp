@@ -2033,7 +2033,7 @@ void CodeFn::to_string_fwd( String& result )
 		}
 	}
 
-	if ( ast->Specs.has( ESpecifier::Pure ) )
+	if ( ast->Specs.has( ESpecifier::Pure ) >= 0 )
 		result.append( " = 0;" );
 	else if (ast->Body)
 		result.append_fmt( " = %S;", ast->Body.to_string() );

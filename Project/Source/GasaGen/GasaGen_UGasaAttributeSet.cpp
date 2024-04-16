@@ -63,10 +63,13 @@ void gen_UGasaAttributeSet()
 					body.append( fmt_newline );
 
 					body.append( def_pragma( txt("region UObject")));
-					body.append( parse_function( code(
+					CodeFn GetLifetimeOfReplicatedProps = parse_function( code(
 						void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-					)));
+					));
+					body.append( GetLifetimeOfReplicatedProps );
 					body.append( def_pragma( txt("endregion UObject")));
+
+					String test = GetLifetimeOfReplicatedProps.to_string();
 				}
 				GasaAttributeSet = def_class( class_name, body
 					, type_UAttributeSet, AccessSpec::Public

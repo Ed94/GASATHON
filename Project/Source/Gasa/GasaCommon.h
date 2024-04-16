@@ -44,6 +44,10 @@ class AGasaPlayerController;
 class UGasaAbilitySystemComp;
 class UGasaAttributeSet;
 class UGasaDevOptions;
+class UGasaImage;
+class UGasaOverlay;
+class UGasaProgressBar;
+class UGasaSizeBox;
 #pragma endregion Forwards
 
 #pragma region Logging

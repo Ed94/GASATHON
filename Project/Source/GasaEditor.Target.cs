@@ -11,8 +11,8 @@ public class GasaEditorTarget : TargetRules
         
         DefaultBuildSettings = BuildSettingsVersion.Latest;
         
-        bUseUnityBuild = false;
-        bUseXGEController = false;
+        // bUseUnityBuild = false;
+        // bUseXGEController = false;
         
 		ExtraModuleNames.Add("Gasa");
 		ExtraModuleNames.Add("GasaEditor");
