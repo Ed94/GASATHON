@@ -339,55 +339,63 @@ namespace EOperator
 		PtrToMemOfPtr,
 		FunctionCall,
 		Comma,
+		New,
+		NewArray,
+		Delete,
+		DeleteArray,
 		NumOps
 	};
 
 	StrC to_str( Type op )
 	{
 		local_persist StrC lookup[] {
-			{ sizeof( "INVALID" ), "INVALID" },
-			{ sizeof( "=" ),       "="       },
-			{ sizeof( "+=" ),      "+="      },
-			{ sizeof( "-=" ),      "-="      },
-			{ sizeof( "*=" ),      "*="      },
-			{ sizeof( "/=" ),      "/="      },
-			{ sizeof( "%=" ),      "%="      },
-			{ sizeof( "&=" ),      "&="      },
-			{ sizeof( "|=" ),      "|="      },
-			{ sizeof( "^=" ),      "^="      },
-			{ sizeof( "<<=" ),     "<<="     },
-			{ sizeof( ">>=" ),     ">>="     },
-			{ sizeof( "++" ),      "++"      },
-			{ sizeof( "--" ),      "--"      },
-			{ sizeof( "+" ),       "+"       },
-			{ sizeof( "-" ),       "-"       },
-			{ sizeof( "!" ),       "!"       },
-			{ sizeof( "+" ),       "+"       },
-			{ sizeof( "-" ),       "-"       },
-			{ sizeof( "*" ),       "*"       },
-			{ sizeof( "/" ),       "/"       },
-			{ sizeof( "%" ),       "%"       },
-			{ sizeof( "~" ),       "~"       },
-			{ sizeof( "&" ),       "&"       },
-			{ sizeof( "|" ),       "|"       },
-			{ sizeof( "^" ),       "^"       },
-			{ sizeof( "<<" ),      "<<"      },
-			{ sizeof( ">>" ),      ">>"      },
-			{ sizeof( "&&" ),      "&&"      },
-			{ sizeof( "||" ),      "||"      },
-			{ sizeof( "==" ),      "=="      },
-			{ sizeof( "!=" ),      "!="      },
-			{ sizeof( "<" ),       "<"       },
-			{ sizeof( ">" ),       ">"       },
-			{ sizeof( "<=" ),      "<="      },
-			{ sizeof( ">=" ),      ">="      },
-			{ sizeof( "[]" ),      "[]"      },
-			{ sizeof( "*" ),       "*"       },
-			{ sizeof( "&" ),       "&"       },
-			{ sizeof( "->" ),      "->"      },
-			{ sizeof( "->*" ),     "->*"     },
-			{ sizeof( "()" ),      "()"      },
-			{ sizeof( "," ),       ","       },
+			{ sizeof( "INVALID" ),  "INVALID"   },
+			{ sizeof( "=" ),        "="         },
+			{ sizeof( "+=" ),       "+="        },
+			{ sizeof( "-=" ),       "-="        },
+			{ sizeof( "*=" ),       "*="        },
+			{ sizeof( "/=" ),       "/="        },
+			{ sizeof( "%=" ),       "%="        },
+			{ sizeof( "&=" ),       "&="        },
+			{ sizeof( "|=" ),       "|="        },
+			{ sizeof( "^=" ),       "^="        },
+			{ sizeof( "<<=" ),      "<<="       },
+			{ sizeof( ">>=" ),      ">>="       },
+			{ sizeof( "++" ),       "++"        },
+			{ sizeof( "--" ),       "--"        },
+			{ sizeof( "+" ),        "+"         },
+			{ sizeof( "-" ),        "-"         },
+			{ sizeof( "!" ),        "!"         },
+			{ sizeof( "+" ),        "+"         },
+			{ sizeof( "-" ),        "-"         },
+			{ sizeof( "*" ),        "*"         },
+			{ sizeof( "/" ),        "/"         },
+			{ sizeof( "%" ),        "%"         },
+			{ sizeof( "~" ),        "~"         },
+			{ sizeof( "&" ),        "&"         },
+			{ sizeof( "|" ),        "|"         },
+			{ sizeof( "^" ),        "^"         },
+			{ sizeof( "<<" ),       "<<"        },
+			{ sizeof( ">>" ),       ">>"        },
+			{ sizeof( "&&" ),       "&&"        },
+			{ sizeof( "||" ),       "||"        },
+			{ sizeof( "==" ),       "=="        },
+			{ sizeof( "!=" ),       "!="        },
+			{ sizeof( "<" ),        "<"         },
+			{ sizeof( ">" ),        ">"         },
+			{ sizeof( "<=" ),       "<="        },
+			{ sizeof( ">=" ),       ">="        },
+			{ sizeof( "[]" ),       "[]"        },
+			{ sizeof( "*" ),        "*"         },
+			{ sizeof( "&" ),        "&"         },
+			{ sizeof( "->" ),       "->"        },
+			{ sizeof( "->*" ),      "->*"       },
+			{ sizeof( "()" ),       "()"        },
+			{ sizeof( "," ),        ","         },
+			{ sizeof( "new" ),      "new"       },
+			{ sizeof( "new[]" ),    "new[]"     },
+			{ sizeof( "delete" ),   "delete"    },
+			{ sizeof( "delete[]" ), "delete[]"  },
 		};
 		return lookup[ op ];
 	}
@@ -822,7 +830,7 @@ struct AST
 			union
 			{
 				AST* ArrExpr;        // Typename
-				AST* Body;           // Class, Constructr, Destructor, Enum, Function, Namespace, Struct, Union
+				AST* Body;           // Class, Constructr, Destructor, Enum, Friend, Function, Namespace, Struct, Union
 				AST* Declaration;    // Friend, Template
 				AST* Value;          // Parameter, Variable
 			};
@@ -902,7 +910,7 @@ struct AST_POD
 			union
 			{
 				AST* ArrExpr;        // Typename
-				AST* Body;           // Class, Constructr, Destructor, Enum, Function, Namespace, Struct, Union
+				AST* Body;           // Class, Constructr, Destructor, Enum, Friend, Function, Namespace, Struct, Union
 				AST* Declaration;    // Friend, Template
 				AST* Value;          // Parameter, Variable
 			};
