@@ -125,8 +125,8 @@ int gen_main()
 					case CodeT::Function_Fwd:
 						if ( class_code->Name )
 						{
-							// log_fmt("%s\n", class_code->Name );
-							log_fmt("%s\n", class_code->to_string() );
+							log_fmt("%s\n", class_code->Name );
+							// log_fmt("%s\n", class_code->to_string() );
 						}
 					break;
 				}
@@ -176,7 +176,7 @@ int gen_main()
 #define path_AActor \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Runtime\Engine\Classes\GameFramework\Actor.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_AActor );
 	CodeBody parsed_aactor = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -194,8 +194,8 @@ int gen_main()
 				switch ( class_code->Type )
 				{
 					case CodeT::Variable:
-					// case CodeT::Function:
-					// case CodeT::Function_Fwd:
+					case CodeT::Function:
+					case CodeT::Function_Fwd:
 						if ( class_code->Name )
 						{
 							log_fmt("%s\n", class_code->Name );
