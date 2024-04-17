@@ -300,6 +300,10 @@
 		{
 			"Name": "VisualStudioSourceCodeAccess",
 			"Enabled": true
+		},
+		{
+			"Name": "GitSourceControl",
+			"Enabled": true
 		}
 	]
 }
