@@ -95,7 +95,7 @@ void ue_parse_testing()
 			{
 				switch ( class_code->Type )
 				{
-					case CodeT::Variable:
+					// case CodeT::Variable:
 					case CodeT::Function:
 					case CodeT::Function_Fwd:
 						if ( class_code->Name )

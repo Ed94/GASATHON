@@ -105,8 +105,12 @@ function run-gengasa
 
 	$path_AbilitySystem = join-path $path_gasa 'AbilitySystem'
 	$include  = @(
-		'GasaAttributeSet.h', 'GasaAttributeSet.cpp', 'LETS_SEE.h'
+		'GasaAttributeSet.h', 'GasaAttributeSet.cpp'
 	)
 	format-cpp $path_AbilitySystem $include $null
+
+	$path_KismetPrivate = 'C:\projects\Unreal\Surgo\UE\Engine\Source\Editor\Kismet\Private\'
+	$include = @( 'SBlueprintActionMenu.cpp' )
+	format-cpp $path_KismetPrivate $include $null
 }
 run-gengasa

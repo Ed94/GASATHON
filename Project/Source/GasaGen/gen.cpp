@@ -1718,7 +1718,11 @@ String CodeDestructor::to_string()
 
 void CodeDestructor::to_string_def( String& result )
 {
-	if ( ast->Specs )
+	if ( ast->Name )
+	{
+		result.append_fmt( "%S()", ast->Name );
+	}
+	else if ( ast->Specs )
 	{
 		if ( ast->Specs.has( ESpecifier::Virtual ) )
 			result.append_fmt( "virtual ~%S()", ast->Parent->Name );
@@ -2434,7 +2438,7 @@ void CodeStruct::to_string_def( String& result )
 	{
 		char const* access_level = to_str( ast->ParentAccess );
 
-		result.append_fmt( "%S : %s %S", ast->Name, access_level, ast->ParentType );
+		result.append_fmt( "%S : %s %S", ast->Name, access_level, ast->ParentType.to_string() );
 
 		CodeType interface = ast->ParentType->Next->cast< CodeType >();
 		if ( interface )
@@ -7302,6 +7306,7 @@ namespace parser
 	internal CodeFn         parse_function_after_name( ModuleFlag mflags, CodeAttributes attributes, CodeSpecifiers specifiers, CodeType ret_type, Token name );
 	internal Code           parse_function_body();
 	internal Code           parse_global_nspace();
+	internal Code           parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers );
 	internal Token          parse_identifier( bool* possible_member_function = nullptr );
 	internal CodeInclude    parse_include();
 	internal CodeOperator   parse_operator_after_ret_type( ModuleFlag mflags, CodeAttributes attributes, CodeSpecifiers specifiers, CodeType ret_type );
@@ -7339,115 +7344,6 @@ namespace parser
 	// Internal parsing functions
 
 	constexpr bool strip_formatting_dont_preserve_newlines = false;
-
-	internal inline
-	bool is_constructor_definition()
-	{
-		/*
-			To check if a definition is for a constructor we can go straight to the opening parenthesis for its parameters
-			From There we work backwards to see if we come across two identifiers with the same name between an member access
-			:: operator, there can be template parameters on the left of the :: so we ignore those.
-			Whats important is that	its back to back.
-
-			This has multiple possible faults. What we parse using this method may not filter out if something has a "return type"
-			This is bad since technically you could have a namespace nested into another namespace with the same name.
-			If this awful pattern is done the only way to distiguish with this coarse parse is to know there is no return type defined.
-
-			TODO(Ed): We could fix this by attempting to parse a type, but we would have to have a way to have it soft fail and rollback.
-		*/
-		TokArray tokens = Context.Tokens;
-
-		s32   idx = tokens.Idx;
-		Token nav = tokens[ idx ];
-		for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[ idx ] )
-		{
-			if ( nav.Text[0] == '<' )
-			{
-				// Skip templated expressions as they mey have expressions with the () operators
-				s32 capture_level  = 0;
-				s32 template_level = 0;
-				for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[idx] )
-				{
-					if (nav.Text[ 0 ] == '<')
-						++ template_level;
-
-					if (nav.Text[ 0 ] == '>')
-						-- template_level;
-					if (nav.Type == TokType::Operator && nav.Text[1] == '>')
-						-- template_level;
-
-					if ( nav.Type == ETokType::Capture_Start)
-					{
-						if (template_level != 0 )
-							++ capture_level;
-						else
-							break;
-					}
-
-					if ( template_level != 0 && nav.Type == ETokType::Capture_End)
-						-- capture_level;
-				}
-			}
-
-			if ( nav.Type == TokType::Capture_Start )
-				break;
-		}
-
-		-- idx;
-		Token tok_right = tokens[idx];
-		Token tok_left  = NullToken;
-
-		if (tok_right.Type != TokType::Identifier)
-		{
-			// We're not dealing with a constructor if there is no identifier right before the opening of a parameter's scope.
-			return false;
-		}
-
-		-- idx;
-		tok_left = tokens[idx];
-		// <Attributes> <Specifiers> ... <Identifier>
-
-		if ( tok_left.Type != TokType::Access_StaticSymbol )
-			return false;
-
-		-- idx;
-		tok_left = tokens[idx];
-		// <Attributes> <Specifiers> ... :: <Identifier>
-
-		// We search toward the left until we find the next valid identifier
-		s32 capture_level  = 0;
-		s32 template_level = 0;
-		while ( idx != tokens.Idx )
-		{
-			if (tok_left.Text[ 0 ] == '<')
-				++ template_level;
-
-			if (tok_left.Text[ 0 ] == '>')
-				-- template_level;
-			if (tok_left.Type == TokType::Operator && tok_left.Text[1] == '>')
-				-- template_level;
-
-			if ( template_level != 0 && tok_left.Type == ETokType::Capture_Start)
-				++ capture_level;
-
-			if ( template_level != 0 && tok_left.Type == ETokType::Capture_End)
-				-- capture_level;
-
-			if ( capture_level == 0 && template_level == 0  && tok_left.Type == TokType::Identifier )
-				break;
-
-			-- idx;
-			tok_left = tokens[idx];
-		}
-
-		bool is_same = str_compare( tok_right.Text, tok_left.Text, tok_right.Length ) == 0;
-		if (tok_left.Type == TokType::Identifier && is_same)
-		{
-			// We have found the pattern we desired
-			// <Name> :: <Name> (
-			return true;
-		}
-	}
 
 	/*
 	    This function was an attempt at stripping formatting from any c++ code.
@@ -9012,11 +8908,11 @@ namespace parser
 				case TokType::Type_double :
 				case TokType::Type_int :
 				{
+					Code constructor_destructor = parse_global_nspace_constructor_destructor( specifiers );
 					// Possible constructor implemented at global file scope.
-					if (is_constructor_definition())
+					if ( constructor_destructor )
 					{
-						member = parse_constructor( specifiers );
-						// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
+						member = constructor_destructor;
 						break;
 					}
 
@@ -9074,6 +8970,134 @@ namespace parser
 		return result;
 	}
 
+	internal inline
+	Code parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers )
+	{
+		Code result = { nullptr };
+
+		/*
+			To check if a definition is for a constructor we can go straight to the opening parenthesis for its parameters
+			From There we work backwards to see if we come across two identifiers with the same name between an member access
+			:: operator, there can be template parameters on the left of the :: so we ignore those.
+			Whats important is that	its back to back.
+
+			This has multiple possible faults. What we parse using this method may not filter out if something has a "return type"
+			This is bad since technically you could have a namespace nested into another namespace with the same name.
+			If this awful pattern is done the only way to distiguish with this coarse parse is to know there is no return type defined.
+
+			TODO(Ed): We could fix this by attempting to parse a type, but we would have to have a way to have it soft fail and rollback.
+		*/
+		TokArray tokens = Context.Tokens;
+
+		s32   idx = tokens.Idx;
+		Token nav = tokens[ idx ];
+		for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[ idx ] )
+		{
+			if ( nav.Text[0] == '<' )
+			{
+				// Skip templated expressions as they mey have expressions with the () operators
+				s32 capture_level  = 0;
+				s32 template_level = 0;
+				for ( ; idx < tokens.Arr.num(); idx++, nav = tokens[idx] )
+				{
+					if (nav.Text[ 0 ] == '<')
+						++ template_level;
+
+					if (nav.Text[ 0 ] == '>')
+						-- template_level;
+					if (nav.Type == TokType::Operator && nav.Text[1] == '>')
+						-- template_level;
+
+					if ( nav.Type == ETokType::Capture_Start)
+					{
+						if (template_level != 0 )
+							++ capture_level;
+						else
+							break;
+					}
+
+					if ( template_level != 0 && nav.Type == ETokType::Capture_End)
+						-- capture_level;
+				}
+			}
+
+			if ( nav.Type == TokType::Capture_Start )
+				break;
+		}
+
+		-- idx;
+		Token tok_right = tokens[idx];
+		Token tok_left  = NullToken;
+
+		if (tok_right.Type != TokType::Identifier)
+		{
+			// We're not dealing with a constructor if there is no identifier right before the opening of a parameter's scope.
+			return result;
+		}
+
+		-- idx;
+		tok_left = tokens[idx];
+		// <Attributes> <Specifiers> ... <Identifier>
+
+		bool possible_destructor = false;
+		if ( tok_left.Type == TokType::Operator && tok_left.Text[0] == '~')
+		{
+			possible_destructor = true;
+			-- idx;
+			tok_left = tokens[idx];
+		}
+
+		if ( tok_left.Type != TokType::Access_StaticSymbol )
+			return result;
+
+		-- idx;
+		tok_left = tokens[idx];
+		// <Attributes> <Specifiers> ... :: <Identifier>
+
+		// We search toward the left until we find the next valid identifier
+		s32 capture_level  = 0;
+		s32 template_level = 0;
+		while ( idx != tokens.Idx )
+		{
+			if (tok_left.Text[ 0 ] == '<')
+				++ template_level;
+
+			if (tok_left.Text[ 0 ] == '>')
+				-- template_level;
+			if (tok_left.Type == TokType::Operator && tok_left.Text[1] == '>')
+				-- template_level;
+
+			if ( template_level != 0 && tok_left.Type == ETokType::Capture_Start)
+				++ capture_level;
+
+			if ( template_level != 0 && tok_left.Type == ETokType::Capture_End)
+				-- capture_level;
+
+			if ( capture_level == 0 && template_level == 0  && tok_left.Type == TokType::Identifier )
+				break;
+
+			-- idx;
+			tok_left = tokens[idx];
+		}
+
+		bool is_same = str_compare( tok_right.Text, tok_left.Text, tok_right.Length ) == 0;
+		if (tok_left.Type == TokType::Identifier && is_same)
+		{
+			// We have found the pattern we desired
+			if (possible_destructor)
+			{
+				// <Name> :: ~<Name> (
+				result = parse_destructor( specifiers );
+			}
+			else {
+				// <Name> :: <Name> (
+				result = parse_constructor( specifiers );
+			}
+		}
+
+		return result;
+	}
+
 	// TODO(Ed): I want to eventually change the identifier to its own AST type.
 	// This would allow distinction of the qualifier for a symbol <qualifier>::<nested symboL>
 	// This would also allow
@@ -9112,6 +9136,21 @@ namespace parser
 					Context.pop();
 					return { nullptr, 0, TokType::Invalid };
 				}
+			}
+
+			if ( currtok.Type == TokType::Operator && currtok.Text[0] == '~' )
+			{
+				bool is_destructor = str_compare( Context.Scope->Prev->ProcName, "parse_destructor" ) == 0;
+				if (is_destructor)
+				{
+					name.Length = ( ( sptr )prevtok.Text + prevtok.Length ) - ( sptr )name.Text;
+					Context.pop();
+					return name;
+				}
+
+				log_failure( "Error, had a ~ operator after %S but not a destructor\n%s", ETokType::to_str( prevtok.Type ), Context.to_string() );
+				Context.pop();
+				return { nullptr, 0, TokType::Invalid };
 			}
 
 			if ( currtok.Type != TokType::Identifier )
@@ -10332,7 +10371,7 @@ namespace parser
 				eat( currtok.Type );
 			}
 
-			initializer_list_tok.Length = ( ( sptr )currtok.Text + currtok.Length ) - ( sptr )initializer_list_tok.Text;
+			initializer_list_tok.Length = ( ( sptr )prevtok.Text + prevtok.Length ) - ( sptr )initializer_list_tok.Text;
 			// <Name> ( <Parameters> ) : <InitializerList>
 
 			initializer_list = untyped_str( initializer_list_tok );
@@ -10393,6 +10432,9 @@ namespace parser
 	{
 		push_scope();
 
+		bool has_context         = Context.Scope && Context.Scope->Prev;
+		bool is_in_global_nspace = has_context && str_compare( Context.Scope->Prev->ProcName, "parse_global_nspace" ) == 0;
+
 		if ( check( TokType::Spec_Virtual ) )
 		{
 			if ( specifiers )
@@ -10402,6 +10444,8 @@ namespace parser
 			eat( TokType::Spec_Virtual );
 		}
 		// <Virtual Specifier>
+
+		Token prefix_identifier = parse_identifier();
 
 		if ( left && currtok.Text[ 0 ] == '~' )
 			eat( TokType::Operator );
@@ -10466,6 +10510,12 @@ namespace parser
 		}
 
 		CodeDestructor result = ( CodeDestructor )make_code();
+
+		if ( prefix_identifier )
+		{
+			prefix_identifier.Length += 1 + identifier.Length;
+			result->Name = get_cached_string( prefix_identifier );
+		}
 
 		if ( specifiers )
 			result->Specs = specifiers;
@@ -11256,11 +11306,15 @@ namespace parser
 			bool is_in_global_nspace = has_context && str_compare( Context.Scope->Prev->ProcName, "parse_global_nspace" ) == 0;
 
 			// Possible constructor implemented at global file scope.
-			if (is_in_global_nspace && is_constructor_definition())
+			if (is_in_global_nspace)
 			{
-				definition = parse_constructor( specifiers );
-				// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
-				break;
+				Code constructor_destructor = parse_global_nspace_constructor_destructor( specifiers );
+				if ( constructor_destructor )
+				{
+					definition = constructor_destructor;
+					// <Attributes> <Specifiers> <Name> :: <Name> <Type> () { ... }
+					break;
+				}
 			}
 
 			// Possible user Defined operator casts

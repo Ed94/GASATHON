@@ -11,6 +11,7 @@ using namespace gen;
 #include "GasaGenCommon.cpp"
 #include "GasaGen_ue_parse_testing.cpp"
 #include "GasaGen_UGasaAttributeSet.cpp"
+#include "GasaGen_ChangeBPActionMenu.cpp"
 
 int gen_main()
 {
@@ -59,6 +60,8 @@ int gen_main()
 	StrC str_DECLARE_EVENT_ThreeParams                             = txt("DECLARE_EVENT_ThreeParams(");
 	StrC str_USTRUCT                                               = txt("USTRUCT(");
 	StrC str_GENERATED_USTRUCT_BODY                                = txt("GENERATED_USTRUCT_BODY(");
+	StrC str_SLATE_BEGIN_ARGS = txt("SLATE_BEGIN_ARGS(");
+	StrC str_SLATE_END_ARGS = txt("SLATE_END_ARGS(");
 
 	PreprocessorDefines.append( get_cached_string(str_GENERATED_BODY));
 	PreprocessorDefines.append( get_cached_string(str_GENERATED_UCLASS_BODY));
@@ -97,11 +100,14 @@ int gen_main()
 	PreprocessorDefines.append( get_cached_string(str_DECLARE_EVENT_ThreeParams));
 	PreprocessorDefines.append( get_cached_string(str_USTRUCT));
 	PreprocessorDefines.append( get_cached_string(str_GENERATED_USTRUCT_BODY));
+	PreprocessorDefines.append( get_cached_string(str_SLATE_BEGIN_ARGS));
+	PreprocessorDefines.append( get_cached_string(str_SLATE_END_ARGS));
 
-	ue_parse_testing();
+	// ue_parse_testing();
 
 	StrC str_gasa_api = txt("GASA_API");
 
 	gen_UGasaAttributeSet();
+	swap_SBlueprintActionMenu_Construct();
 	return 0;
 }

@@ -2070,7 +2070,7 @@ struct AST_Destructor
 	Code           Next;
 	parser::Token* Tok;
 	Code           Parent;
-	char           _PAD_NAME_[ sizeof( StringCached ) ];
+	StringCached   Name;
 	CodeT          Type;
 	char           _PAD_UNUSED_[ sizeof( ModuleFlag ) + sizeof( u32 ) ];
 };

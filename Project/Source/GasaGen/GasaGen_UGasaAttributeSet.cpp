@@ -68,8 +68,6 @@ void gen_UGasaAttributeSet()
 					));
 					body.append( GetLifetimeOfReplicatedProps );
 					body.append( def_pragma( txt("endregion UObject")));
-
-					String test = GetLifetimeOfReplicatedProps.to_string();
 				}
 				GasaAttributeSet = def_class( class_name, body
 					, type_UAttributeSet, AccessSpec::Public
@@ -137,11 +135,11 @@ void gen_UGasaAttributeSet()
 					)));
 				}
 
-				GetLifetimeOfReplicatedProps = parse_function( token_fmt( "body", (StrC)(field_lifetimes.to_string()), stringize(
+				GetLifetimeOfReplicatedProps = parse_function( token_fmt( "field_lifetimes", (StrC)(field_lifetimes.to_string()), stringize(
 					void UGasaAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 					{
 						Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-						<body>
+						<field_lifetimes>
 					}
 				)));
 			}
