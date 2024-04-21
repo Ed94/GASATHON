@@ -1,8 +1,8 @@
 ﻿#include "GasaEffectActor.h"
 
-#include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GasaAttributeSet.h"
+#include "GasaAttributeSet_Inlines.h"
 #include "Components/SphereComponent.h"
 
 

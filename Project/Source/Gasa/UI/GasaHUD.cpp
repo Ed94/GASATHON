@@ -1,11 +1,21 @@
 ﻿#include "GasaHUD.h"
+#include "GasaHUD_Inlines.h"
 
 #include "GasaDevOptions.h"
-#include "UI_HostWidget.h"
+#include "HUDHostWidget.h"
 #include "Blueprint/UserWidget.h"
-
 using namespace Gasa;
 
+void AGasaHUD::InitOverlay(FWidgetControllerData const* WidgetControllerData)
+{
+	HostWidget = CreateWidget<UHUDHostWidget>( GetWorld() 
+		, GetDevOptions()->Template_HUD_HostUI.LoadSynchronous() );
+
+	HostWidgetController = NewObject<UHostWidgetController>(this, GetDevOptions()->Template_HostWidgetController.Get());
+	HostWidget->SetWidgetController(HostWidgetController);
+
+	HostWidget->AddToViewport();
+}
 
 #pragma region HUD
 void AGasaHUD::ShowHUD()
@@ -15,17 +25,8 @@ void AGasaHUD::ShowHUD()
 #pragma endregion HUD
 
 #pragma region Actor
-UE_DISABLE_OPTIMIZATION
 void AGasaHUD::BeginPlay()
 {
 	Super::BeginPlay();
-
-	HostWidget = CreateWidget<UUI_HostWidget>( GetWorld() 
-		, GetDevOptions()->Template_HUD_HostUI.LoadSynchronous() );
-	HostWidget->AddToViewport();
-	
-	bool bHostVis = HostWidget->IsVisible();
-	Log(FString::Printf(TEXT("HostVIs: %s"), *FString::FromInt(bHostVis)));
 }
-UE_ENABLE_OPTIMIZATION
 #pragma endregion Actor

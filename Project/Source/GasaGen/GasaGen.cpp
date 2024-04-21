@@ -55,7 +55,7 @@ int gen_main()
 		PreprocessorDefines.append( get_cached_string(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
 		PreprocessorDefines.append( get_cached_string(str_ENUM_CLASS_FLAGS));
 		PreprocessorDefines.append( get_cached_string(str_FORCEINLINE_DEBUGGABLE));
-		PreprocessorDefines.append( get_cached_string(str_FORCEINLINE));
+		// PreprocessorDefines.append( get_cached_string(str_FORCEINLINE));
 		PreprocessorDefines.append( get_cached_string(str_GENERATED_BODY));
 		PreprocessorDefines.append( get_cached_string(str_GENERATED_UCLASS_BODY));
 		PreprocessorDefines.append( get_cached_string(str_GENERATED_USTRUCT_BODY));

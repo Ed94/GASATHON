@@ -1,6 +1,9 @@
 ﻿#include "PlayerCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "Game/GasaPlayerController.h"
+#include "UI/GasaHUD.h"
+#include "UI/WidgetController.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -9,6 +12,7 @@ APlayerCharacter::APlayerCharacter()
 	bAutoAbilitySystem = false;
 }
 
+// TODO(Ed): We need to setup Net Slime...
 void APlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -20,8 +24,14 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 		Attributes    = PS->Attributes;
 		AbilitySystem->InitAbilityActorInfo(PS, this);
 	}
+
+	AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
+	AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
+	FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
+	HUD->InitOverlay(& Data);
 }
 
+// TODO(Ed): We need to setup Net Slime...
 void APlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
@@ -32,5 +42,13 @@ void APlayerCharacter::OnRep_PlayerState()
 		AbilitySystem = PS->AbilitySystem;
 		Attributes    = PS->Attributes;
 		AbilitySystem->InitAbilityActorInfo(PS, this);
+	}
+
+	if (IsLocallyControlled())
+	{
+		AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
+		AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
+		FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
+		HUD->InitOverlay(& Data);
 	}
 }

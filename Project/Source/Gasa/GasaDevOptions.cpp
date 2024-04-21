@@ -1,7 +1,8 @@
 #include "GasaDevOptions.h"
 
 #include "Actors/CameraMount.h"
-#include "UI/UI_HostWidget.h"
+#include "UI/HUDHostWidget.h"
+#include "UI/HostWidgetController.h"
 
 using namespace Gasa;
 

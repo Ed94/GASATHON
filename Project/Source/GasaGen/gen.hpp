@@ -451,7 +451,7 @@ namespace ESpecifier
 			{ sizeof( "constinit" ),     "constinit"     },
 			{ sizeof( "explicit" ),      "explicit"      },
 			{ sizeof( "extern" ),        "extern"        },
-			{ sizeof( "forceinline" ),   "forceinline"   },
+			{ sizeof( "FORCEINLINE" ),   "FORCEINLINE"   },
 			{ sizeof( "global" ),        "global"        },
 			{ sizeof( "inline" ),        "inline"        },
 			{ sizeof( "internal" ),      "internal"      },
@@ -671,7 +671,7 @@ struct Code
 	Using_Code( Code );
 
 	template<class Type>
-	forceinline Type cast()
+	FORCEINLINE Type cast()
 	{
 		return *rcast( Type*, this );
 	}
@@ -761,7 +761,7 @@ struct AST
 	neverinline void to_string( String& result );
 
 	template<class Type>
-	forceinline Type cast()
+	FORCEINLINE Type cast()
 	{
 		return *this;
 	}
@@ -6397,7 +6397,7 @@ extern CodeSpecifiers spec_constexpr;
 extern CodeSpecifiers spec_constinit;
 extern CodeSpecifiers spec_extern_linkage;
 extern CodeSpecifiers spec_final;
-extern CodeSpecifiers spec_forceinline;
+extern CodeSpecifiers spec_FORCEINLINE;
 extern CodeSpecifiers spec_global;
 extern CodeSpecifiers spec_inline;
 extern CodeSpecifiers spec_internal_linkage;

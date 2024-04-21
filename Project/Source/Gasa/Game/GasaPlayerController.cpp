@@ -1,4 +1,5 @@
 ﻿#include "GasaPlayerController.h"
+#include "GasaPlayerController_Inlines.h"
 
 #include "AbilitySystemComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -12,7 +13,6 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
-
 using namespace Gasa;
 
 AGasaPlayerController::AGasaPlayerController()
@@ -24,6 +24,8 @@ AGasaPlayerController::AGasaPlayerController()
 	bReplicates = true;
 }
 
+
+
 #pragma region Input
 void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 {
@@ -31,8 +33,6 @@ void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 	if (pawn == nullptr )
 		return;
 
-	
-	
 // Note(Ed): I did the follow optimization for practice, they are completely unnecessary for this context.
 #if 0
 	FVector2D AxisV     = ActionValue.Get<FVector2D>();
@@ -77,6 +77,7 @@ void AGasaPlayerController::SpawnDefaultHUD()
 	Super::SpawnDefaultHUD();
 }
 
+// TODO(Ed): We need to setup Net Slime...
 void AGasaPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);

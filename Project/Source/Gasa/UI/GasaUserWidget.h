@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "Blueprint/UserWidget.h"
+#include "GasaCommon.h"
 
 #include "GasaUserWidget.generated.h"
+
 
 UCLASS(Blueprintable)
 class GASA_API UGasaUserWidget : public UUserWidget
@@ -23,12 +25,15 @@ public:
 	TSubclassOf<UGasaUserWidget> LooseParent;
 
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<UObject> WidgetController;
+	TObjectPtr<UWidgetController> WidgetController;
 
 	UGasaUserWidget(FObjectInitializer const& ObjectInitializer);
 
+	template<typename WidgetControllerType>
+	FORCEINLINE WidgetControllerType* GetWidgetController() { return Cast<WidgetControllerType>(WidgetController); }
+
 	UFUNCTION(BlueprintCallable)
-	void SetWidgetController(UObject* Controller)
+	void SetWidgetController(UWidgetController* Controller)
 	{
 		WidgetController = Controller;
 		OnWidgetControllerSet();

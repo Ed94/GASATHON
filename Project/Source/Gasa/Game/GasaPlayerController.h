@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "GasaCommon.h"
-#include "GasaPlayerState.h"
 #include "GameFramework/PlayerController.h"
 
 #include "GasaPlayerController.generated.h"
@@ -51,10 +50,7 @@ public:
 	
 	AGasaPlayerController();
 
-	AGasaPlayerState* GetPlayerState()
-	{
-		return Cast<AGasaPlayerState>( PlayerState );
-	}
+	inline AGasaPlayerState* GetPlayerState();
 	
 #pragma region PlayerController
 	void SpawnDefaultHUD() override;

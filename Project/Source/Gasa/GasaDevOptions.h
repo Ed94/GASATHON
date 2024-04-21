@@ -19,7 +19,10 @@ public:
 	TSoftClassPtr<ACameraMount> Template_PlayerCamera;
 
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="UI")
-	TSoftClassPtr<UUI_HostWidget> Template_HUD_HostUI;
+	TSoftClassPtr<UHUDHostWidget> Template_HUD_HostUI;
+	
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="UI")
+	TSoftClassPtr<UHostWidgetController> Template_HostWidgetController;
 
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="Tags")
 	FName Tag_GlobalPPV;

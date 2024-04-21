@@ -40,6 +40,7 @@ class AGasaGameInstance;
 class AGasaGameState;
 class AGasaLevelScriptActor;
 class AGasaPlayerController;
+class AGasaPlayerState;
 
 class UGasaAbilitySystemComp;
 class UGasaAttributeSet;
@@ -48,7 +49,11 @@ class UGasaImage;
 class UGasaOverlay;
 class UGasaProgressBar;
 class UGasaSizeBox;
-class UUI_HostWidget;
+class UHostWidgetController;
+class UHUDHostWidget;
+class UWidgetController;
+
+struct FWidgetControllerData;
 #pragma endregion Forwards
 
 #pragma region Logging

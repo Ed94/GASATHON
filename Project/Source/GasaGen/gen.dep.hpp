@@ -145,21 +145,21 @@ GEN_NS_BEGIN
 #define local_persist static    // Local Persisting variables
 
 #ifdef GEN_COMPILER_MSVC
-#define forceinline __forceinline
+#define FORCEINLINE __forceinline
 #define neverinline __declspec( noinline )
 #elif defined( GEN_COMPILER_GCC )
-#define forceinline inline __attribute__( ( __always_inline__ ) )
+#define FORCEINLINE inline __attribute__( ( __always_inline__ ) )
 #define neverinline __attribute__( ( __noinline__ ) )
 #elif defined( GEN_COMPILER_CLANG )
 #if __has_attribute( __always_inline__ )
-#define forceinline inline __attribute__( ( __always_inline__ ) )
+#define FORCEINLINE inline __attribute__( ( __always_inline__ ) )
 #define neverinline __attribute__( ( __noinline__ ) )
 #else
-#define forceinline
+#define FORCEINLINE
 #define neverinline
 #endif
 #else
-#define forceinline
+#define FORCEINLINE
 #define neverinline
 #endif
 

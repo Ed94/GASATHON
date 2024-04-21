@@ -81,7 +81,7 @@ global CodeSpecifiers spec_constexpr;
 global CodeSpecifiers spec_constinit;
 global CodeSpecifiers spec_extern_linkage;
 global CodeSpecifiers spec_final;
-global CodeSpecifiers spec_forceinline;
+global CodeSpecifiers spec_FORCEINLINE;
 global CodeSpecifiers spec_global;
 global CodeSpecifiers spec_inline;
 global CodeSpecifiers spec_internal_linkage;
@@ -2988,12 +2988,12 @@ internal void define_constants()
 	spec_##Type_ = def_specifiers( num_args( __VA_ARGS__ ), __VA_ARGS__ ); \
 	spec_##Type_.set_global();
 
-#pragma push_macro( "forceinline" )
+#pragma push_macro( "FORCEINLINE" )
 #pragma push_macro( "global" )
 #pragma push_macro( "internal" )
 #pragma push_macro( "local_persist" )
 #pragma push_macro( "neverinline" )
-#undef forceinline
+#undef FORCEINLINE
 #undef global
 #undef internal
 #undef local_persist
@@ -3004,7 +3004,7 @@ internal void define_constants()
 	def_constant_spec( constinit, ESpecifier::Constinit );
 	def_constant_spec( extern_linkage, ESpecifier::External_Linkage );
 	def_constant_spec( final, ESpecifier::Final );
-	def_constant_spec( forceinline, ESpecifier::ForceInline );
+	def_constant_spec( FORCEINLINE, ESpecifier::ForceInline );
 	def_constant_spec( global, ESpecifier::Global );
 	def_constant_spec( inline, ESpecifier::Inline );
 	def_constant_spec( internal_linkage, ESpecifier::Internal_Linkage );
@@ -3025,7 +3025,7 @@ internal void define_constants()
 	    spec_local_persist = def_specifiers( 1, ESpecifier::Local_Persist );
 	spec_local_persist.set_global();
 
-#pragma pop_macro( "forceinline" )
+#pragma pop_macro( "FORCEINLINE" )
 #pragma pop_macro( "global" )
 #pragma pop_macro( "internal" )
 #pragma pop_macro( "local_persist" )
@@ -5840,7 +5840,7 @@ namespace parser
 				{ sizeof( "explicit" ),              "explicit"              },
 				{ sizeof( "extern" ),                "extern"                },
 				{ sizeof( "final" ),                 "final"                 },
-				{ sizeof( "forceinline" ),           "forceinline"           },
+				{ sizeof( "FORCEINLINE" ),           "FORCEINLINE"           },
 				{ sizeof( "global" ),                "global"                },
 				{ sizeof( "inline" ),                "inline"                },
 				{ sizeof( "internal" ),              "internal"              },
@@ -6059,7 +6059,7 @@ namespace parser
 		}
 	};
 
-	global Arena_128KB defines_map_arena;
+	global Arena_256KB defines_map_arena;
 	global HashTable<StrC> defines;
 	global Array<Token> Tokens;
 
@@ -6110,7 +6110,7 @@ namespace parser
 		Lex_ReturnNull,
 	};
 
-	forceinline s32 lex_preprocessor_directive( StrC& content, s32& left, char const*& scanner, s32& line, s32& column, HashTable<StrC>& defines, Token& token )
+	FORCEINLINE s32 lex_preprocessor_directive( StrC& content, s32& left, char const*& scanner, s32& line, s32& column, HashTable<StrC>& defines, Token& token )
 	{
 		char const* hash = scanner;
 		Tokens.append( { hash, 1, TokType::Preprocess_Hash, line, column, TF_Preprocess } );
@@ -6344,7 +6344,7 @@ namespace parser
 		return Lex_Continue;    // Skip found token, its all handled here.
 	}
 
-	forceinline void lex_found_token( StrC& content, s32& left, char const*& scanner, s32& line, s32& column, HashTable<StrC>& defines, Token& token )
+	FORCEINLINE void lex_found_token( StrC& content, s32& left, char const*& scanner, s32& line, s32& column, HashTable<StrC>& defines, Token& token )
 	{
 		if ( token.Type != TokType::Invalid )
 		{
@@ -7255,7 +7255,7 @@ namespace parser
 	{
 		Tokens            = Array<Token>::init_reserve( LexArena, ( LexAllocator_Size - sizeof( Array<Token>::Header ) ) / sizeof( Token ) );
 
-		defines_map_arena = Arena_128KB::init();
+		defines_map_arena = Arena_256KB::init();
 		defines           = HashTable<StrC>::init( defines_map_arena );
 	}
 
