@@ -15,5 +15,5 @@ Implementation design perfs:
 * Keep static module functions within C++ namesapces and have the in BP function libraries to expose to BPs.
 * Perfer stage-metaprogramming to C++ compiler provided templating (when possible).
 
-The latest version is hosted on : (https://git.cozyair.dev/ed/GASATHON)[https://git.cozyair.dev/ed/GASATHON]
+The latest version is hosted on : [https://git.cozyair.dev/ed/GASATHON](https://git.cozyair.dev/ed/GASATHON)
 For now the github is out of date due to lfs issues (I'm eventually just going to push a repo or corrections without lfs for this site)
