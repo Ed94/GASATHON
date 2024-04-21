@@ -4,7 +4,8 @@
 #include "AbilitySystemComponent.h"
 #include "GasaAttributeSet.generated.h"
 
-UCLASS() class GASA_API UGasaAttributeSet : public UAttributeSet
+UCLASS()
+class GASA_API UGasaAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 public:
@@ -21,6 +22,7 @@ public:
 	FGameplayAttributeData MaxMana;
 
 	UGasaAttributeSet();
+
 	UFUNCTION()
 	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
 	UFUNCTION()
@@ -31,55 +33,35 @@ public:
 	void Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana );
 
 #pragma region Getters
-
 	static FGameplayAttribute GetHealthAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked< FProperty >( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetMaxHealthAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked< FProperty >( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxHealth ) );
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxHealth ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetManaAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked< FProperty >( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Mana ) );
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Mana ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetMaxManaAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked< FProperty >( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
 		return Prop;
 	}
-
-	FORCEINLINE float GetHealth() const
-	{
-		return Health.GetCurrentValue();
-	}
-
-	FORCEINLINE float GetMaxHealth() const
-	{
-		return MaxHealth.GetCurrentValue();
-	}
-
-	FORCEINLINE float GetMana() const
-	{
-		return Mana.GetCurrentValue();
-	}
-
-	FORCEINLINE float GetMaxMana() const
-	{
-		return MaxMana.GetCurrentValue();
-	}
-
-#pragma endregion Getters
+	FORCEINLINE float GetHealth() const { return Health.GetCurrentValue(); }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth.GetCurrentValue(); }
+	FORCEINLINE float GetMana() const { return Mana.GetCurrentValue(); }
+	FORCEINLINE float GetMaxMana() const { return MaxMana.GetCurrentValue(); }
+	#pragma endregion Getters
 
 #pragma region Setters
-	FORCEINLINE void SetHealth( float NewVal )
+	    FORCEINLINE void
+	    SetHealth( float NewVal )
 	{
 		UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
 		if ( ensure( AbilityComp ) )
@@ -87,7 +69,6 @@ public:
 			AbilityComp->SetNumericAttributeBase( GetHealthAttribute(), NewVal );
 		};
 	}
-
 	FORCEINLINE void SetMaxHealth( float NewVal )
 	{
 		UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
@@ -96,7 +77,6 @@ public:
 			AbilityComp->SetNumericAttributeBase( GetMaxHealthAttribute(), NewVal );
 		};
 	}
-
 	FORCEINLINE void SetMana( float NewVal )
 	{
 		UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
@@ -105,7 +85,6 @@ public:
 			AbilityComp->SetNumericAttributeBase( GetManaAttribute(), NewVal );
 		};
 	}
-
 	FORCEINLINE void SetMaxMana( float NewVal )
 	{
 		UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
@@ -114,44 +93,39 @@ public:
 			AbilityComp->SetNumericAttributeBase( GetMaxManaAttribute(), NewVal );
 		};
 	}
-
 	FORCEINLINE void InitHealth( float NewVal )
 	{
 		Health.SetBaseValue( NewVal );
 		Health.SetCurrentValue( NewVal );
 	}
-
 	FORCEINLINE void InitMaxHealth( float NewVal )
 	{
 		MaxHealth.SetBaseValue( NewVal );
 		MaxHealth.SetCurrentValue( NewVal );
 	}
-
 	FORCEINLINE void InitMana( float NewVal )
 	{
 		Mana.SetBaseValue( NewVal );
 		Mana.SetCurrentValue( NewVal );
 	}
-
 	FORCEINLINE void InitMaxMana( float NewVal )
 	{
 		MaxMana.SetBaseValue( NewVal );
 		MaxMana.SetCurrentValue( NewVal );
 	}
-
-#pragma endregion Setters
+	#pragma endregion Setters
 
 #pragma region UObject
 
-	void GetLifetimeReplicatedProps( TArray< FLifetimeProperty >& OutLifetimeProps ) const override;
+	    void
+	    GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 #pragma endregion UObject
 };
-
 namespace Gasa
 {
 	inline UGasaAttributeSet const* GetAttributeSet( UAbilitySystemComponent* ASC )
 	{
-		return Cast< UGasaAttributeSet >( ASC->GetAttributeSet( UGasaAttributeSet::StaticClass() ) );
+		return Cast<UGasaAttributeSet>( ASC->GetAttributeSet( UGasaAttributeSet::StaticClass() ) );
 	}
 
 }

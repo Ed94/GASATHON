@@ -6,7 +6,7 @@ AlignAfterOpenBracket: BlockIndent
 AlignArrayOfStructures: Left
 AlignConsecutiveAssignments:
   Enabled: true
-  AcrossEmptyLines: true
+  AcrossEmptyLines: false
   AcrossComments: false
   AlignCompound: true
   PadOperators: true
@@ -24,17 +24,16 @@ AlignConsecutiveMacros:
   AcrossComments: false
 AlignEscapedNewlines: Left
 AlignOperands: DontAlign
-
 AlignTrailingComments: true
 
-AllowAllArgumentsOnNextLine: false
+AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortBlocksOnASingleLine: Never
+AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortLambdasOnASingleLine: None
 AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 
@@ -60,16 +59,17 @@ BraceWrapping:
   AfterExternBlock: false
   BeforeCatch: false
   BeforeElse: false
+  BeforeWhile: false
   IndentBraces: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
   BeforeLambdaBody: false
-  BeforeWhile: false
+
 
 BreakAfterAttributes: Always
 BreakArrays: true
-# BreakBeforeInlineASMColon: OnlyMultiline
+BreakBeforeInlineASMColon: OnlyMultiline
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Allman
 BreakBeforeInheritanceComma: true
@@ -79,7 +79,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
 BreakStringLiterals: true
 
-ColumnLimit: 160
+ColumnLimit: 240
 
 CompactNamespaces: true
 
@@ -92,6 +92,7 @@ Cpp11BracedListStyle: false
 
 DeriveLineEnding: true
 
+EmptyLineBeforeAccessModifier: LogicalBlock
 ExperimentalAutoDetectBinPacking: false
 
 FixNamespaceComments: true
@@ -102,7 +103,7 @@ IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock
 IndentGotoLabels: true
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentRequires: true
 IndentWidth: 4
 IndentWrappedFunctionNames: true
@@ -126,9 +127,9 @@ ReferenceAlignment: Left
 
 ReflowComments: true
 
-# RequiresExpressionIndentation: OuterScope
+RequiresExpressionIndentation: OuterScope
 
-SeparateDefinitionBlocks: Always
+SeparateDefinitionBlocks: Leave
 
 ShortNamespaceLines: 40
 
@@ -163,7 +164,9 @@ SpacesInLineCommentPrefix:
 SpacesInParentheses: true
 SpacesInSquareBrackets: false
 
-Standard: c++17
+Standard: c++20
+
+StatementMacros: ['UPROPERTY', 'UFUNCTION', 'UCLASS', 'USTRUCT', 'UENUM', 'UINTERFACE', 'GENERATED_BODY']
 
 TabWidth: 4
 

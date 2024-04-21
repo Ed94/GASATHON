@@ -1,18 +1,11 @@
-﻿#include "GasaDevOptions.h"
+#include "GasaDevOptions.h"
 
-#include "GasaDevOptionsCache.h"
+#include "Actors/CameraMount.h"
+#include "UI/UI_HostWidget.h"
+
+using namespace Gasa;
 
 namespace Gasa
 {
 	global FName Tag_GlobalPPV;
 }
-
-void FGasaDevOptionsCache::CachedDevOptions()
-{
-	using namespace Gasa;
-
-	UGasaDevOptions const* DevOs = GetDevOptions();
-	Tag_GlobalPPV = DevOs->Tag_GlobalPPV;
-}
-
- 

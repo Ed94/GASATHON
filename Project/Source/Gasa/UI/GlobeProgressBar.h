@@ -11,25 +11,29 @@ class GASA_API UGlobeProgressBar : public UGasaUserWidget
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget), Category="Globe")
-	UGasaSizeBox* SizeBox_Root;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget), Category="Globe")
-	UGasaOverlay* Overlay_Root;
+	// Just learning: https://benui.ca/unreal/build-widgets-in-editor/?utm_medium=social&utm_source=Discord
+	UFUNCTION(CallInEditor, Category="Generate Designer Widget Template")
+	void GenerateDesignerWidgetTemplate();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget), Category="Globe")
-	UGasaImage* Glass;
+#pragma region Bindings
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
+	UGasaSizeBox* Root_SB;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
+	UGasaOverlay* Overlay;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget), Category="Globe")
-	UGasaImage* BG;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
+	UGasaImage* Bezel;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget), Category="Globe")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
 	UGasaProgressBar* Bar;
 	
-	// UGlobeProgressBar(FObjectInitializer const& ObjectInitializer);
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
+	UGasaImage* Glass;
+	
 	UFUNCTION(BlueprintCallable, Category="Globe")
-	void SetBackgroundStyle(FSlateBrush brush);
+	void SetBezelStyle(FSlateBrush brush);
 
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetBarPadding( FMargin margin );
@@ -45,16 +49,22 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetSize(float width, float height);
-
-#if 0
-	UFUNCTION(BlueprintCallable, Category="Globe")
-	void UpdateSize();
+#pragma endregion Bindings
 	
-	UFUNCTION(BlueprintCallable, Category="Globe")
-	void UpdateBackground();
-#endif
+	// UGlobeProgressBar(FObjectInitializer const& ObjectInitializer);
+
+#pragma region Widget
+	void SynchronizeProperties() override;
+#pragma endregion Widget
+
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #pragma region UserWidget
 	void NativePreConstruct() override;
 #pragma endregion UserWidget
+
+#pragma region Object
+	void Serialize(FArchive& Ar) override;
+	void Serialize(FStructuredArchive::FRecord Record) override;
+#pragma endregion Object
 };

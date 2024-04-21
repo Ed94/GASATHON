@@ -25,7 +25,7 @@ u8 adt_make_branch( ADT_Node* node, AllocatorInfo backing, char const* name, b32
 	node->type   = type;
 	node->name   = name;
 	node->parent = parent;
-	node->nodes  = Array< ADT_Node >::init( backing );
+	node->nodes  = Array<ADT_Node>::init( backing );
 
 	if ( ! node->nodes )
 		return EADT_ERROR_OUT_OF_MEMORY;
@@ -70,7 +70,7 @@ ADT_Node* adt_find( ADT_Node* node, char const* name, b32 deep_search )
 
 	for ( sw i = 0; i < node->nodes.num(); i++ )
 	{
-		if ( ! str_compare( node->nodes[ i ].name, name ) )
+		if ( ! str_compare( node->nodes[i].name, name ) )
 		{
 			return ( node->nodes + i );
 		}
@@ -106,17 +106,17 @@ internal ADT_Node* _adt_get_value( ADT_Node* node, char const* value )
 		case EADT_TYPE_INTEGER :
 		case EADT_TYPE_REAL :
 		{
-			char     back[ 4096 ] = { 0 };
+			char     back[4096] = { 0 };
 			FileInfo tmp;
 
 			/* allocate a file descriptor for a memory-mapped number to string conversion, input source buffer is not cloned, however. */
-			file_stream_open( &tmp, heap(), ( u8* )back, size_of( back ), EFileStream_WRITABLE );
+			file_stream_open( &tmp, heap(), (u8*)back, size_of( back ), EFileStream_WRITABLE );
 			adt_print_number( &tmp, node );
 
 			sw  fsize = 0;
 			u8* buf   = file_stream_buf( &tmp, &fsize );
 
-			if ( ! str_compare( ( char const* )buf, value ) )
+			if ( ! str_compare( (char const*)buf, value ) )
 			{
 				file_close( &tmp );
 				return node;
@@ -136,9 +136,9 @@ internal ADT_Node* _adt_get_field( ADT_Node* node, char* name, char* value )
 {
 	for ( sw i = 0; i < node->nodes.num(); i++ )
 	{
-		if ( ! str_compare( node->nodes[ i ].name, name ) )
+		if ( ! str_compare( node->nodes[i].name, name ) )
 		{
-			ADT_Node* child = &node->nodes[ i ];
+			ADT_Node* child = &node->nodes[i];
 			if ( _adt_get_value( child, value ) )
 			{
 				return node; /* this object does contain a field of a specified value! */
@@ -172,19 +172,19 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 	str_fmt_out( "uri: %s\n", uri );
 #endif
 
-	char *    p = ( char* )uri, *b = p, *e = p;
+	char *    p = (char*)uri, *b = p, *e = p;
 	ADT_Node* found_node = NULL;
 
 	b                    = p;
-	p = e     = ( char* )str_skip( p, '/' );
-	char* buf = str_fmt_buf( "%.*s", ( int )( e - b ), b );
+	p = e     = (char*)str_skip( p, '/' );
+	char* buf = str_fmt_buf( "%.*s", (int)( e - b ), b );
 
 	/* handle field value lookup */
 	if ( *b == '[' )
 	{
 		char *l_p = buf + 1, *l_b = l_p, *l_e = l_p, *l_b2 = l_p, *l_e2 = l_p;
-		l_e  = ( char* )str_skip( l_p, '=' );
-		l_e2 = ( char* )str_skip( l_p, ']' );
+		l_e  = (char*)str_skip( l_p, '=' );
+		l_e2 = (char*)str_skip( l_p, ']' );
 
 		if ( ( ! *l_e && node->type != EADT_TYPE_ARRAY ) || ! *l_e2 )
 		{
@@ -211,7 +211,7 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 			{
 				for ( sw i = 0; i < node->nodes.num(); i++ )
 				{
-					ADT_Node* child = &node->nodes[ i ];
+					ADT_Node* child = &node->nodes[i];
 					if ( child->type != EADT_TYPE_OBJECT )
 					{
 						continue;
@@ -229,7 +229,7 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 		{
 			for ( sw i = 0; i < node->nodes.num(); i++ )
 			{
-				ADT_Node* child = &node->nodes[ i ];
+				ADT_Node* child = &node->nodes[i];
 				if ( _adt_get_value( child, l_b2 ) )
 				{
 					found_node = child;
@@ -258,10 +258,10 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 	/* handle array index lookup */
 	else
 	{
-		sw idx = ( sw )str_to_i64( buf, NULL, 10 );
+		sw idx = (sw)str_to_i64( buf, NULL, 10 );
 		if ( idx >= 0 && idx < node->nodes.num() )
 		{
-			found_node = &node->nodes[ idx ];
+			found_node = &node->nodes[idx];
 
 			/* go deeper if uri continues */
 			if ( *e )
@@ -366,15 +366,15 @@ void adt_swap_nodes( ADT_Node* node, ADT_Node* other_node )
 {
 	GEN_ASSERT_NOT_NULL( node );
 	GEN_ASSERT_NOT_NULL( other_node );
-	ADT_Node* parent                     = node->parent;
-	ADT_Node* other_parent               = other_node->parent;
-	sw        index                      = ( pointer_diff( parent->nodes, node ) / size_of( ADT_Node ) );
-	sw        index2                     = ( pointer_diff( other_parent->nodes, other_node ) / size_of( ADT_Node ) );
-	ADT_Node  temp                       = parent->nodes[ index ];
-	temp.parent                          = other_parent;
-	other_parent->nodes[ index2 ].parent = parent;
-	parent->nodes[ index ]               = other_parent->nodes[ index2 ];
-	other_parent->nodes[ index2 ]        = temp;
+	ADT_Node* parent                   = node->parent;
+	ADT_Node* other_parent             = other_node->parent;
+	sw        index                    = ( pointer_diff( parent->nodes, node ) / size_of( ADT_Node ) );
+	sw        index2                   = ( pointer_diff( other_parent->nodes, other_node ) / size_of( ADT_Node ) );
+	ADT_Node  temp                     = parent->nodes[index];
+	temp.parent                        = other_parent;
+	other_parent->nodes[index2].parent = parent;
+	parent->nodes[index]               = other_parent->nodes[index2];
+	other_parent->nodes[index2]        = temp;
 }
 
 void adt_remove_node( ADT_Node* node )
@@ -483,28 +483,28 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 		return ++base_str;
 	}
 
-	node_type      = EADT_TYPE_INTEGER;
-	neg_zero       = false;
+	node_type    = EADT_TYPE_INTEGER;
+	neg_zero     = false;
 
-	sw   ib        = 0;
-	char buf[ 48 ] = { 0 };
+	sw   ib      = 0;
+	char buf[48] = { 0 };
 
 	if ( *e == '+' )
 		++e;
 	else if ( *e == '-' )
 	{
-		buf[ ib++ ] = *e++;
+		buf[ib++] = *e++;
 	}
 
 	if ( *e == '.' )
 	{
-		node_type   = EADT_TYPE_REAL;
-		node_props  = EADT_PROPS_IS_PARSED_REAL;
-		lead_digit  = false;
-		buf[ ib++ ] = '0';
+		node_type  = EADT_TYPE_REAL;
+		node_props = EADT_PROPS_IS_PARSED_REAL;
+		lead_digit = false;
+		buf[ib++]  = '0';
 		do
 		{
-			buf[ ib++ ] = *e;
+			buf[ib++] = *e;
 		} while ( char_is_digit( *++e ) );
 	}
 	else
@@ -522,7 +522,7 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 
 		while ( char_is_hex_digit( *e ) || char_to_lower( *e ) == 'x' )
 		{
-			buf[ ib++ ] = *e++;
+			buf[ib++] = *e++;
 		}
 
 		if ( *e == '.' )
@@ -533,13 +533,13 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 
 			do
 			{
-				buf[ ib++ ] = *e;
+				buf[ib++] = *e;
 				++step;
 			} while ( char_is_digit( *++e ) );
 
 			if ( step < 2 )
 			{
-				buf[ ib++ ] = '0';
+				buf[ib++] = '0';
 			}
 		}
 	}
@@ -550,9 +550,9 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 		return ++base_str;
 	}
 
-	f32  eb          = 10;
-	char expbuf[ 6 ] = { 0 };
-	sw   expi        = 0;
+	f32  eb        = 10;
+	char expbuf[6] = { 0 };
+	sw   expi      = 0;
 
 	if ( *e && ! ! str_find( "eE", *e ) )
 	{
@@ -569,11 +569,11 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 			}
 			while ( char_is_digit( *e ) )
 			{
-				expbuf[ expi++ ] = *e++;
+				expbuf[expi++] = *e++;
 			}
 		}
 
-		orig_exp = exp = ( u8 )str_to_i64( expbuf, NULL, 10 );
+		orig_exp = exp = (u8)str_to_i64( expbuf, NULL, 10 );
 	}
 
 	if ( node_type == EADT_TYPE_INTEGER )
@@ -581,14 +581,14 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 		node->integer = str_to_i64( buf, 0, 0 );
 #ifndef GEN_PARSER_DISABLE_ANALYSIS
 		/* special case: negative zero */
-		if ( node->integer == 0 && buf[ 0 ] == '-' )
+		if ( node->integer == 0 && buf[0] == '-' )
 		{
 			neg_zero = true;
 		}
 #endif
 		while ( orig_exp-- > 0 )
 		{
-			node->integer *= ( s64 )eb;
+			node->integer *= (s64)eb;
 		}
 	}
 	else
@@ -604,8 +604,8 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 		while ( *base_string_off++ == '0' )
 			base2_offset++;
 
-		base  = ( s32 )str_to_i64( q, 0, 0 );
-		base2 = ( s32 )str_to_i64( base_string2, 0, 0 );
+		base  = (s32)str_to_i64( q, 0, 0 );
+		base2 = (s32)str_to_i64( base_string2, 0, 0 );
 		if ( exp )
 		{
 			exp        = exp * ( ! ( eb == 10.0f ) ? -1 : 1 );
@@ -613,7 +613,7 @@ char* adt_parse_number( ADT_Node* node, char* base_str )
 		}
 
 		/* special case: negative zero */
-		if ( base == 0 && buf[ 0 ] == '-' )
+		if ( base == 0 && buf[0] == '-' )
 		{
 			neg_zero = true;
 		}
@@ -667,11 +667,11 @@ ADT_Error adt_print_number( FileInfo* file, ADT_Node* node )
 		{
 			if ( node->props == EADT_PROPS_IS_HEX )
 			{
-				_adt_fprintf( file, "0x%llx", ( long long )node->integer );
+				_adt_fprintf( file, "0x%llx", (long long)node->integer );
 			}
 			else
 			{
-				_adt_fprintf( file, "%lld", ( long long )node->integer );
+				_adt_fprintf( file, "%lld", (long long)node->integer );
 			}
 		}
 		break;
@@ -709,14 +709,14 @@ ADT_Error adt_print_number( FileInfo* file, ADT_Node* node )
 			}
 			else if ( node->props == EADT_PROPS_IS_EXP )
 			{
-				_adt_fprintf( file, "%lld.%0*d%llde%lld", ( long long )node->base, node->base2_offset, 0, ( long long )node->base2, ( long long )node->exp );
+				_adt_fprintf( file, "%lld.%0*d%llde%lld", (long long)node->base, node->base2_offset, 0, (long long)node->base2, (long long)node->exp );
 			}
 			else if ( node->props == EADT_PROPS_IS_PARSED_REAL )
 			{
 				if ( ! node->lead_digit )
-					_adt_fprintf( file, ".%0*d%lld", node->base2_offset, 0, ( long long )node->base2 );
+					_adt_fprintf( file, ".%0*d%lld", node->base2_offset, 0, (long long)node->base2 );
 				else
-					_adt_fprintf( file, "%lld.%0*d%lld", ( long long int )node->base2_offset, 0, ( int )node->base, ( long long )node->base2 );
+					_adt_fprintf( file, "%lld.%0*d%lld", (long long int)node->base2_offset, 0, (int)node->base, (long long)node->base2 );
 #endif
 			}
 			else
@@ -772,7 +772,7 @@ ADT_Error adt_str_to_number( ADT_Node* node )
 		return EADT_ERROR_INVALID_TYPE;
 	}
 
-	adt_parse_number( node, ( char* )node->string );
+	adt_parse_number( node, (char*)node->string );
 
 	return EADT_ERROR_NONE;
 }
@@ -788,7 +788,7 @@ ADT_Error adt_str_to_number_strict( ADT_Node* node )
 		return EADT_ERROR_INVALID_TYPE;
 	}
 
-	adt_parse_number_strict( node, ( char* )node->string );
+	adt_parse_number_strict( node, (char*)node->string );
 
 	return EADT_ERROR_NONE;
 }
@@ -922,7 +922,7 @@ u8 csv_parse_delimiter( CSV_Object* root, char* text, AllocatorInfo allocator, b
 			char* num_p       = beginChar;
 
 			// We only consider hexadecimal values if they start with 0x
-			if ( str_len( num_p ) > 2 && num_p[ 0 ] == '0' && ( num_p[ 1 ] == 'x' || num_p[ 1 ] == 'X' ) )
+			if ( str_len( num_p ) > 2 && num_p[0] == '0' && ( num_p[1] == 'x' || num_p[1] == 'X' ) )
 			{
 				num_p += 2;    // skip '0x' prefix
 				do
@@ -950,7 +950,7 @@ u8 csv_parse_delimiter( CSV_Object* root, char* text, AllocatorInfo allocator, b
 			adt_append_arr( root, NULL );
 		}
 
-		root->nodes[ columnIndex ].nodes.append( rowItem );
+		root->nodes[columnIndex].nodes.append( rowItem );
 
 		if ( delimiter == delim )
 		{
@@ -1059,17 +1059,17 @@ void csv_write_delimiter( FileInfo* file, CSV_Object* obj, char delimiter )
 	if ( cols == 0 )
 		return;
 
-	sw rows = obj->nodes[ 0 ].nodes.num();
+	sw rows = obj->nodes[0].nodes.num();
 	if ( rows == 0 )
 		return;
 
-	b32 has_headers = obj->nodes[ 0 ].name != NULL;
+	b32 has_headers = obj->nodes[0].name != NULL;
 
 	if ( has_headers )
 	{
 		for ( sw i = 0; i < cols; i++ )
 		{
-			_csv_write_header( file, &obj->nodes[ i ] );
+			_csv_write_header( file, &obj->nodes[i] );
 			if ( i + 1 != cols )
 			{
 				str_fmt_file( file, "%c", delimiter );
@@ -1082,7 +1082,7 @@ void csv_write_delimiter( FileInfo* file, CSV_Object* obj, char delimiter )
 	{
 		for ( sw i = 0; i < cols; i++ )
 		{
-			_csv_write_record( file, &obj->nodes[ i ].nodes[ r ] );
+			_csv_write_record( file, &obj->nodes[i].nodes[r] );
 			if ( i + 1 != cols )
 			{
 				str_fmt_file( file, "%c", delimiter );
@@ -1099,7 +1099,7 @@ String csv_write_string_delimiter( AllocatorInfo a, CSV_Object* obj, char delimi
 	csv_write_delimiter( &tmp, obj, delimiter );
 	sw     fsize;
 	u8*    buf    = file_stream_buf( &tmp, &fsize );
-	String output = String::make_length( a, ( char* )buf, fsize );
+	String output = String::make_length( a, (char*)buf, fsize );
 	file_close( &tmp );
 	return output;
 }

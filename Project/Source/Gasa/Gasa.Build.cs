@@ -33,9 +33,17 @@ public class Gasa : ModuleRules
             "NetCore",
             "Niagara",
             "SlateCore",
-            "UMG",
+            "UMG", 
         });
-    #endregion Engine
+        
+        if (Target.bBuildEditor)
+        {
+	        PrivateDependencyModuleNames.AddRange( new string[] {
+		        "UnrealEd",
+				"UMGEditor",
+			});
+        }
+	#endregion Engine
     
     #region Plugins
 		if (Target.Configuration != UnrealTargetConfiguration.Shipping && Target.Type != TargetRules.TargetType.Server)
@@ -66,5 +74,6 @@ public class Gasa : ModuleRules
     #endregion Plugins
     
 		PublicIncludePaths.Add("Gasa");
+		PublicIncludePathModuleNames.Add("Gasa");
     }
 }

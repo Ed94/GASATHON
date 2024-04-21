@@ -86,8 +86,8 @@ struct ADT_Node
 	/* adt data */
 	union
 	{
-		char const*       string;
-		Array< ADT_Node > nodes;    ///< zpl_array
+		char const*     string;
+		Array<ADT_Node> nodes;    ///< zpl_array
 
 		struct
 		{

@@ -4,7 +4,7 @@
 #include "WidgetController.generated.h"
 
 UCLASS(BlueprintType)
-class GASA_API UWdgetController : public UObject
+class GASA_API UWidgetController : public UObject
 {
 	GENERATED_BODY()
 public:

@@ -33,9 +33,10 @@ void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMan
 	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, MaxMana, PrevMaxMana )
 }
 
-void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray< FLifetimeProperty >& OutLifetimeProps ) const
+void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
+
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Health );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, MaxHealth );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Mana );

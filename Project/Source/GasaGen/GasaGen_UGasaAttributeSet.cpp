@@ -1,4 +1,11 @@
 ﻿// Used in the GasaGen.cpp translation unit
+#if GASA_INTELLISENSE_DIRECTIVES
+#pragma once
+#define GEN_EXPOSE_BACKEND
+#include "gen.hpp"
+#include "gen.builder.hpp"
+#include "GasaGenCommon.cpp"
+#endif
 
 void def_attribute_properties            ( CodeBody body, Array<StringCached> properties );
 void def_attribute_field_on_reps         ( CodeBody body, Array<StringCached> properties );
@@ -30,20 +37,20 @@ void gen_UGasaAttributeSet()
 			CodeInclude Include_AbilitySystemComponent     = def_include(txt("AbilitySystemComponent.h"));
 			CodeInclude Include_GasaAttributeSet_Generated = def_include(txt("GasaAttributeSet.generated.h"));
 
-			CodeAttributes api_attribute= def_attributes( gasa_api->Name);
+			CodeAttributes api_attribute= def_attributes( UModule_GASA_API->Name);
 
 			CodeClass GasaAttributeSet = {};
 			{
 				CodeBody body = def_body( CodeT::Class_Body );
 				{
-					body.append( umeta_generated_body);
-					body.append( fmt_newline);
+					body.append( UHT_GENERATED_BODY);
 					body.append( access_public );
 
 					def_attribute_properties( body, attribute_fields);
 
 					body.append(fmt_newline);
 					body.append( def_constructor() );
+					body.append(fmt_newline);
 
 					def_attribute_field_on_reps( body, attribute_fields);
 
@@ -90,11 +97,12 @@ void gen_UGasaAttributeSet()
 			header.print( Include_AbilitySystemComponent);
 			header.print( Include_GasaAttributeSet_Generated);
 			header.print( fmt_newline);
-			header.print(umeta_uclass);
+			header.print( UHT_UCLASS );
 			header.print(GasaAttributeSet);
 			header.print(ns_gasa);
 		}
 		header.write();
+		format_file(path_gasa_ability_system "GasaAttributeSet.h");
 	}
 
 	Builder source = Builder::open( path_gasa_ability_system "GasaAttributeSet.cpp" );
@@ -119,15 +127,15 @@ void gen_UGasaAttributeSet()
 					InitMaxMana( 50.f );
 				}
 			));
-
 			body.append(constructor_for_UGasaAttributeSet );
-			body.append(fmt_newline);
 
 			impl_attribute_fields( body, class_name, attribute_fields);
 
 			CodeFn GetLifetimeOfReplicatedProps;
 			{
 				CodeBody field_lifetimes = def_body( CodeT::Function_Body);
+				field_lifetimes.append(fmt_newline);
+				field_lifetimes.append(fmt_newline);
 				for (StringCached field : attribute_fields)
 				{
 					field_lifetimes.append( code_fmt( "field", (StrC)field, stringize(
@@ -148,6 +156,7 @@ void gen_UGasaAttributeSet()
 			source.print(body);
 		}
 		source.write();
+		format_file(path_gasa_ability_system "GasaAttributeSet.cpp");
 	}
 }
 
@@ -200,12 +209,12 @@ void def_attribute_field_property_getters( CodeBody body, StrC class_name, Array
 	}
 }
 
+#pragma push_macro("FORCEINLINE")
+#undef FORCEINLINE
 void def_attribute_field_value_getters( CodeBody body, Array<StringCached> properties )
 {
 	for ( String property : properties )
 	{
-#pragma push_macro(FORCEINLINE)
-#undef FORCEINLINE
 		body.append( code_fmt( "property", (StrC)property,
 		stringize(
 			FORCEINLINE float Get<property>() const
@@ -213,7 +222,6 @@ void def_attribute_field_value_getters( CodeBody body, Array<StringCached> prope
 				return <property>.GetCurrentValue();
 			}
 		)));
-#pragma pop_macro(FORCEINLINE)
 	}
 }
 
@@ -267,3 +275,4 @@ void impl_attribute_fields( CodeBody body, StrC class_name, Array<StringCached> 
 		body.append( field_impl );
 	}
 }
+#pragma pop_macro("FORCEINLINE")

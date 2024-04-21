@@ -4,6 +4,7 @@
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GasaDevOptions.h"
 #include "GasaPlayerState.h"
 #include "Actors/CameraMount.h"
 #include "Camera/CameraComponent.h"
@@ -11,6 +12,8 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+
+using namespace Gasa;
 
 AGasaPlayerController::AGasaPlayerController()
 {
@@ -21,11 +24,14 @@ AGasaPlayerController::AGasaPlayerController()
 	bReplicates = true;
 }
 
+#pragma region Input
 void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 {
 	APawn* pawn = GetPawn<APawn>();
 	if (pawn == nullptr )
 		return;
+
+	
 	
 // Note(Ed): I did the follow optimization for practice, they are completely unnecessary for this context.
 #if 0
@@ -63,6 +69,13 @@ void AGasaPlayerController::Move(FInputActionValue const& ActionValue)
 	pawn->AddMovementInput( MoveDir );
 #endif
 }
+#pragma endregion Input
+
+#pragma region PlayerController
+void AGasaPlayerController::SpawnDefaultHUD()
+{
+	Super::SpawnDefaultHUD();
+}
 
 void AGasaPlayerController::OnPossess(APawn* InPawn)
 {
@@ -86,7 +99,6 @@ void AGasaPlayerController::OnUnPossess()
 	Super::OnUnPossess();
 }
 
-#pragma region PlayerController
 void AGasaPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -162,7 +174,7 @@ void AGasaPlayerController::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	Cam = GetWorld()->SpawnActor<ACameraMount>(CamClass, FActorSpawnParameters() );
+	Cam = GetWorld()->SpawnActor<ACameraMount>(GetDevOptions()->Template_PlayerCamera.Get(), FActorSpawnParameters() );
 	SetViewTarget(Cam);
 }
 

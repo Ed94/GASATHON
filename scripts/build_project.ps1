@@ -1,5 +1,3 @@
-Clear-Host
-
 $path_scripts = $PSScriptRoot
 $path_helpers = join-path $path_scripts 'helpers'
 $path_root    = split-path -Parent -Path $path_scripts

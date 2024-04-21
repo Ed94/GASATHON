@@ -171,8 +171,8 @@ if ( $vendor -match "clang" )
 		$map    = join-path $path_output (split-path $map    -Leaf)
 
 		# This allows dll reloads at runtime to work (jankily, use below if not interested)
-		$pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
-		# $pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
+		# $pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
+		$pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
 
 		$compiler_args += @(
 			$flag_no_color_diagnostics,
@@ -250,8 +250,8 @@ if ( $vendor -match "clang" )
 		$map    = join-path $path_output (split-path $map    -Leaf)
 
 		# This allows dll reloads at runtime to work (jankily, use below if not interested)
-		$pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
-		# $pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
+		# $pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
+		$pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
 
 		$compiler_args += @(
 			$flag_no_color_diagnostics,
@@ -369,8 +369,8 @@ if ( $vendor -match "msvc" )
 		$map    = join-path $path_output (split-path $map    -Leaf)
 
 		# This allows dll reloads at runtime to work (jankily, use below if not interested)
-		$pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
-		# $pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
+		# $pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
+		$pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
 
 		$compiler_args += @(
 			$flag_nologo,
@@ -455,8 +455,8 @@ if ( $vendor -match "msvc" )
 		$map    = join-path $path_output (split-path $map    -Leaf)
 
 		# This allows dll reloads at runtime to work (jankily, use below if not interested)
-		$pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
-		# $pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
+		# $pdb    = $binary -replace '\.(exe|dll)$', "_$(get-random).pdb"
+		$pdb    = $binary -replace '\.(exe|dll)$', ".pdb"
 
 		$compiler_args += @(
 			$flag_nologo,

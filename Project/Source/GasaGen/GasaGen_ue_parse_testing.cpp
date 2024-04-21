@@ -1,3 +1,12 @@
+// Used in the GasaGen.cpp translation unit
+#if GASA_INTELLISENSE_DIRECTIVES
+#pragma once
+#define GEN_EXPOSE_BACKEND
+#include "gen.hpp"
+#include "gen.builder.hpp"
+#include "GasaGenCommon.cpp"
+#endif
+
 void ue_parse_testing()
 {
 	FileContents content;
@@ -5,7 +14,7 @@ void ue_parse_testing()
 #define path_UProgressBar \
 	"C:/projects/Unreal/Surgo/UE/Engine/Source/Runtime/UMG/Public/Components/ProgressBar.h"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_UProgressBar );
 	CodeBody parsed_uprogressbar = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -40,7 +49,7 @@ void ue_parse_testing()
 #define path_UObject \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Runtime\CoreUObject\Public\UObject\Object.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_UObject );
 	CodeBody parsed_uobject = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -78,7 +87,7 @@ void ue_parse_testing()
 #define path_AActor \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Runtime\Engine\Classes\GameFramework\Actor.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_AActor );
 	CodeBody parsed_aactor = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -112,7 +121,7 @@ void ue_parse_testing()
 #define path_ActorComponent \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Runtime\Engine\Classes\Components\ActorComponent.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_ActorComponent );
 	CodeBody parsed_actor_component = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -146,7 +155,7 @@ void ue_parse_testing()
 #define path_SceneComponent \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Runtime\Engine\Classes\Components\SceneComponent.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_SceneComponent );
 	CodeBody parsed_scene_component = parse_global_body( StrC { content.size, (char const*)content.data });
 
@@ -180,7 +189,7 @@ void ue_parse_testing()
 #define path_AttributeSet \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Plugins\Runtime\GameplayAbilities\Source\GameplayAbilities\Public\AttributeSet.h)"
 
-#if 0
+#if 1
 	content = file_read_contents( GlobalAllocator, true, path_AttributeSet );
 	CodeBody parsed_attribute_set = parse_global_body( StrC { content.size, (char const*)content.data });
 

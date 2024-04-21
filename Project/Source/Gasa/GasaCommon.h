@@ -48,6 +48,7 @@ class UGasaImage;
 class UGasaOverlay;
 class UGasaProgressBar;
 class UGasaSizeBox;
+class UUI_HostWidget;
 #pragma endregion Forwards
 
 #pragma region Logging
@@ -98,7 +99,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogGasa, Log, All);
 namespace Gasa
 {
 	using ELogV = EGasaVerbosity;
-	
+
 	//◞ ‸ ◟//
 	// Works for Unreal 5.4, Win64 MSVC (untested in other scenarios, for now)
 	inline
@@ -111,7 +112,7 @@ namespace Gasa
 	{
 	#if !UE_BUILD_SHIPPING && !NO_LOGGING
 		ELogVerbosity::Type EngineVerbosity = (ELogVerbosity::Type) Verbosity;
-		
+
 		static UE::Logging::Private::FStaticBasicLogDynamicData LOG_Dynamic;
 		static UE::Logging::Private::FStaticBasicLogRecord
 		LOG_Static(TEXT("%s -- %hs %hs(%d)"), File, Line, EngineVerbosity, LOG_Dynamic);
@@ -132,13 +133,13 @@ namespace Gasa
 	}
 }
 
-#define GASA_Fatal(Message)       UE_LOG( Gasa, Fatal,       TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_FILE(), __func__, __builtin_LINE()  );
-#define GASA_Error(Message)       UE_LOG( Gasa, Error,       TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
-#define GASA_Warning(Message)     UE_LOG( Gasa, Warning,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
-#define GASA_Display(Message)     UE_LOG( Gasa, Display,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
-#define GASA_Log(Message)         UE_LOG( Gasa, Log,         TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
-#define GASA_Verbose(Message)     UE_LOG( Gasa, Verbose,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
-#define GASA_VeryVerbose(Message) UE_LOG( Gasa, VeryVerbose, TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_Fatal(Message)       UE_LOG( LogGasa, Fatal,       TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_FILE(), __func__, __builtin_LINE()  );
+#define GASA_Error(Message)       UE_LOG( LogGasa, Error,       TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_Warning(Message)     UE_LOG( LogGasa, Warning,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_Display(Message)     UE_LOG( LogGasa, Display,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_Log(Message)         UE_LOG( LogGasa, Log,         TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_Verbose(Message)     UE_LOG( LogGasa, Verbose,     TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
+#define GASA_VeryVerbose(Message) UE_LOG( LogGasa, VeryVerbose, TEXT("%s -- %hs %hs(%d)"), *Message, __builtin_File(), __func__, __builtin_LINE()  );
 #pragma endregion Logging
 
 #pragma region Timing
@@ -154,7 +155,7 @@ namespace Gasa
 	constexpr float _80Hz  = .013f;
 	constexpr float _90Hz  = .011f;
 	constexpr float _100Hz = .010f;
-	constexpr float _120Hz = .083f;
+	constexpr float _120Hz = .008f;
 	constexpr float _240Hz = .004f;
 	constexpr float _480Hz = .002f;
 }

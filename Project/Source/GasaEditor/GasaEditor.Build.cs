@@ -8,12 +8,22 @@ public class GasaEditor : ModuleRules
    #region Engine
         PrivateIncludePathModuleNames.AddRange(new string[] {
             "Core",
+            "CoreUObject",
+            "Engine",
         });
         PrivateDependencyModuleNames.AddRange(new string[] {
-            "Core",
+            "Core", 
+            "Engine",
+            "CoreUObject",
+            "PropertyEditor",
+            "SlateCore",
+            "Slate",
+            "UMG",
+            "UnrealEd",
         });
     #endregion Engine
     
-		PublicIncludePathModuleNames.Add("Gasa");
+		PublicIncludePaths.Add("GasaEditor");
+		PrivateDependencyModuleNames.Add("Gasa");
     }
 }

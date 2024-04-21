@@ -1,5 +1,3 @@
-Clear-Host
-
 $target_arch        = Join-Path $PSScriptRoot 'helpers/target_arch.psm1'
 $devshell           = Join-Path $PSScriptRoot 'helpers/devshell.ps1'
 $format_cpp	        = Join-Path $PSScriptRoot 'helpers/format_cpp.psm1'
@@ -7,7 +5,7 @@ $incremental_checks = Join-Path $PSScriptRoot 'helpers/incremental_checks.ps1'
 $vendor_toolchain   = Join-Path $PSScriptRoot 'helpers/vendor_toolchain.ps1'
 $update_deps        = Join-Path $PSScriptRoot 'update_deps.ps1'
 
-$path_root     = git rev-parse --show-toplevel
+$path_root = git rev-parse --show-toplevel
 
 Import-Module $target_arch
 Import-Module $format_cpp
@@ -91,7 +89,7 @@ build-gengasa
 
 function run-gengasa
 {
-	Push-Location $path_project
+	Push-Location $path_root
 	if ( Test-Path( $exe_gasagen ) ) {
 		write-host "`nRunning GasaGen"
 		$time_taken = Measure-Command { & $exe_gasagen
@@ -102,15 +100,5 @@ function run-gengasa
 		write-host "`GasaGen completed in $($time_taken.TotalMilliseconds) ms"
 	}
 	Pop-Location
-
-	$path_AbilitySystem = join-path $path_gasa 'AbilitySystem'
-	$include  = @(
-		'GasaAttributeSet.h', 'GasaAttributeSet.cpp'
-	)
-	format-cpp $path_AbilitySystem $include $null
-
-	$path_KismetPrivate = 'C:\projects\Unreal\Surgo\UE\Engine\Source\Editor\Kismet\Private\'
-	$include = @( 'SBlueprintActionMenu.cpp' )
-	format-cpp $path_KismetPrivate $include $null
 }
 run-gengasa

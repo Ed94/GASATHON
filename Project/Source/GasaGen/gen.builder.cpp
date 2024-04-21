@@ -14,7 +14,6 @@ Builder Builder::open( char const* path )
 		log_failure( "gen::File::open - Could not open file: %s", path );
 		return result;
 	}
-
 	result.Buffer = String::make_reserve( GlobalAllocator, Builder_StrBufferReserve );
 
 	// log_fmt("$Builder - Opened file: %s\n", result.File.filename );
@@ -37,7 +36,7 @@ void Builder::print( Code code )
 void Builder::print_fmt( char const* fmt, ... )
 {
 	sw   res;
-	char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
+	char buf[GEN_PRINTF_MAXLEN] = { 0 };
 
 	va_list va;
 	va_start( va, fmt );

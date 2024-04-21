@@ -170,10 +170,10 @@ GEN_NS_BEGIN
 
 // Casting
 
-#define ccast( Type, Value ) ( *const_cast< Type* >( &( Value ) ) )
-#define pcast( Type, Value ) ( *reinterpret_cast< Type* >( &( Value ) ) )
-#define rcast( Type, Value ) reinterpret_cast< Type >( Value )
-#define scast( Type, Value ) static_cast< Type >( Value )
+#define ccast( Type, Value ) ( *const_cast<Type*>( &( Value ) ) )
+#define pcast( Type, Value ) ( *reinterpret_cast<Type*>( &( Value ) ) )
+#define rcast( Type, Value ) reinterpret_cast<Type>( Value )
+#define scast( Type, Value ) static_cast<Type>( Value )
 
 // Num Arguments (Varadics)
 // #if defined(__GNUC__) || defined(__clang__)
@@ -461,19 +461,19 @@ GEN_NS_BEGIN
 #define labeled_scope_end             }
 
 #define clamp( x, lower, upper )      min( max( ( x ), ( lower ) ), ( upper ) )
-#define count_of( x )                 ( ( size_of( x ) / size_of( 0 [ x ] ) ) / ( ( sw )( ! ( size_of( x ) % size_of( 0 [ x ] ) ) ) ) )
+#define count_of( x )                 ( ( size_of( x ) / size_of( 0 [x] ) ) / ( (sw)( ! ( size_of( x ) % size_of( 0 [x] ) ) ) ) )
 #define is_between( x, lower, upper ) ( ( ( lower ) <= ( x ) ) && ( ( x ) <= ( upper ) ) )
 #define max( a, b )                   ( ( a ) > ( b ) ? ( a ) : ( b ) )
 #define min( a, b )                   ( ( a ) < ( b ) ? ( a ) : ( b ) )
 #define size_of( x )                  ( sw )( sizeof( x ) )
 
 #if defined( _MSC_VER ) || defined( GEN_COMPILER_TINYC )
-#define offset_of( Type, element ) ( ( GEN_NS( gen_sw ) ) & ( ( ( Type* )0 )->element ) )
+#define offset_of( Type, element ) ( ( GEN_NS( gen_sw ) ) & ( ( (Type*)0 )->element ) )
 #else
 #define offset_of( Type, element ) __builtin_offsetof( Type, element )
 #endif
 
-template< class Type >
+template<class Type>
 void swap( Type& a, Type& b )
 {
 	Type tmp = a;
@@ -640,13 +640,13 @@ s32  assert_crash( char const* condition );
 void process_exit( u32 code );
 
 #if Build_Debug
-#define GEN_FATAL( ... )                                                  \
-	do                                                                    \
-	{                                                                     \
-		local_persist thread_local char buf[ GEN_PRINTF_MAXLEN ] = { 0 }; \
-                                                                          \
-		str_fmt( buf, GEN_PRINTF_MAXLEN, __VA_ARGS__ );                   \
-		GEN_PANIC( buf );                                                 \
+#define GEN_FATAL( ... )                                                \
+	do                                                                  \
+	{                                                                   \
+		local_persist thread_local char buf[GEN_PRINTF_MAXLEN] = { 0 }; \
+                                                                        \
+		str_fmt( buf, GEN_PRINTF_MAXLEN, __VA_ARGS__ );                 \
+		GEN_PANIC( buf );                                               \
 	} while ( 0 )
 #else
 
@@ -662,10 +662,10 @@ void process_exit( u32 code );
 
 #pragma region Memory
 
-#define kilobytes( x )     ( ( x ) * ( s64 )( 1024 ) )
-#define megabytes( x )     ( kilobytes( x ) * ( s64 )( 1024 ) )
-#define gigabytes( x )     ( megabytes( x ) * ( s64 )( 1024 ) )
-#define terabytes( x )     ( gigabytes( x ) * ( s64 )( 1024 ) )
+#define kilobytes( x )     ( ( x ) * (s64)( 1024 ) )
+#define megabytes( x )     ( kilobytes( x ) * (s64)( 1024 ) )
+#define gigabytes( x )     ( megabytes( x ) * (s64)( 1024 ) )
+#define terabytes( x )     ( gigabytes( x ) * (s64)( 1024 ) )
 
 #define GEN__ONES          ( zpl_cast( uw ) - 1 / GEN_U8_MAX )
 #define GEN__HIGHS         ( GEN__ONES * ( GEN_U8_MAX / 2 + 1 ) )
@@ -759,10 +759,10 @@ GEN_DEF_INLINE void* resize( AllocatorInfo a, void* ptr, sw old_size, sw new_siz
 GEN_DEF_INLINE void* resize_align( AllocatorInfo a, void* ptr, sw old_size, sw new_size, sw alignment );
 
 //! Allocate memory for an item.
-#define alloc_item( allocator_, Type ) ( Type* )alloc( allocator_, size_of( Type ) )
+#define alloc_item( allocator_, Type ) (Type*)alloc( allocator_, size_of( Type ) )
 
 //! Allocate memory for an array of items.
-#define alloc_array( allocator_, Type, count ) ( Type* )alloc( allocator_, size_of( Type ) * ( count ) )
+#define alloc_array( allocator_, Type, count ) (Type*)alloc( allocator_, size_of( Type ) * ( count ) )
 
 /* heap memory analysis tools */
 /* define GEN_HEAP_ANALYSIS to enable this feature */
@@ -873,7 +873,7 @@ GEN_IMPL_INLINE void* mem_move( void* dest, void const* source, sw n )
 			{
 				if ( ! n-- )
 					return dest;
-				d[ n ] = s[ n ];
+				d[n] = s[n];
 			}
 			while ( n >= size_of( sw ) )
 			{
@@ -882,7 +882,7 @@ GEN_IMPL_INLINE void* mem_move( void* dest, void const* source, sw n )
 			}
 		}
 		while ( n )
-			n--, d[ n ] = s[ n ];
+			n--, d[n] = s[n];
 	}
 
 	return dest;
@@ -897,18 +897,18 @@ GEN_IMPL_INLINE void* mem_set( void* dest, u8 c, sw n )
 
 	u8* s = zpl_cast( u8* ) dest;
 	sw  k;
-	u32 c32 = ( ( u32 )-1 ) / 255 * c;
+	u32 c32 = ( (u32)-1 ) / 255 * c;
 
 	if ( n == 0 )
 		return dest;
-	s[ 0 ] = s[ n - 1 ] = c;
+	s[0] = s[n - 1] = c;
 	if ( n < 3 )
 		return dest;
-	s[ 1 ] = s[ n - 2 ] = c;
-	s[ 2 ] = s[ n - 3 ] = c;
+	s[1] = s[n - 2] = c;
+	s[2] = s[n - 3] = c;
 	if ( n < 7 )
 		return dest;
-	s[ 3 ] = s[ n - 4 ] = c;
+	s[3] = s[n - 4] = c;
 	if ( n < 9 )
 		return dest;
 
@@ -1081,7 +1081,7 @@ struct Arena
 		GEN_ASSERT( is_power_of_two( alignment ) );
 
 		alignment_offset = 0;
-		result_pointer   = ( sw )PhysicalStart + TotalUsed;
+		result_pointer   = (sw)PhysicalStart + TotalUsed;
 		mask             = alignment - 1;
 
 		if ( result_pointer & mask )
@@ -1124,7 +1124,7 @@ struct Arena
 
 // Just a wrapper around using an arena with memory associated with its scope instead of from an allocator.
 // Used for static segment or stack allocations.
-template< s32 Size >
+template<s32 Size>
 struct FixedArena
 {
 	static FixedArena init()
@@ -1144,21 +1144,21 @@ struct FixedArena
 	}
 
 	Arena arena;
-	char  memory[ Size ];
+	char  memory[Size];
 };
 
-using Arena_1KB   = FixedArena< kilobytes( 1 ) >;
-using Arena_4KB   = FixedArena< kilobytes( 4 ) >;
-using Arena_8KB   = FixedArena< kilobytes( 8 ) >;
-using Arena_16KB  = FixedArena< kilobytes( 16 ) >;
-using Arena_32KB  = FixedArena< kilobytes( 32 ) >;
-using Arena_64KB  = FixedArena< kilobytes( 64 ) >;
-using Arena_128KB = FixedArena< kilobytes( 128 ) >;
-using Arena_256KB = FixedArena< kilobytes( 256 ) >;
-using Arena_512KB = FixedArena< kilobytes( 512 ) >;
-using Arena_1MB   = FixedArena< megabytes( 1 ) >;
-using Arena_2MB   = FixedArena< megabytes( 2 ) >;
-using Arena_4MB   = FixedArena< megabytes( 4 ) >;
+using Arena_1KB   = FixedArena<kilobytes( 1 )>;
+using Arena_4KB   = FixedArena<kilobytes( 4 )>;
+using Arena_8KB   = FixedArena<kilobytes( 8 )>;
+using Arena_16KB  = FixedArena<kilobytes( 16 )>;
+using Arena_32KB  = FixedArena<kilobytes( 32 )>;
+using Arena_64KB  = FixedArena<kilobytes( 64 )>;
+using Arena_128KB = FixedArena<kilobytes( 128 )>;
+using Arena_256KB = FixedArena<kilobytes( 256 )>;
+using Arena_512KB = FixedArena<kilobytes( 512 )>;
+using Arena_1MB   = FixedArena<megabytes( 1 )>;
+using Arena_2MB   = FixedArena<megabytes( 2 )>;
+using Arena_4MB   = FixedArena<megabytes( 4 )>;
 
 struct Pool
 {
@@ -1313,7 +1313,7 @@ GEN_IMPL_INLINE s32 str_compare( const char* s1, const char* s2 )
 	{
 		s1++, s2++;
 	}
-	return *( u8* )s1 - *( u8* )s2;
+	return *(u8*)s1 - *(u8*)s2;
 }
 
 GEN_IMPL_INLINE s32 str_compare( const char* s1, const char* s2, sw len )
@@ -1417,11 +1417,11 @@ GEN_IMPL_INLINE char const* str_skip( char const* str, char c )
 
 GEN_IMPL_INLINE char const* str_skip_any( char const* str, char const* char_list )
 {
-	char const* closest_ptr     = zpl_cast( char const* ) pointer_add( ( void* )str, str_len( str ) );
+	char const* closest_ptr     = zpl_cast( char const* ) pointer_add( (void*)str, str_len( str ) );
 	sw          char_list_count = str_len( char_list );
 	for ( sw i = 0; i < char_list_count; i++ )
 	{
-		char const* p = str_skip( str, char_list[ i ] );
+		char const* p = str_skip( str, char_list[i] );
 		closest_ptr   = min( closest_ptr, p );
 	}
 	return closest_ptr;
@@ -1497,34 +1497,34 @@ inline sw log_fmt( char const* fmt, ... )
 
 #pragma region Containers
 
-template< class TType >
+template<class TType>
 struct RemoveConst
 {
 	typedef TType Type;
 };
 
-template< class TType >
-struct RemoveConst< const TType >
+template<class TType>
+struct RemoveConst<const TType>
 {
 	typedef TType Type;
 };
 
-template< class TType >
-struct RemoveConst< const TType[] >
+template<class TType>
+struct RemoveConst<const TType[]>
 {
 	typedef TType Type[];
 };
 
-template< class TType, uw Size >
-struct RemoveConst< const TType[ Size ] >
+template<class TType, uw Size>
+struct RemoveConst<const TType[Size]>
 {
-	typedef TType Type[ Size ];
+	typedef TType Type[Size];
 };
 
-template< class TType >
-using TRemoveConst = typename RemoveConst< TType >::Type;
+template<class TType>
+using TRemoveConst = typename RemoveConst<TType>::Type;
 
-template< class Type >
+template<class Type>
 struct Array
 {
 	struct Header
@@ -1570,7 +1570,7 @@ struct Array
 			header = get_header();
 		}
 
-		Data[ header->Num ] = value;
+		Data[header->Num] = value;
 		header->Num++;
 
 		return true;
@@ -1617,7 +1617,6 @@ struct Array
 		mem_move( target + 1, target, ( header->Num - idx ) * sizeof( Type ) );
 		header->Num++;
 
-		Data[ idx ] = item;
 		return true;
 	}
 
@@ -1651,7 +1650,7 @@ struct Array
 	Type& back( void )
 	{
 		Header& header = *get_header();
-		return Data[ header.Num - 1 ];
+		return Data[header.Num - 1];
 	}
 
 	void clear( void )
@@ -1669,7 +1668,7 @@ struct Array
 
 		for ( sw idx = begin; idx < end; idx++ )
 		{
-			Data[ idx ] = value;
+			Data[idx] = value;
 		}
 
 		return true;
@@ -1684,8 +1683,8 @@ struct Array
 
 	Header* get_header( void )
 	{
-		using NonConstType = TRemoveConst< Type >;
-		return rcast( Header*, const_cast< NonConstType* >( Data ) ) - 1;
+		using NonConstType = TRemoveConst<Type>;
+		return rcast( Header*, const_cast<NonConstType*>( Data ) ) - 1;
 	}
 
 	bool grow( uw min_capacity )
@@ -1804,7 +1803,7 @@ struct Array
 
 // TODO(Ed) : This thing needs ALOT of work.
 
-template< typename Type >
+template<typename Type>
 struct HashTable
 {
 	struct FindResult
@@ -1823,22 +1822,22 @@ struct HashTable
 
 	static HashTable init( AllocatorInfo allocator )
 	{
-		HashTable< Type > result = { { nullptr }, { nullptr } };
+		HashTable<Type> result = { { nullptr }, { nullptr } };
 
-		result.Hashes            = Array< sw >::init( allocator );
-		result.Entries           = Array< Entry >::init( allocator );
+		result.Hashes          = Array<sw>::init( allocator );
+		result.Entries         = Array<Entry>::init( allocator );
 
 		return result;
 	}
 
 	static HashTable init_reserve( AllocatorInfo allocator, uw num )
 	{
-		HashTable< Type > result        = { { nullptr }, { nullptr } };
+		HashTable<Type> result          = { { nullptr }, { nullptr } };
 
-		result.Hashes                   = Array< sw >::init_reserve( allocator, num );
+		result.Hashes                   = Array<sw>::init_reserve( allocator, num );
 		result.Hashes.get_header()->Num = num;
 
-		result.Entries                  = Array< Entry >::init_reserve( allocator, num );
+		result.Entries                  = Array<Entry>::init_reserve( allocator, num );
 
 		return result;
 	}
@@ -1846,7 +1845,7 @@ struct HashTable
 	void clear( void )
 	{
 		for ( sw idx = 0; idx < Hashes.num(); idx++ )
-			Hashes[ idx ] = -1;
+			Hashes[idx] = -1;
 
 		Hashes.clear();
 		Entries.clear();
@@ -1865,7 +1864,7 @@ struct HashTable
 	{
 		sw idx = find( key ).EntryIndex;
 		if ( idx >= 0 )
-			return &Entries[ idx ].Value;
+			return &Entries[idx].Value;
 
 		return nullptr;
 	}
@@ -1878,7 +1877,7 @@ struct HashTable
 
 		for ( sw idx = 0; idx < Entries.num(); idx++ )
 		{
-			map_proc( Entries[ idx ].Key, Entries[ idx ].Value );
+			map_proc( Entries[idx].Key, Entries[idx].Value );
 		}
 	}
 
@@ -1890,13 +1889,13 @@ struct HashTable
 
 		for ( sw idx = 0; idx < Entries.num(); idx++ )
 		{
-			map_proc( Entries[ idx ].Key, &Entries[ idx ].Value );
+			map_proc( Entries[idx].Key, &Entries[idx].Value );
 		}
 	}
 
 	void grow()
 	{
-		sw new_num = Array< Entry >::grow_formula( Entries.num() );
+		sw new_num = Array<Entry>::grow_formula( Entries.num() );
 		rehash( new_num );
 	}
 
@@ -1905,34 +1904,34 @@ struct HashTable
 		sw idx;
 		sw last_added_index;
 
-		HashTable< Type > new_ht         = init_reserve( Hashes.get_header()->Allocator, new_num );
+		HashTable<Type> new_ht         = init_reserve( Hashes.get_header()->Allocator, new_num );
 
-		Array< sw >::Header* hash_header = new_ht.Hashes.get_header();
+		Array<sw>::Header* hash_header = new_ht.Hashes.get_header();
 
 		for ( idx = 0; idx < new_ht.Hashes.num(); ++idx )
-			new_ht.Hashes[ idx ] = -1;
+			new_ht.Hashes[idx] = -1;
 
 		for ( idx = 0; idx < Entries.num(); ++idx )
 		{
-			Entry& entry = Entries[ idx ];
+			Entry& entry = Entries[idx];
 
 			FindResult find_result;
 
 			if ( new_ht.Hashes.num() == 0 )
 				new_ht.grow();
 
-			entry            = Entries[ idx ];
+			entry            = Entries[idx];
 			find_result      = new_ht.find( entry.Key );
 			last_added_index = new_ht.add_entry( entry.Key );
 
 			if ( find_result.PrevIndex < 0 )
-				new_ht.Hashes[ find_result.HashIndex ] = last_added_index;
+				new_ht.Hashes[find_result.HashIndex] = last_added_index;
 
 			else
-				new_ht.Entries[ find_result.PrevIndex ].Next = last_added_index;
+				new_ht.Entries[find_result.PrevIndex].Next = last_added_index;
 
-			new_ht.Entries[ last_added_index ].Next  = find_result.EntryIndex;
-			new_ht.Entries[ last_added_index ].Value = entry.Value;
+			new_ht.Entries[last_added_index].Next  = find_result.EntryIndex;
+			new_ht.Entries[last_added_index].Value = entry.Value;
 		}
 
 		destroy();
@@ -1944,23 +1943,23 @@ struct HashTable
 		sw idx;
 
 		for ( idx = 0; idx < Entries.num(); idx++ )
-			Entries[ idx ].Next = -1;
+			Entries[idx].Next = -1;
 
 		for ( idx = 0; idx < Hashes.num(); idx++ )
-			Hashes[ idx ] = -1;
+			Hashes[idx] = -1;
 
 		for ( idx = 0; idx < Entries.num(); idx++ )
 		{
 			Entry*     entry;
 			FindResult find_result;
 
-			entry       = &Entries[ idx ];
+			entry       = &Entries[idx];
 			find_result = find( entry->Key );
 
 			if ( find_result.PrevIndex < 0 )
-				Hashes[ find_result.HashIndex ] = idx;
+				Hashes[find_result.HashIndex] = idx;
 			else
-				Entries[ find_result.PrevIndex ].Next = idx;
+				Entries[find_result.PrevIndex].Next = idx;
 		}
 	}
 
@@ -2000,15 +1999,15 @@ struct HashTable
 
 			if ( find_result.PrevIndex >= 0 )
 			{
-				Entries[ find_result.PrevIndex ].Next = idx;
+				Entries[find_result.PrevIndex].Next = idx;
 			}
 			else
 			{
-				Hashes[ find_result.HashIndex ] = idx;
+				Hashes[find_result.HashIndex] = idx;
 			}
 		}
 
-		Entries[ idx ].Value = value;
+		Entries[idx].Value = value;
 
 		if ( full() )
 			grow();
@@ -2017,14 +2016,14 @@ struct HashTable
 	sw slot( u64 key )
 	{
 		for ( sw idx = 0; idx < Hashes.num(); ++idx )
-			if ( Hashes[ idx ] == key )
+			if ( Hashes[idx] == key )
 				return idx;
 
 		return -1;
 	}
 
-	Array< sw >    Hashes;
-	Array< Entry > Entries;
+	Array<sw>    Hashes;
+	Array<Entry> Entries;
 
 protected:
 	sw add_entry( u64 key )
@@ -2044,15 +2043,15 @@ protected:
 		if ( Hashes.num() > 0 )
 		{
 			result.HashIndex  = key % Hashes.num();
-			result.EntryIndex = Hashes[ result.HashIndex ];
+			result.EntryIndex = Hashes[result.HashIndex];
 
 			while ( result.EntryIndex >= 0 )
 			{
-				if ( Entries[ result.EntryIndex ].Key == key )
+				if ( Entries[result.EntryIndex].Key == key )
 					break;
 
 				result.PrevIndex  = result.EntryIndex;
-				result.EntryIndex = Entries[ result.EntryIndex ].Next;
+				result.EntryIndex = Entries[result.EntryIndex].Next;
 			}
 		}
 
@@ -2081,6 +2080,11 @@ struct StrC
 {
 	sw          Len;
 	char const* Ptr;
+
+	char const& operator[]( sw index ) const
+	{
+		return Ptr[index];
+	}
 
 	operator char const*() const
 	{
@@ -2144,7 +2148,7 @@ struct String
 
 		for ( sw idx = 0; idx < num_parts; ++idx )
 		{
-			result.append( parts[ idx ] );
+			result.append( parts[idx] );
 
 			if ( idx < num_parts - 1 )
 				result.append( glue );
@@ -2159,7 +2163,19 @@ struct String
 			return false;
 
 		for ( sw idx = 0; idx < lhs.length(); ++idx )
-			if ( lhs[ idx ] != rhs[ idx ] )
+			if ( lhs[idx] != rhs[idx] )
+				return false;
+
+		return true;
+	}
+
+	static bool are_equal( String lhs, StrC rhs )
+	{
+		if ( lhs.length() != (rhs.Len - 1) )
+			return false;
+
+		for ( sw idx = 0; idx < lhs.length(); ++idx )
+			if ( lhs[idx] != rhs[idx] )
 				return false;
 
 		return true;
@@ -2190,9 +2206,9 @@ struct String
 
 			mem_copy( Data + curr_len, str, length );
 
-			Data[ curr_len + length ] = '\0';
+			Data[curr_len + length] = '\0';
 
-			header.Length             = curr_len + length;
+			header.Length           = curr_len + length;
 		}
 		return str;
 	}
@@ -2218,7 +2234,7 @@ struct String
 
 	char& back()
 	{
-		return Data[ length() - 1 ];
+		return Data[length() - 1];
 	}
 
 	sw capacity() const
@@ -2231,6 +2247,24 @@ struct String
 	void clear()
 	{
 		get_header().Length = 0;
+	}
+
+	b32 starts_with( StrC substring ) const
+	{
+		if (substring.Len > length())
+			return false;
+
+		b32 result = str_compare(Data, substring.Ptr, substring.Len ) == 0;
+		return result;
+	}
+
+	b32 starts_with( String substring ) const
+	{
+		if (substring.length() > length())
+			return false;
+
+		b32 result = str_compare(Data, substring, substring.length() - 1 ) == 0;
+		return result;
 	}
 
 	String duplicate( AllocatorInfo allocator ) const
@@ -2250,7 +2284,7 @@ struct String
 
 	Header& get_header()
 	{
-		return *( Header* )( Data - sizeof( Header ) );
+		return *(Header*)( Data - sizeof( Header ) );
 	}
 
 	sw length() const
@@ -2298,7 +2332,7 @@ struct String
 			read_pos++;
 		}
 
-		write_pos[ 0 ] = '\0';    // Null-terminate the modified string
+		write_pos[0] = '\0';    // Null-terminate the modified string
 
 		// Update the length if needed
 		get_header().Length = write_pos - Data;
@@ -2322,7 +2356,7 @@ struct String
 		if ( Data != start_pos )
 			mem_move( Data, start_pos, len );
 
-		Data[ len ]         = '\0';
+		Data[len]           = '\0';
 
 		get_header().Length = len;
 	}
@@ -2335,7 +2369,7 @@ struct String
 	// Debug function that provides a copy of the string with whitespace characters visualized.
 	String visualize_whitespace() const
 	{
-		Header* header = ( Header* )( Data - sizeof( Header ) );
+		Header* header = (Header*)( Data - sizeof( Header ) );
 
 		String result  = make_reserve( header->Allocator, length() * 2 );    // Assume worst case for space requirements.
 
@@ -2420,12 +2454,12 @@ struct String
 
 	char& operator[]( sw index )
 	{
-		return Data[ index ];
+		return Data[index];
 	}
 
 	char const& operator[]( sw index ) const
 	{
-		return Data[ index ];
+		return Data[index];
 	}
 
 	char* Data;
@@ -2439,7 +2473,7 @@ struct String_POD
 static_assert( sizeof( String_POD ) == sizeof( String ), "String is not a POD" );
 
 // Implements basic string interning. Data structure is based off the ZPL Hashtable.
-using StringTable = HashTable< String const >;
+using StringTable = HashTable<String const>;
 
 // Represents strings cached with the string table.
 // Should never be modified, if changed string is desired, cache_string( str ) another.

@@ -13,9 +13,6 @@ class GASA_API AGasaPlayerController : public APlayerController
 public:
 #pragma region Camera
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ACameraMount> CamClass;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<ACameraMount> Cam;
 #pragma endregion Camera
 
@@ -60,6 +57,8 @@ public:
 	}
 	
 #pragma region PlayerController
+	void SpawnDefaultHUD() override;
+	
 	void OnPossess(APawn* InPawn) override;
 
 	void OnUnPossess() override;

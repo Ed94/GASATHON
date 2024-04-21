@@ -10,7 +10,7 @@
 			"name": "Debug GenGas vsdbg",
 			"program": "${workspaceFolder}/Project/Binaries/GasaGen.exe",
 			"args": [],
-			"cwd": "${workspaceFolder}/Project/",
+			"cwd": "${workspaceFolder}",
 			"visualizerFile": "${workspaceFolder}/scripts/gencpp.natvis"
 		},
 	]

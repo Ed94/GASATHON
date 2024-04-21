@@ -192,7 +192,7 @@ s64 str_to_i64( const char* str, char** end_ptr, s32 base )
 
 	len = _scan_zpl_i64( str, base, &value );
 	if ( end_ptr )
-		*end_ptr = ( char* )str + len;
+		*end_ptr = (char*)str + len;
 	return value;
 }
 
@@ -213,7 +213,7 @@ void i64_to_str( s64 value, char* string, s32 base )
 	{
 		while ( v > 0 )
 		{
-			*buf++  = _num_to_char_table[ v % base ];
+			*buf++  = _num_to_char_table[v % base];
 			v      /= base;
 		}
 	}
@@ -235,7 +235,7 @@ void u64_to_str( u64 value, char* string, s32 base )
 	{
 		while ( value > 0 )
 		{
-			*buf++  = _num_to_char_table[ value % base ];
+			*buf++  = _num_to_char_table[value % base];
 			value  /= base;
 		}
 	}
@@ -442,8 +442,8 @@ internal sw _print_string( char* text, sw max_len, _format_info* info, char cons
 
 internal sw _print_char( char* text, sw max_len, _format_info* info, char arg )
 {
-	char str[ 2 ] = "";
-	str[ 0 ]      = arg;
+	char str[2] = "";
+	str[0]      = arg;
 	return _print_string( text, max_len, info, str );
 }
 
@@ -460,14 +460,14 @@ internal sw _print_repeated_char( char* text, sw max_len, _format_info* info, ch
 
 internal sw _print_i64( char* text, sw max_len, _format_info* info, s64 value )
 {
-	char num[ 130 ];
+	char num[130];
 	i64_to_str( value, num, info ? info->base : 10 );
 	return _print_string( text, max_len, info, num );
 }
 
 internal sw _print_u64( char* text, sw max_len, _format_info* info, u64 value )
 {
-	char num[ 130 ];
+	char num[130];
 	u64_to_str( value, num, info ? info->base : 10 );
 	return _print_string( text, max_len, info, num );
 }
@@ -564,7 +564,7 @@ internal sw _print_f64( char* text, sw max_len, _format_info* info, b32 is_hexad
 		while ( len-- )
 		{
 			if ( text_begin + len < end )
-				text_begin[ len ] = fill;
+				text_begin[len] = fill;
 		}
 	}
 
@@ -857,7 +857,7 @@ neverinline sw str_fmt_va( char* text, sw max_len, char const* fmt, va_list va )
 
 char* str_fmt_buf_va( char const* fmt, va_list va )
 {
-	local_persist thread_local char buffer[ GEN_PRINTF_MAXLEN ];
+	local_persist thread_local char buffer[GEN_PRINTF_MAXLEN];
 	str_fmt_va( buffer, size_of( buffer ), fmt, va );
 	return buffer;
 }
@@ -874,7 +874,7 @@ char* str_fmt_buf( char const* fmt, ... )
 
 sw str_fmt_file_va( struct FileInfo* f, char const* fmt, va_list va )
 {
-	local_persist thread_local char buf[ GEN_PRINTF_MAXLEN ];
+	local_persist thread_local char buf[GEN_PRINTF_MAXLEN];
 	sw                              len = str_fmt_va( buf, size_of( buf ), fmt, va );
 	b32                             res = file_write( f, buf, len - 1 );    // NOTE: prevent extra whitespace
 	return res ? len : -1;
@@ -924,7 +924,7 @@ sw str_fmt_out_err( char const* fmt, ... )
 
 #pragma region Hashing
 
-global u32 const _crc32_table[ 256 ] = {
+global u32 const _crc32_table[256] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b,
 	0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7, 0x136c9856, 0x646ba8c0,
 	0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9, 0xfa0f3d63, 0x8d080df5, 0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172, 0x3c03e4d1, 0x4b04d447, 0xd20d85fd,
@@ -953,11 +953,11 @@ u32 crc32( void const* data, sw len )
 	u32       result = ~( zpl_cast( u32 ) 0 );
 	u8 const* c      = zpl_cast( u8 const* ) data;
 	for ( remaining = len; remaining--; c++ )
-		result = ( result >> 8 ) ^ ( _crc32_table[ ( result ^ *c ) & 0xff ] );
+		result = ( result >> 8 ) ^ ( _crc32_table[( result ^ *c ) & 0xff] );
 	return ~result;
 }
 
-global u64 const _crc64_table[ 256 ] = {
+global u64 const _crc64_table[256] = {
 	0x0000000000000000ull, 0x7ad870c830358979ull, 0xf5b0e190606b12f2ull, 0x8f689158505e9b8bull, 0xc038e5739841b68full, 0xbae095bba8743ff6ull,
 	0x358804e3f82aa47dull, 0x4f50742bc81f2d04ull, 0xab28ecb46814fe75ull, 0xd1f09c7c5821770cull, 0x5e980d24087fec87ull, 0x24407dec384a65feull,
 	0x6b1009c7f05548faull, 0x11c8790fc060c183ull, 0x9ea0e857903e5a08ull, 0xe478989fa00bd371ull, 0x7d08ff3b88be6f81ull, 0x07d08ff3b88be6f8ull,
@@ -1009,7 +1009,7 @@ u64 crc64( void const* data, sw len )
 	u64       result = ( zpl_cast( u64 ) 0 );
 	u8 const* c      = zpl_cast( u8 const* ) data;
 	for ( remaining = len; remaining--; c++ )
-		result = ( result >> 8 ) ^ ( _crc64_table[ ( result ^ *c ) & 0xff ] );
+		result = ( result >> 8 ) ^ ( _crc64_table[( result ^ *c ) & 0xff] );
 	return result;
 }
 
@@ -1363,7 +1363,7 @@ void* Arena::allocator_proc( void* allocator_data, AllocType type, sw size, sw a
 			sw    total_size = align_forward_i64( size, alignment );
 
 			// NOTE: Out of memory
-			if ( arena->TotalUsed + total_size > ( sw )arena->TotalSize )
+			if ( arena->TotalUsed + total_size > (sw)arena->TotalSize )
 			{
 				// zpl__printf_err("%s", "Arena out of memory\n");
 				GEN_FATAL( "Arena out of memory! (Possibly could not fit for the largest size Arena!!)" );
@@ -1495,13 +1495,13 @@ Pool Pool::init_align( AllocatorInfo backing, sw num_blocks, sw block_size, sw b
 	curr = data;
 	for ( block_index = 0; block_index < num_blocks - 1; block_index++ )
 	{
-		uptr* next = ( uptr* )curr;
-		*next      = ( uptr )curr + actual_block_size;
+		uptr* next = (uptr*)curr;
+		*next      = (uptr)curr + actual_block_size;
 		curr       = pointer_add( curr, actual_block_size );
 	}
 
-	end                = ( uptr* )curr;
-	*end               = ( uptr )NULL;
+	end                = (uptr*)curr;
+	*end               = (uptr)NULL;
 
 	pool.PhysicalStart = data;
 	pool.FreeList      = data;
@@ -1520,13 +1520,13 @@ void Pool::clear()
 	curr              = PhysicalStart;
 	for ( block_index = 0; block_index < NumBlocks - 1; block_index++ )
 	{
-		uptr* next = ( uptr* )curr;
-		*next      = ( uptr )curr + actual_block_size;
+		uptr* next = (uptr*)curr;
+		*next      = (uptr)curr + actual_block_size;
 		curr       = pointer_add( curr, actual_block_size );
 	}
 
-	end      = ( uptr* )curr;
-	*end     = ( uptr )NULL;
+	end      = (uptr*)curr;
+	*end     = (uptr)NULL;
 
 	FreeList = PhysicalStart;
 }
@@ -1565,7 +1565,7 @@ String String::make_length( AllocatorInfo allocator, char const* str, sw length 
 	else
 		mem_set( result, 0, alloc_size - header_size );
 
-	result[ length ] = '\0';
+	result[length] = '\0';
 
 	return result;
 }
@@ -1593,7 +1593,7 @@ String String::make_reserve( AllocatorInfo allocator, sw capacity )
 
 String String::fmt_buf( AllocatorInfo allocator, char const* fmt, ... )
 {
-	local_persist thread_local char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
+	local_persist thread_local char buf[GEN_PRINTF_MAXLEN] = { 0 };
 
 	va_list va;
 	va_start( va, fmt );
@@ -1606,7 +1606,7 @@ String String::fmt_buf( AllocatorInfo allocator, char const* fmt, ... )
 bool String::append_fmt( char const* fmt, ... )
 {
 	sw   res;
-	char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
+	char buf[GEN_PRINTF_MAXLEN] = { 0 };
 
 	va_list va;
 	va_start( va, fmt );
@@ -1694,7 +1694,7 @@ internal wchar_t* _alloc_utf8_to_ucs2( AllocatorInfo a, char const* text, sw* w_
 			*w_len_ = 0;
 		return NULL;
 	}
-	w_text[ w_len ] = 0;
+	w_text[w_len] = 0;
 	if ( w_len_ )
 		*w_len_ = w_len;
 	return w_text;
@@ -1928,8 +1928,8 @@ neverinline GEN_FILE_OPEN_PROC( _posix_file_open )
 internal void _dirinfo_free_entry( DirEntry* entry );
 
 // TODO : Is this a bad idea?
-global b32      _std_file_set                     = false;
-global FileInfo _std_files[ EFileStandard_COUNT ] = {
+global b32      _std_file_set                   = false;
+global FileInfo _std_files[EFileStandard_COUNT] = {
 	{ { nullptr, nullptr, nullptr, nullptr }, { nullptr }, 0, nullptr, 0, nullptr }
 };
 
@@ -1940,15 +1940,15 @@ FileInfo* file_get_standard( FileStandardType std )
 	if ( ! _std_file_set )
 	{
 #define GEN__SET_STD_FILE( type, v ) \
-	_std_files[ type ].fd.p = v;     \
-	_std_files[ type ].ops  = default_file_operations
+	_std_files[type].fd.p = v;       \
+	_std_files[type].ops  = default_file_operations
         GEN__SET_STD_FILE( EFileStandard_INPUT, GetStdHandle( STD_INPUT_HANDLE ) );
         GEN__SET_STD_FILE( EFileStandard_OUTPUT, GetStdHandle( STD_OUTPUT_HANDLE ) );
         GEN__SET_STD_FILE( EFileStandard_ERROR, GetStdHandle( STD_ERROR_HANDLE ) );
 #undef GEN__SET_STD_FILE
 		_std_file_set = true;
 	}
-	return &_std_files[ std ];
+	return &_std_files[std];
 }
 
 #else    // POSIX
@@ -1958,15 +1958,15 @@ FileInfo* file_get_standard( FileStandardType std )
 	if ( ! _std_file_set )
 	{
 #define GEN__SET_STD_FILE( type, v ) \
-	_std_files[ type ].fd.i = v;     \
-	_std_files[ type ].ops  = default_file_operations
+	_std_files[type].fd.i = v;       \
+	_std_files[type].ops  = default_file_operations
 		GEN__SET_STD_FILE( EFileStandard_INPUT, 0 );
 		GEN__SET_STD_FILE( EFileStandard_OUTPUT, 1 );
 		GEN__SET_STD_FILE( EFileStandard_ERROR, 2 );
 #undef GEN__SET_STD_FILE
 		_std_file_set = true;
 	}
-	return &_std_files[ std ];
+	return &_std_files[std];
 }
 
 #endif
@@ -2082,8 +2082,8 @@ FileContents file_read_contents( AllocatorInfo a, b32 zero_terminate, char const
 			file_read_at( &file, result.data, result.size, 0 );
 			if ( zero_terminate )
 			{
-				u8* str      = zpl_cast( u8* ) result.data;
-				str[ fsize ] = '\0';
+				u8* str    = zpl_cast( u8* ) result.data;
+				str[fsize] = '\0';
 			}
 		}
 		file_close( &file );
@@ -2111,13 +2111,13 @@ GEN_DEF_INLINE _memory_fd*    _file_stream_from_fd( FileDescriptor fd );
 GEN_IMPL_INLINE FileDescriptor _file_stream_fd_make( _memory_fd* d )
 {
 	FileDescriptor fd = { 0 };
-	fd.p              = ( void* )d;
+	fd.p              = (void*)d;
 	return fd;
 }
 
 GEN_IMPL_INLINE _memory_fd* _file_stream_from_fd( FileDescriptor fd )
 {
-	_memory_fd* d = ( _memory_fd* )fd.p;
+	_memory_fd* d = (_memory_fd*)fd.p;
 	GEN_ASSERT( d->magic == GEN__FILE_STREAM_FD_MAGIC );
 	return d;
 }
@@ -2126,7 +2126,7 @@ b8 file_stream_new( FileInfo* file, AllocatorInfo allocator )
 {
 	GEN_ASSERT_NOT_NULL( file );
 
-	_memory_fd* d = ( _memory_fd* )alloc( allocator, size_of( _memory_fd ) );
+	_memory_fd* d = (_memory_fd*)alloc( allocator, size_of( _memory_fd ) );
 
 	if ( ! d )
 		return false;
@@ -2136,7 +2136,7 @@ b8 file_stream_new( FileInfo* file, AllocatorInfo allocator )
 	d->allocator = allocator;
 	d->flags     = EFileStream_CLONE_WRITABLE;
 	d->cap       = 0;
-	d->buf       = Array< u8 >::init( allocator );
+	d->buf       = Array<u8>::init( allocator );
 
 	if ( ! d->buf )
 		return false;
@@ -2153,7 +2153,7 @@ b8 file_stream_new( FileInfo* file, AllocatorInfo allocator )
 b8 file_stream_open( FileInfo* file, AllocatorInfo allocator, u8* buffer, sw size, FileStreamFlags flags )
 {
 	GEN_ASSERT_NOT_NULL( file );
-	_memory_fd* d = ( _memory_fd* )alloc( allocator, size_of( _memory_fd ) );
+	_memory_fd* d = (_memory_fd*)alloc( allocator, size_of( _memory_fd ) );
 	if ( ! d )
 		return false;
 	zero_item( file );
@@ -2162,8 +2162,8 @@ b8 file_stream_open( FileInfo* file, AllocatorInfo allocator, u8* buffer, sw siz
 	d->flags     = flags;
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array< u8 > arr = Array< u8 >::init_reserve( allocator, size );
-		d->buf          = arr;
+		Array<u8> arr = Array<u8>::init_reserve( allocator, size );
+		d->buf        = arr;
 
 		if ( ! d->buf )
 			return false;
@@ -2236,11 +2236,11 @@ internal GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array< u8 > arr = { d->buf };
+		Array<u8> arr = { d->buf };
 
 		if ( arr.get_header()->Capacity < new_cap )
 		{
-			if ( ! arr.grow( ( s64 )( new_cap ) ) )
+			if ( ! arr.grow( (s64)( new_cap ) ) )
 				return false;
 			d->buf = arr;
 		}
@@ -2250,7 +2250,7 @@ internal GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 
 	if ( ( d->flags & EFileStream_CLONE_WRITABLE ) && extralen > 0 )
 	{
-		Array< u8 > arr = { d->buf };
+		Array<u8> arr = { d->buf };
 
 		mem_copy( d->buf + offset + rwlen, pointer_add_const( buffer, rwlen ), extralen );
 		d->cap                     = new_cap;
@@ -2273,7 +2273,7 @@ internal GEN_FILE_CLOSE_PROC( _memory_file_close )
 
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array< u8 > arr = { d->buf };
+		Array<u8> arr = { d->buf };
 		arr.free();
 	}
 
@@ -2329,7 +2329,7 @@ u64 read_cpu_time_stamp_counter( void )
 #elif defined( GEN_SYSTEM_EMSCRIPTEN )
 u64 read_cpu_time_stamp_counter( void )
 {
-	return ( u64 )( emscripten_get_now() * 1e+6 );
+	return (u64)( emscripten_get_now() * 1e+6 );
 }
 #elif defined( GEN_CPU_ARM ) && ! defined( GEN_COMPILER_TINYC )
 u64 read_cpu_time_stamp_counter( void )
@@ -2352,7 +2352,7 @@ u64 read_cpu_time_stamp_counter( void )
 		{    // Is it counting?
 			asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"( pmccntr ) );
 			// The counter is set up to count every 64th cycle
-			return ( ( int64_t )pmccntr ) * 64;    // Should optimize to << 6
+			return ( (int64_t)pmccntr ) * 64;    // Should optimize to << 6
 		}
 	}
 #else
@@ -2441,7 +2441,7 @@ u64 time_rel_ms( void )
 
 f64 time_rel( void )
 {
-	return ( f64 )( time_rel_ms() * 1e-3 );
+	return (f64)( time_rel_ms() * 1e-3 );
 }
 #endif
 
