@@ -10,29 +10,39 @@ UGasaAttributeSet::UGasaAttributeSet()
 {
 	InitHealth( 50.f );
 	InitMaxHealth( 100.f );
-	InitMana( 25.f );
+	InitMana( 50.f );
 	InitMaxMana( 50.f );
 }
+#pragma region Rep Notifies
 
 void UGasaAttributeSet::Client_OnRep_Health( FGameplayAttributeData& PrevHealth )
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, Health, PrevHealth )
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Health, PrevHealth );
 }
 
 void UGasaAttributeSet::Client_OnRep_MaxHealth( FGameplayAttributeData& PrevMaxHealth )
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, MaxHealth, PrevMaxHealth )
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxHealth ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), MaxHealth, PrevMaxHealth );
 }
 
 void UGasaAttributeSet::Client_OnRep_Mana( FGameplayAttributeData& PrevMana )
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, Mana, PrevMana )
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Mana ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Mana, PrevMana );
 }
 
 void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana )
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, MaxMana, PrevMaxMana )
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), MaxMana, PrevMaxMana );
 }
+#pragma endregion Rep Notifies
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );

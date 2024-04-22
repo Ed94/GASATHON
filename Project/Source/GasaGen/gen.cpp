@@ -8635,18 +8635,18 @@ namespace parser
 		result->Type    = Function_Body;
 
 		// TODO : Support actual parsing of function body
-		Token start = currtok;
+		Token start = currtok_noskip;
 
 		s32 level   = 0;
-		while ( left && ( currtok.Type != TokType::BraceCurly_Close || level > 0 ) )
+		while ( left && ( currtok_noskip.Type != TokType::BraceCurly_Close || level > 0 ) )
 		{
-			if ( currtok.Type == TokType::BraceCurly_Open )
+			if ( currtok_noskip.Type == TokType::BraceCurly_Open )
 				level++;
 
-			else if ( currtok.Type == TokType::BraceCurly_Close && level > 0 )
+			else if ( currtok_noskip.Type == TokType::BraceCurly_Close && level > 0 )
 				level--;
 
-			eat( currtok.Type );
+			eat( currtok_noskip.Type );
 		}
 
 		Token previous = prevtok;

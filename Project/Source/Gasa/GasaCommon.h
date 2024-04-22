@@ -22,6 +22,7 @@ class UAbilitySystemComponent;
 class UAbilitySystemInterface;
 class UAttributeSet;
 class UCameraComponent;
+class UGameplayEffect;
 class UInputAction;
 class UInputMappingContext;
 class USphereComponent;

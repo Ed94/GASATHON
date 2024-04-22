@@ -307,19 +307,37 @@ void def_attribute_field_initers ( CodeBody body, Array<StringCached> properties
 
 void impl_attribute_fields( CodeBody body, StrC class_name, Array<StringCached> properties )
 {
+	body.append(def_pragma( txt("region Rep Notifies")));
 	for ( String property : properties )
 	{
 		body.append(fmt_newline);
 
-		CodeFn field_impl = parse_function( token_fmt( "class_name", class_name, "property", (StrC)property,
+		CodeFn field_impl = parse_function( token_fmt(
+			"class_name", class_name, "property", (StrC)property, "from_notice", txt("\n// From GAMEPLAYATTRIBUTE_REPNOTIFY\n"),
 		stringize(
 			void <class_name>::Client_OnRep_<property>(FGameplayAttributeData& Prev<property>)
 			{
-				GAMEPLAYATTRIBUTE_REPNOTIFY(<class_name>, <property>, Prev<property>)
+				<from_notice>
+				static FProperty* <class_name>Property = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED(<class_name>, <property>));
+				GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(FGameplayAttribute(<class_name>Property), <property>, Prev<property>);
 			}
 		)));
 
 		body.append( field_impl );
 	}
+	body.append( def_pragma( txt("endregion Rep Notifies")));
+}
+
+inline
+Code gen_GAMEPLAYATTRIBUTE_REPNOTIFY(StrC class_name, StrC property_name, StrC old_value)
+{
+	Code rep_notify = code_fmt(
+		  "class_name",    class_name
+		, "property_name", property_name
+		, "old_value",     old_value,
+	stringize(
+		static FProperty* <class_name>Property = FindFieldChecked<FProperty>(<class_name>::StaticClass(), GET_MEMBER_NAME_CHECKED(<class_name>, <property_name>));
+		GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(FGameplayAttribute(<class_name>Property), <property_name>, <old_value>);
+	));
 }
 #pragma pop_macro("FORCEINLINE")

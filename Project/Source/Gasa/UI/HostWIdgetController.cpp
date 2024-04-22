@@ -29,6 +29,8 @@ void UHostWidgetController::MaxManaChanged( FOnAttributeChangeData const& Attrib
 
 void UHostWidgetController::BroadcastInitialValues()
 {
+	// This function is managed by: GenGasa/GenGasa_HostWidgetController.cpp
+
 	UGasaAttributeSet* GasaAttribs = Cast<UGasaAttributeSet>( Data.Attributes );
 	if ( GasaAttribs )
 	{
@@ -37,10 +39,13 @@ void UHostWidgetController::BroadcastInitialValues()
 		Event_OnManaChanged.Broadcast( GasaAttribs->GetMana() );
 		Event_OnMaxManaChanged.Broadcast( GasaAttribs->GetMaxMana() );
 	}
+	BindCallbacksToDependencies();
 }
 
 void UHostWidgetController::BindCallbacksToDependencies()
 {
+	// This function is managed by: GenGasa/GenGasa_HostWidgetController.cpp
+
 	UGasaAbilitySystemComp* AbilitySystem = Cast<UGasaAbilitySystemComp>( Data.AbilitySystem );
 	UGasaAttributeSet*      GasaAttribs   = Cast<UGasaAttributeSet>( Data.Attributes );
 

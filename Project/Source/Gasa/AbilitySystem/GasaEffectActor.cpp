@@ -1,61 +1,23 @@
 ﻿#include "GasaEffectActor.h"
 
-#include "AbilitySystemInterface.h"
-#include "GasaAttributeSet.h"
-#include "GasaAttributeSet_Inlines.h"
-#include "Components/SphereComponent.h"
-
+#include "GasaAbilitySystemComponent_Inlines.h"
+using namespace Gasa;
 
 AGasaEffectActor::AGasaEffectActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	Mesh   = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
-
-	SetRootComponent(Mesh);
-	Sphere->SetupAttachment(Mesh);
+	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
 
-void AGasaEffectActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
-	, AActor* OtherActor
-	, UPrimitiveComponent* OtherComp
-	, int32 OtherBodyIndex
-	, bool bFromSweep
-	, FHitResult const& SweepResult)
+void AGasaEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> EffectClass)
 {
-	// Demo of "restricted way"
-	if ( ! OtherActor->Implements<UAbilitySystemInterface>())
-		return;
+	UGasaAbilitySystemComp* AS = GetAbilitySystem(Target, true);
+
+	FGameplayEffectContextHandle
+	Context = AS->MakeEffectContext();
+	Context.AddSourceObject(Target);
 	
-	IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(OtherActor);
-	if (ASI == nullptr)
-		return;
-
-	// TODO(Ed): Change this to use a gameplay effect instead
-	UAbilitySystemComponent* AbilitySystem = ASI->GetAbilitySystemComponent();
-	UGasaAttributeSet*       MutAttributes = const_cast<UGasaAttributeSet*>(Gasa::GetAttributeSet(AbilitySystem));
-	
-	MutAttributes->SetHealth( MutAttributes->GetHealth() + 25.f );
-	Destroy();
-}
-
-void AGasaEffectActor::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent
-	, AActor* OtherActor
-	, UPrimitiveComponent* OtherComp
-	, int32 OtherBodyIndex)
-{
-}
-
-void AGasaEffectActor::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-void AGasaEffectActor::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	Sphere->OnComponentBeginOverlap.AddUniqueDynamic(this, &ThisClass::OnOverlapBegin);
-	Sphere->OnComponentEndOverlap.AddUniqueDynamic(this, &ThisClass::OnOverlapEnd);
+	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
+	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
 }
