@@ -166,7 +166,16 @@ SpacesInSquareBrackets: false
 
 Standard: c++20
 
-StatementMacros: ['UPROPERTY', 'UFUNCTION', 'UCLASS', 'USTRUCT', 'UENUM', 'UINTERFACE', 'GENERATED_BODY']
+StatementMacros: [
+  'UPROPERTY',
+  'UFUNCTION',
+  'UCLASS',
+  'USTRUCT',
+  'UENUM',
+  'UINTERFACE',
+  'GENERATED_BODY',
+  'DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam'
+]
 
 TabWidth: 4
 

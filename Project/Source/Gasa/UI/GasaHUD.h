@@ -19,7 +19,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UHostWidgetController> HostWidgetController;
 	
-	void InitOverlay(FWidgetControllerData const* WidgetControllerData);
+	void InitHostWidget(FWidgetControllerData const* WidgetControllerData);
 	
 #pragma region HUD	
 	void ShowHUD() override;

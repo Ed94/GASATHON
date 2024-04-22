@@ -5146,6 +5146,9 @@ Code CodeParam::duplicate()
 
 bool CodeParam::is_equal( Code other )
 {
+	if ( ast == nullptr && other.ast == nullptr)
+		return true;
+
 	if ( ast == nullptr || other.ast == nullptr )
 	{
 		log_failure( "Code::is_equal: Cannot compare code, AST is null!" );

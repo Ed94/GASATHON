@@ -1950,6 +1950,7 @@ void CodeFn::to_string_def( String& result )
 	if ( ast->Attributes )
 		result.append_fmt( " %S ", ast->Attributes.to_string() );
 
+	b32 prefix_specs = false;
 	if ( ast->Specs )
 	{
 		for ( SpecifierT spec : ast->Specs )
@@ -1958,11 +1959,13 @@ void CodeFn::to_string_def( String& result )
 			{
 				StrC spec_str = ESpecifier::to_str( spec );
 				result.append_fmt( " %.*s", spec_str.Len, spec_str.Ptr );
+
+				prefix_specs = true;
 			}
 		}
 	}
 
-	if ( ast->Attributes || ast->Specs )
+	if ( ast->Attributes || prefix_specs )
 		result.append( "\n" );
 
 	if ( ast->ReturnType )
@@ -2000,19 +2003,22 @@ void CodeFn::to_string_fwd( String& result )
 	if ( ast->Attributes )
 		result.append_fmt( "%S ", ast->Attributes.to_string() );
 
+	bool prefix_specs = false;
 	if ( ast->Specs )
 	{
 		for ( SpecifierT spec : ast->Specs )
 		{
-			if ( ESpecifier::is_trailing( spec ) && ! ( spec != ESpecifier::Pure ) )
+			if ( ! ESpecifier::is_trailing( spec ) || ! ( spec != ESpecifier::Pure ) )
 			{
 				StrC spec_str = ESpecifier::to_str( spec );
 				result.append_fmt( " %.*s", spec_str.Len, spec_str.Ptr );
+
+				prefix_specs = true;
 			}
 		}
 	}
 
-	if ( ast->Attributes || ast->Specs )
+	if ( ast->Attributes || prefix_specs )
 	{
 		result.append( "\n" );
 	}
@@ -2894,17 +2900,17 @@ internal void define_constants()
 
 	access_private       = make_code();
 	access_private->Type = ECode::Access_Private;
-	access_private->Name = get_cached_string( txt( "private:" ) );
+	access_private->Name = get_cached_string( txt( "private:\n" ) );
 	access_private.set_global();
 
 	access_protected       = make_code();
 	access_protected->Type = ECode::Access_Protected;
-	access_protected->Name = get_cached_string( txt( "protected:" ) );
+	access_protected->Name = get_cached_string( txt( "protected:\n" ) );
 	access_protected.set_global();
 
 	access_public       = make_code();
 	access_public->Type = ECode::Access_Public;
-	access_public->Name = get_cached_string( txt( "public:" ) );
+	access_public->Name = get_cached_string( txt( "public:\n" ) );
 	access_public.set_global();
 
 	attrib_api_export = def_attributes( code( GEN_API_Export_Code ) );

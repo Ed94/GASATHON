@@ -94,6 +94,7 @@ if ( $vendor -match "clang" )
 	# https://clang.llvm.org/docs/ClangCommandLineReference.html
 	$flag_all_c 					   = '-x c'
 	$flag_all_cpp                      = '-x c++'
+	$flag_cpp_version                  = '-std='
 	$flag_compile                      = '-c'
 	$flag_color_diagnostics            = '-fcolor-diagnostics'
 	$flag_no_color_diagnostics         = '-fno-color-diagnostics'
@@ -318,6 +319,7 @@ if ( $vendor -match "msvc" )
 	# https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-by-category?view=msvc-170
 	$flag_all_c 					 = '/TC'
 	$flag_all_cpp                    = '/TP'
+	$flag_cpp_version                = '/std:'
 	$flag_compile			         = '/c'
 	$flag_debug                      = '/Zi'
 	$flag_define		             = '/D'

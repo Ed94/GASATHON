@@ -28,7 +28,7 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 	AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
 	AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
 	FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
-	HUD->InitOverlay(& Data);
+	HUD->InitHostWidget(& Data);
 }
 
 // TODO(Ed): We need to setup Net Slime...
@@ -49,6 +49,6 @@ void APlayerCharacter::OnRep_PlayerState()
 		AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
 		AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
 		FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
-		HUD->InitOverlay(& Data);
+		HUD->InitHostWidget(& Data);
 	}
 }

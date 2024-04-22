@@ -7,27 +7,19 @@ USTRUCT(BlueprintType)
 struct GASA_API FWidgetControllerData
 {
 	GENERATED_BODY()
-
+public:
 	FWidgetControllerData() = default;
 
-	FWidgetControllerData(AGasaPlayerController*   Controller
-						, AGasaPlayerState*        PlayerState
-						, UAbilitySystemComponent* AbilitySystem
-						, UAttributeSet*           Attributes )
-#if 1
+	FWidgetControllerData
+	( AGasaPlayerController*   Controller
+	, AGasaPlayerState*        PlayerState
+	, UAbilitySystemComponent* AbilitySystem
+	, UAttributeSet*           Attributes )
 	: Controller(Controller)
 	, PlayerState(PlayerState)
 	, AbilitySystem(AbilitySystem)
 	, Attributes(Attributes)
-#endif
-	{
-#if 0
-		this->Controller    = Controller;
-		this->PlayerState   = PlayerState;
-		this->AbilitySystem = AbilitySystem;
-		this->Attributes    = Attributes;
-#endif
-	}
+	{}
 	
 	UPROPERTY(BlueprintReadOnly, Category="Player")
 	TObjectPtr<AGasaPlayerController> Controller;
@@ -50,4 +42,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Player")
 	FWidgetControllerData Data;
+
+	UFUNCTION()
+	virtual void BroadcastInitialValues() {};
 };

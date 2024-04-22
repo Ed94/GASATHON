@@ -46,6 +46,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetGlassStyle(FSlateBrush brush);
+
+	UFUNCTION(BlueprintCallable, Category="Globe")
+	void SetPercentage(float CurrentValue, float MaxValue);
 	
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetSize(float width, float height);

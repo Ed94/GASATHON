@@ -79,6 +79,7 @@ function build-gengasa
 
 	$compiler_args = @()
 	$compiler_args += ($flag_define + 'GEN_TIME')
+	$compiler_args += ($flag_cpp_version + 'c++17')
 
 	$linker_args = @()
 	$linker_args += $flag_link_win_subsystem_console

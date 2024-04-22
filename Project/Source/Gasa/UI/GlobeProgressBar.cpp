@@ -89,6 +89,11 @@ void UGlobeProgressBar::SetGlassStyle(FSlateBrush brush)
 	Glass->SetBrush(brush);
 }
 
+void UGlobeProgressBar::SetPercentage(float CurrentValue, float MaxValue)
+{
+	Bar->SetPercent( MaxValue > 0.f ? CurrentValue / MaxValue : 0.f );
+}
+
 void UGlobeProgressBar::SetSize(float width, float height)
 {
 	Root_SB->SetWidthOverride(  width );

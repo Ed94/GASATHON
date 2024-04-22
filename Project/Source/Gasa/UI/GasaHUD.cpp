@@ -6,14 +6,16 @@
 #include "Blueprint/UserWidget.h"
 using namespace Gasa;
 
-void AGasaHUD::InitOverlay(FWidgetControllerData const* WidgetControllerData)
+void AGasaHUD::InitHostWidget(FWidgetControllerData const* WidgetControllerData)
 {
 	HostWidget = CreateWidget<UHUDHostWidget>( GetWorld() 
 		, GetDevOptions()->Template_HUD_HostUI.LoadSynchronous() );
 
 	HostWidgetController = NewObject<UHostWidgetController>(this, GetDevOptions()->Template_HostWidgetController.Get());
+	HostWidgetController->Data = (* WidgetControllerData);
 	HostWidget->SetWidgetController(HostWidgetController);
-
+	
+	HostWidgetController->BroadcastInitialValues();
 	HostWidget->AddToViewport();
 }
 

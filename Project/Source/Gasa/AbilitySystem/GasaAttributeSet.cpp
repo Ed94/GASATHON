@@ -8,9 +8,9 @@
 
 UGasaAttributeSet::UGasaAttributeSet()
 {
-	InitHealth( 100.f );
+	InitHealth( 80.f );
 	InitMaxHealth( 100.f );
-	InitMana( 50.f );
+	InitMana( 20.f );
 	InitMaxMana( 50.f );
 }
 
@@ -33,7 +33,6 @@ void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMan
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY( UGasaAttributeSet, MaxMana, PrevMaxMana )
 }
-
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );

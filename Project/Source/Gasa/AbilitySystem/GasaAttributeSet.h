@@ -90,7 +90,6 @@ public:
 	#pragma endregion Setters
 
 #pragma region UObject
-
 	    void
 	    GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 #pragma endregion UObject
