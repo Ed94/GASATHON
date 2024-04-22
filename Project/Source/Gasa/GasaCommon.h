@@ -14,6 +14,7 @@
 
 #pragma region Engine Forwards
 struct FInputActionValue;
+struct FOnAttributeChangeData;
 
 class IAbilitySystemInterface;
 
@@ -34,6 +35,8 @@ class UCogWindowManager;
 // Gasa
 
 #pragma region Forwards
+struct FWidgetControllerData;
+
 class ACameraMount;
 class AGasaCharacter;
 class AGasaGameInstance;
@@ -52,8 +55,6 @@ class UGasaSizeBox;
 class UHostWidgetController;
 class UHUDHostWidget;
 class UWidgetController;
-
-struct FWidgetControllerData;
 #pragma endregion Forwards
 
 #pragma region Logging

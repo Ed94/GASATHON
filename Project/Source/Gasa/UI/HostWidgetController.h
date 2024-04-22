@@ -23,9 +23,15 @@ public:
 
 	UPROPERTY( BlueprintAssignable, Category = "Attributes" )
 	FAttributeFloatChangedSig Event_OnMaxManaChanged;
+
+	void HealthChanged( FOnAttributeChangeData const& Data );
+	void MaxHealthChanged( FOnAttributeChangeData const& Data );
+	void ManaChanged( FOnAttributeChangeData const& Data );
+	void MaxManaChanged( FOnAttributeChangeData const& Data );
 #pragma endregion Attribute Events
 
 #pragma region WidgetController
 	void BroadcastInitialValues() override;
+	void BindCallbacksToDependencies() override;
 #pragma endregion WidgetController
 };

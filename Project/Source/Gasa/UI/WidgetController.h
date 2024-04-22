@@ -45,4 +45,5 @@ public:
 
 	UFUNCTION()
 	virtual void BroadcastInitialValues() {};
+	virtual void BindCallbacksToDependencies() {};
 };
