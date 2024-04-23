@@ -24,7 +24,7 @@ public:
 	UFUNCTION()
 	void OwningClient_OnGameFrameworkInitialized(AGasaPlayerController* PC);
 
-	UFUNCTION(BlueprintCallable, meta=(DisplayName = "On Game Framework Initialized"))
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta=(DisplayName = "On Game Framework Initialized"))
 	void BP_OnGameFrameworkInitialized();
 #pragma endregion GameFramework
 	
@@ -59,6 +59,8 @@ public:
 
 #pragma region GameModeBase
 	void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	void FinishRestartPlayer(AController* NewPlayer, const FRotator& StartRotation) override;
 
 	void GenericPlayerInitialization(AController* C) override;
 

@@ -1,9 +1,9 @@
 ﻿#include "GasaGameMode.h"
 
+#include "Online/CoreOnline.h"
 #include "GasaGameInstance.h"
 #include "GasaGameState.h"
 #include "GasaPlayerController.h"
-#include "GasaPlayerState.h"
 #include "Engine/Player.h"
 #include "GameFramework/GameSession.h"
 #include "GameFramework/GameState.h"
@@ -69,6 +69,33 @@ void AGasaGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	NetLog("EndPlay");
+}
+
+void AGasaGameMode::FinishRestartPlayer(AController* NewPlayer, const FRotator& StartRotation)
+{
+	// Super::FinishRestartPlayer(NewPlayer, StartRotation);
+	{
+		NewPlayer->Possess(NewPlayer->GetPawn());
+
+		// If the Pawn is destroyed as part of possession we have to abort
+		if (!IsValid(NewPlayer->GetPawn()))
+		{
+			FailedToRestartPlayer(NewPlayer);
+		}
+		else
+		{
+			// Set initial control rotation to starting rotation rotation
+			NewPlayer->ClientSetRotation(NewPlayer->GetPawn()->GetActorRotation(), true);
+
+			FRotator NewControllerRot = StartRotation;
+			NewControllerRot.Roll = 0.f;
+			NewPlayer->SetControlRotation(NewControllerRot);
+
+			SetPlayerDefaults(NewPlayer->GetPawn());
+
+			K2_OnRestartPlayer(NewPlayer);
+		}
+	}
 }
 
 void AGasaGameMode::GenericPlayerInitialization(AController* C)
@@ -360,10 +387,10 @@ void AGasaGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		UGasaGameInstance* GI = GetGameInstance<UGasaGameInstance>();
 		
-		// int32 numconnections = gi->sessionsettings.bpublicgame
-			// ? GI->SessionSettings.PublicConnections : GI->SessionSettings.PrivateConnections;
-
 #if 0
+		int32 numconnections = GI->sessionsettings.bPublicGame
+			? GI->SessionSettings.PublicConnections : GI->SessionSettings.PrivateConnections;
+		
 		if (GS->OnlinePlayers.Num() < NumConnections)
 		{
 			GS->OnlinePlayers.Init( nullptr, NumConnections );
@@ -388,8 +415,8 @@ void AGasaGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 
 	AGasaPlayerController* PC = Cast<AGasaPlayerController>(NewPlayer);
-	// if (PC)
-	// 	PC->Event_OnNetOwner_GameplayFrameworkInitialized.AddDynamic(this, &ThisClass::OwningClient_OnGameFrameworkInitialized);
+	if (PC)
+		PC->Event_NetOwner_OnGameFrameworkInitialized.AddDynamic(this, &ThisClass::OwningClient_OnGameFrameworkInitialized);
 }
 
 void AGasaGameMode::PostSeamlessTravel()
@@ -401,11 +428,7 @@ void AGasaGameMode::PostSeamlessTravel()
 void AGasaGameMode::SetPlayerDefaults(APawn* PlayerPawn)
 {
 	InitializeHUDForPlayer(Cast<APlayerController>(PlayerPawn->GetController()));
-	
-	// Super::SetPlayerDefaults(PlayerPawn);
-	{
-		PlayerPawn->SetPlayerDefaults();
-	}
+	Super::SetPlayerDefaults(PlayerPawn);
 }
 
 void AGasaGameMode::SetSeamlessTravelViewTarget(APlayerController* PC)

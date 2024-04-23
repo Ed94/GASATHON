@@ -48,6 +48,7 @@ public class Gasa : ModuleRules
             "Core",
             
             "AIModule",
+            "CoreOnline",
             "CoreUObject", 
             "DeveloperSettings",
             "Engine", 

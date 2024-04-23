@@ -2,6 +2,8 @@
 
 #include "GasaEngineMinimal.h"
 
+#include "GasaCommon.generated.h"
+
 #define global        
 #define internal      static
 #define local_persist static
@@ -18,14 +20,19 @@
 #pragma region Engine Forwards
 struct FInputActionValue;
 struct FOnAttributeChangeData;
+struct FReplicationFlags;
 
 class AActor;
+class APawn;
 class APostProcessVolume;
+
+class FOutBunch;
 
 class IAbilitySystemInterface;
 
 class UAbilitySystemComponent;
 class UAbilitySystemInterface;
+class UActorChannel;
 class UAttributeSet;
 class UCameraComponent;
 class UGameplayEffect;
@@ -189,3 +196,12 @@ namespace Gasa
 	constexpr float _480Hz = .002f;
 }
 #pragma endregion Timing
+
+#pragma region Delegates
+DECLARE_MULTICAST_DELEGATE(FOnTravelDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTravelSig);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPawnSig);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerCharacterReadySig, APlayerCharacter*, Character);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnReadySig, APawn*, Pawn);
+#pragma endregion Delegates
+

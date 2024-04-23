@@ -11,13 +11,12 @@
 #include "AbilitySystem/GasaAttributeSet.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/PostProcessVolume.h"
+#include "Game/GasaGameInstance.h"
 #include "Game/GasaLevelScriptActor.h"
+#include "Game/GasaPlayerController.h"
 #include "Materials/MaterialInstanceDynamic.h"
-
-void AGasaCharacter::SetHighlight(EHighlight Desired)
-{
-	HighlightState = Desired;
-}
+#include "Networking/GasaNetLibrary_Inlines.h"
+using namespace Gasa;
 
 AGasaCharacter::AGasaCharacter()
 {
@@ -51,13 +50,112 @@ AGasaCharacter::AGasaCharacter()
 		
 		Attributes = CreateDefaultSubobject<UGasaAttributeSet>("Attributes");
 	}
+
+	// Replication
+	
+	bReplicates            = false;
+	bNetLoadOnClient       = true;
+	NetDormancy            = DORM_Awake;
+	NetCullDistanceSquared = NetCullDist_Medium;
+	NetUpdateFrequency     = 30.0f;
+	MinNetUpdateFrequency  = 5.0f;
+	NetPriority            = 2.0f;
+
+	ACharacter::SetReplicateMovement(true);
 }
 
+#pragma region GameFramework
+void AGasaCharacter::Controller_OnPawnPossessed()
+{
+	NetLog("Controller confirmed possession.");
+
+	// Do stuff here that you needed to wait for the player controller be aware of you for.
+	BP_Controller_OnPawnPossessed();
+
+	if (Event_OnPawnReady.IsBound())
+		Event_OnPawnReady.Broadcast();	
+}
+
+void AGasaCharacter::ServerRPC_R_NotifyClientPawnReady_Implementation()
+{
+	Event_OnPawnReady.Broadcast();
+}
+#pragma endregion GameFramework
+
+#pragma region Highlight
+void AGasaCharacter::SetHighlight(EHighlight Desired)
+{
+	HighlightState = Desired;
+}
+#pragma endregion Highlight
+
 #pragma region Pawn
+void AGasaCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+}
+
 void AGasaCharacter::PossessedBy(AController* NewController)
 {
-	Super::PossessedBy(NewController);
+	NetLog("Pawn possessed.");
 
+	AController* OldController;
+	
+	// APawn::PossessedBy
+	{
+		SetOwner(NewController);
+		OldController = Controller;
+		Controller = NewController;
+
+		ForceNetUpdate();
+
+	#if UE_WITH_IRIS
+		// The owning connection depends on the Controller having the new value.
+		UpdateOwningNetConnection();
+	#endif
+		
+		if (Controller->PlayerState != nullptr)
+			SetPlayerState(Controller->PlayerState);
+
+		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+		{
+			if (GetNetMode() != NM_Standalone)
+			{
+				SetReplicates(true);
+				SetAutonomousProxy(true);
+			}
+		}
+		else
+			CopyRemoteRoleFrom(GetDefault<APawn>());
+	}
+
+	if (AGasaPlayerController* PC = Cast<AGasaPlayerController>(NewController))
+	{
+		PC->Event_OnPawnPossessed.AddUniqueDynamic(this, & ThisClass::Controller_OnPawnPossessed);
+	}
+	else
+	{
+		NetLog("Controller assigned to GasaCharacter is not derived from GasaPlayerController.", ELogV::Warning);
+		NetLog("Controller: Name: " + NewController->GetName() + " Class: " + NewController->GetClass()->GetName(), ELogV::Warning);
+	}
+
+	// cont. APawn::PossessedBy
+	{
+		// Dispatch Blueprint event if necessary
+		if (OldController != NewController)
+		{
+			ReceivePossessed(Controller);
+			NotifyControllerChanged();
+		}
+	}
+
+	// ACharacter::PossessedBy
+	{
+		// If we are controlled remotely, set animation timing to be driven by client's network updates. So timing and events remain in sync.
+		if (GetMesh() && IsReplicatingMovement() && (GetRemoteRole() == ROLE_AutonomousProxy && GetNetConnection() != nullptr))
+			GetMesh()->bOnlyAllowAutonomousTickPose = true;
+	}
+	
 	if (bAutoAbilitySystem)
 	{
 		// TODO(Ed): Do we need to do this for enemies?
@@ -65,9 +163,14 @@ void AGasaCharacter::PossessedBy(AController* NewController)
 	}
 }
 
-void AGasaCharacter::OnRep_PlayerState()
+void AGasaCharacter::SetPlayerDefaults()
 {
-	Super::OnRep_PlayerState();
+	Super::SetPlayerDefaults();
+}
+
+void AGasaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 #pragma endregion Pawn
 

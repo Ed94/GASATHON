@@ -19,7 +19,7 @@ public:
 
 #pragma region GameFramework
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	bool bOverrideGameplayFrameworkReady = false;
+	bool bOverrideGameFrameworkReady = false;
 
 	UFUNCTION()
 	void OnGameFrameworkInitialized();

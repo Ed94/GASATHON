@@ -1,3 +1,4 @@
+#pragma once
 #include "GameFramework/GameState.h"
 
 #include "GasaCommon.h"
@@ -5,10 +6,6 @@
 #include "Networking/GasaNetLibrary.h"
 
 #include "GasaGameState.generated.h"
-
-DECLARE_MULTICAST_DELEGATE( FOnTravelDelegate );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE( FOnTravelSig );
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerCharacterReadySig, APlayerCharacter*, Character);
 
 UCLASS( Blueprintable )
 class GASA_API AGasaGameState : public AGameState
@@ -29,11 +26,21 @@ public:
 	AGasaGameState();
 
 #pragma region GameFramework
+	UPROPERTY(BlueprintAssignable)
+	FOnPawnReadySig Event_OnPlayerPawnReady;
+	
 	UFUNCTION()
 	void OnGameFrameworkInitialized();
 
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, meta=(DisplayName = "Game Framework Initialized"))
 	void BP_OnGameFrameworkInitialized();
+
+	UFUNCTION()
+	void NotifyPlayerPawnReady(APawn* Pawn)
+	{
+		if (Event_OnPlayerPawnReady.IsBound())
+			Event_OnPlayerPawnReady.Broadcast(Pawn);
+	}
 #pragma endregion GameFramework
 
 #pragma region Networking
@@ -41,7 +48,7 @@ public:
 	AGasaPlayerState* ListenServerHost;
 
 	UPROPERTY(ReplicatedUsing = "Client_OnRep_OnlinePlayers", BlueprintReadOnly)
-	TArray<AGasaPlayerState> OnlinePlayers;
+	TArray<AGasaPlayerState*> OnlinePlayers;
 
 	UFUNCTION()
 	void Client_OnRep_OnlinePlayers();

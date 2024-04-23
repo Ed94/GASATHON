@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Networking/GasaNetLibrary_Inlines.h"
 using namespace Gasa;
 
 #pragma region Game Framework
@@ -54,7 +55,7 @@ void AGasaLevelScriptActor::BeginPlay()
 	if(GI)
 		GI->Event_OnGameFrameworkInitialized.AddUniqueDynamic(this, & ThisClass::OnGameFrameworkInitialized);
 
-	if (!bOverrideGameplayFrameworkReady)
+	if (!bOverrideGameFrameworkReady)
 		GI->NotifyGameFrameworkClassReady(EGameFrameworkClassFlag::Levels);
 }
 #pragma endregion Actor

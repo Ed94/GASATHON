@@ -21,8 +21,8 @@ enum class EGameFrameworkClassFlag : uint8
 UENUM(BlueprintType)
 enum class EGameFrameworkState : uint8
 {
-	Initialized,
-	Uninitialized
+	Uninitialized,
+	Initialized
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameFrameworkInitializedSig);
@@ -32,6 +32,8 @@ class GASA_API UGasaGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 public:
+
+	UGasaGameInstance();
 
 	UPROPERTY(VisibleAnywhere, Category="Dev Cache")
 	FGasaDevOptionsCache DevOptionsCache;

@@ -5,6 +5,7 @@
 #include "GasaPlayerState.h"
 #include "GasaGameInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "Networking/GasaNetLibrary_Inlines.h"
 using namespace Gasa;
 
 AGasaGameState::AGasaGameState()
@@ -15,7 +16,6 @@ AGasaGameState::AGasaGameState()
     PrimaryActorTick.bStartWithTickEnabled = true;
 
 	// Replication
-	
 	bReplicates            = true;
 	bNetLoadOnClient       = false;
 	NetDormancy            = DORM_Awake;

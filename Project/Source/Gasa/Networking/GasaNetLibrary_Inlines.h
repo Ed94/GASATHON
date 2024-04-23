@@ -1,34 +1,11 @@
-﻿#include "GasaNetLibrary.h"
-#include "GasaObject.h"
+﻿#pragma once
+#include "GasaNetLibrary.h"
 #include "Engine/NetDriver.h"
-#include "Game/GasaGameMode.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Engine/World.h"
 
 namespace Gasa
 {
 	// TODO(Ed): Profile these...
-
-	inline
-	void DrawNetCullingSphere(const UObject* Context, float Duration, float Thickness)
-	{
-		const AActor* actor = nullptr;
-	
-		if (Context->IsA(UGasaObject::StaticClass()))
-			actor = Cast<AActor>(Context->GetOuter());
-		
-		else if (Context->IsA(AActor::StaticClass()))
-			actor = Cast<AActor>(Context);	
-
-		if (actor)
-			UKismetSystemLibrary::DrawDebugSphere(actor
-				, actor->GetActorLocation()
-				, UKismetMathLibrary::Sqrt(actor->NetCullDistanceSquared) * 2
-				, 12
-				, FLinearColor(FColor::Emerald)
-				, Duration
-				, Thickness);
-	}
 
 	inline
 	ENetworkMode GetNetworkMode(UObject const* Context)
@@ -110,8 +87,6 @@ namespace Gasa
 		else if (Context->GetClass()->IsChildOf(UActorComponent::StaticClass()))
 			Actor = Cast<UActorComponent>(Context)->GetOwner();
 		// Its assumed that all GasaObjects have an outer actor
-		else if (Context->IsA(UGasaObject::StaticClass()))
-			Actor = Cast<AActor>(Context->GetOuter());
 		else
 		{
 			UObject const* Outermost = Context->GetOutermostObject();
@@ -127,23 +102,7 @@ namespace Gasa
 		bool Result = Actor->HasLocalNetOwner();
 		return Result;
 	}
-
-	inline
-	bool IsNetOwner(UGasaObject const* Context)
-	{
-		if (Context == nullptr || Context->GetWorld() == nullptr)
-			return false;
-
-		AActor const* Actor = Cast<AActor>(Context->GetOuter());
-		if (Actor == nullptr)
-		{
-			Log("Could not get actor reference", ELogV::Warning, LogGasaNet);
-			return false;
-		}
-		bool Result = Actor->HasLocalNetOwner();
-		return Result;	
-	}
-
+	
 	inline
 	bool IsNetOwner(AActor const* Actor)
 	{
@@ -177,8 +136,6 @@ namespace Gasa
 		else if (Context->GetClass()->IsChildOf(UActorComponent::StaticClass()))
 			Actor = Cast<UActorComponent>(Context)->GetOwner();
 		// Its assumed that all GasaObjects have an outer actor
-		else if (Context->IsA(UGasaObject::StaticClass()))
-			Actor = Cast<AActor>(Context->GetOuter());
 		else
 		{
 			UObject const* Outermost = Context->GetOutermostObject();
@@ -186,22 +143,6 @@ namespace Gasa
 				Actor = Cast<AActor>(Outermost);
 		}
 
-		if (Actor == nullptr)
-		{
-			Log("Could not get actor reference", ELogV::Warning, LogGasaNet);
-			return false;
-		}
-		bool Result = Actor->GetLocalRole() == ENetRole::ROLE_SimulatedProxy;
-		return Result;	
-	}
-
-	inline
-	bool IsSimulatedProxy(UGasaObject const* Context)
-	{
-		if (Context == nullptr || Context->GetWorld() == nullptr)
-			return false;
-
-		AActor const* Actor = Cast<AActor>(Context->GetOuter());
 		if (Actor == nullptr)
 		{
 			Log("Could not get actor reference", ELogV::Warning, LogGasaNet);
@@ -233,8 +174,6 @@ namespace Gasa
 		else if (Context->GetClass()->IsChildOf(UActorComponent::StaticClass()))
 			Actor = Cast<UActorComponent>(Context)->GetOwner();
 		// Its assumed that all GasaObjects have an outer actor
-		else if (Context->IsA(UGasaObject::StaticClass()))
-			Actor = Cast<AActor>(Context->GetOuter());
 		else
 		{
 			UObject const* Outermost = Context->GetOutermostObject();
@@ -251,22 +190,6 @@ namespace Gasa
 		return Result;
 	}
 	
-	inline
-	bool ServerAuthorized(UGasaObject const* Context)
-	{
-		if (Context == nullptr || Context->GetWorld() == nullptr)
-			return false;
-
-		AActor const* Actor = Cast<AActor>(Context->GetOuter());
-		if (Actor == nullptr)
-		{
-			Log("Could not get actor reference", ELogV::Warning, LogGasaNet);
-			return false;
-		}
-		bool Result = Actor->HasAuthority();
-		return Result;
-	}
-
 	inline
 	bool ServerAuthorized(AActor const* Actor)
 	{

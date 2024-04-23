@@ -8,6 +8,34 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogGasaNet, Log, All);
 
+#define NullGuard( Object_, Logger_, Message_ )		\
+do {												\
+	if ( ! IsValid(Object_) )						\
+	{												\
+		Logger_( (Message_) , ELogV::Error );		\
+		ensure( IsValid(Object_) );				    \
+		return;										\
+	}												\
+} while (0)
+
+#define NetGuard( Condition_, Logger_, Message_ )	\
+do {												\
+	if ( Condition_ )								\
+	{												\
+		Logger_( (Message_) , ELogV::Error );		\
+		ensure( Condition_ );						\
+		return;										\
+	}												\
+} while (0)
+
+#if UE_BUILD_DEVELOPMENT
+#			define NullGuard_DEV	NullGuard
+#			define NetGuard_DEV		NetGuard
+#else
+#			define NullGuard_DEV( Object_, Logger_, Message_)
+#			define NetGuard_DEV( Object_, Logger_, Message_)
+#endif
+
 UENUM(BlueprintType)
 enum class ENetworkMode : uint8
 {
@@ -39,13 +67,11 @@ namespace Gasa
 	bool IsListenServer(UObject const* Context);
 
 	bool IsNetOwner(UObject const* Context);
-	bool IsNetOwner(UGasaObject const* Context);
 	bool IsNetOwner(AActor const* Context);
 
 	bool IsServer(UObject const* Context);
 	
 	bool IsSimulatedProxy(UObject const* Context);
-	bool IsSimulatedProxy(UGasaObject const* Context);
 	bool IsSimulatedProxy(AActor const* Context);
 	
 	void NetLog( UObject const* Context, FString Message, EGasaVerbosity Verbosity = EGasaVerbosity::Log
@@ -56,6 +82,7 @@ namespace Gasa
 		, const ANSICHAR*   Func      = __builtin_FUNCTION() );
 	
 	bool ServerAuthorized(UObject const* Context);
-	bool ServerAuthorized(UGasaObject const* Context);
 	bool ServerAuthorized(AActor const* Context);
 }
+
+#include "GasaNetLibrary_Inlines.h"

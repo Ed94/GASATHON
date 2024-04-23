@@ -7,29 +7,34 @@ using namespace Gasa;
 #pragma region GameFramework
 // TODO(Ed): Make a NetLog
 
+UGasaGameInstance::UGasaGameInstance()
+{
+	GameFrameworkState = EGameFrameworkState::Uninitialized;
+}
+
 void UGasaGameInstance::NotifyGameFrameworkClassReady(EGameFrameworkClassFlag ClassReady)
 {
 	switch (ClassReady)
 	{
 		case EGameFrameworkClassFlag::GameMode:
 			GameFrameworkClassesState |= (uint32)EGameFrameworkClassFlag::GameMode;
-			NetLog("Gameplay Framework class ready: Game State", ELogV::Log, LogGasaNet );
+			NetLog("Game Framework class ready: Game State", ELogV::Log, LogGasaNet );
 		break;
 		case EGameFrameworkClassFlag::GameState:
 			GameFrameworkClassesState |= (uint32)EGameFrameworkClassFlag::GameState;
-			NetLog("Gameplay Framework class ready: Game State", ELogV::Log, LogGasaNet );
+			NetLog("Game Framework class ready: Game State", ELogV::Log, LogGasaNet );
 		break;
 		case EGameFrameworkClassFlag::PlayerController:
 			GameFrameworkClassesState |= (uint32)EGameFrameworkClassFlag::PlayerController;
-			NetLog("Gameplay Framework class ready: Player Controller", ELogV::Log, LogGasaNet);
+			NetLog("Game Framework class ready: Player Controller", ELogV::Log, LogGasaNet);
 		break;
 		case EGameFrameworkClassFlag::PlayerState:
 			GameFrameworkClassesState |= (uint32)EGameFrameworkClassFlag::PlayerState;
-			NetLog("Gameplay Framework class ready: Player State", ELogV::Log, LogGasaNet);
+			NetLog("Game Framework class ready: Player State", ELogV::Log, LogGasaNet);
 		break;
 		case EGameFrameworkClassFlag::Levels:
 			GameFrameworkClassesState |= (uint32)EGameFrameworkClassFlag::Levels;
-			NetLog("Gameplay Framework class ready: Levels", ELogV::Log, LogGasaNet);
+			NetLog("Game Framework class ready: Levels", ELogV::Log, LogGasaNet);
 		break;
 	}
 	ProcessGameFrameworkState();
@@ -68,7 +73,7 @@ void UGasaGameInstance::ProcessGameFrameworkState()
 			if (GameFrameworkClassesState == InitializedFlags)
 			{
 				GameFrameworkState = EGameFrameworkState::Initialized;
-				NetLog("Gameplay Framework initialized");
+				NetLog("Game Framework initialized");
 				
 				Event_OnGameFrameworkInitialized.Broadcast();
 			}
@@ -84,8 +89,5 @@ void UGasaGameInstance::Init()
 	Super::Init();
 
 	DevOptionsCache.CachedDevOptions();
-
-	using namespace Gasa;
-	NetLog(FString::Printf(TEXT("UObject Size:  %d RT: %d"), sizeof(UObject), UObject::StaticClass()->PropertiesSize ));
 }
-#pragma region GameInstance
+#pragma endregion GameInstance

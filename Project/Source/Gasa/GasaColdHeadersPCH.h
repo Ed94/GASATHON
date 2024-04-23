@@ -35,8 +35,8 @@
 #include "Game/GasaViewport.h"
 
 // Networking
-// #include "Networking/GasaNetLibrary.h"
-// #include "Networking/GasaNetLibrary_Inlines.h"
+#include "Networking/GasaNetLibrary.h"
+#include "Networking/GasaNetLibrary_Inlines.h"
 
 // UI
 // #include "UI/GasaCanvas.h"
