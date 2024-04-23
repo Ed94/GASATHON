@@ -8,34 +8,31 @@
 
 UGasaAttributeSet::UGasaAttributeSet()
 {
-	InitHealth( 50.f );
+	InitHealth( 100.f );
 	InitMaxHealth( 100.f );
 	InitMana( 50.f );
 	InitMaxMana( 50.f );
 }
-#pragma region Rep Notifies
 
+#pragma region Rep Notifies
 void UGasaAttributeSet::Client_OnRep_Health( FGameplayAttributeData& PrevHealth )
 {
 	// From GAMEPLAYATTRIBUTE_REPNOTIFY
 	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
 	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Health, PrevHealth );
 }
-
 void UGasaAttributeSet::Client_OnRep_MaxHealth( FGameplayAttributeData& PrevMaxHealth )
 {
 	// From GAMEPLAYATTRIBUTE_REPNOTIFY
 	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxHealth ) );
 	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), MaxHealth, PrevMaxHealth );
 }
-
 void UGasaAttributeSet::Client_OnRep_Mana( FGameplayAttributeData& PrevMana )
 {
 	// From GAMEPLAYATTRIBUTE_REPNOTIFY
 	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Mana ) );
 	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Mana, PrevMana );
 }
-
 void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana )
 {
 	// From GAMEPLAYATTRIBUTE_REPNOTIFY
@@ -43,6 +40,7 @@ void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMan
 	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), MaxMana, PrevMaxMana );
 }
 #pragma endregion Rep Notifies
+
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );

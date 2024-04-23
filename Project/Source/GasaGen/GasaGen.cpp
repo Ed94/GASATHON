@@ -18,6 +18,7 @@ using namespace gen;
 #include "GasaGen_ChangeBPActionMenu.cpp"
 #include "GasaGen_DevOptionsCache.cpp"
 #include "GasaGen_HostWidgetController.cpp"
+#include "GasaGen_NetSlime.cpp"
 
 int gen_main()
 {
@@ -80,6 +81,7 @@ int gen_main()
 	gen_UGasaAttributeSet();
 	gen_FGasaDevOptionsCache();
 	gen_UHostWidgetController();
+	// gen_netslime_interfaces();
 
 	// One offs
 	if (0)

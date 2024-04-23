@@ -10,13 +10,13 @@ AGasaEffectActor::AGasaEffectActor()
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
 
-void AGasaEffectActor::ApplyEffectToTarget(AActor* Target, TSubclassOf<UGameplayEffect> EffectClass)
+void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEffect> EffectClass)
 {
-	UGasaAbilitySystemComp* AS = GetAbilitySystem(Target, true);
+	UGasaAbilitySystemComp* AS = GetAbilitySystem(Actor, true);
 
 	FGameplayEffectContextHandle
 	Context = AS->MakeEffectContext();
-	Context.AddSourceObject(Target);
+	Context.AddSourceObject(Actor);
 	
 	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
 	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );

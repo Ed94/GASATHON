@@ -4,6 +4,7 @@
 #include "GasaAttributeSet.h"
 #include "GasaAttributeSet_Inlines.h"
 #include "Components/SphereComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 
 AGasaEffectActorDemo::AGasaEffectActorDemo()

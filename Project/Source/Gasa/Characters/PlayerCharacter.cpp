@@ -25,10 +25,13 @@ void APlayerCharacter::PossessedBy(AController* NewController)
 		AbilitySystem->InitAbilityActorInfo(PS, this);
 	}
 
-	AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
-	AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
-	FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
-	HUD->InitHostWidget(& Data);
+	if (IsLocallyControlled())
+	{
+		AGasaPlayerController* PC   = GetController<AGasaPlayerController>();
+		AGasaHUD*              HUD  = PC->GetHUD<AGasaHUD>();
+		FWidgetControllerData  Data = { PC, PS, AbilitySystem, Attributes };
+		HUD->InitHostWidget(& Data);
+	}
 }
 
 // TODO(Ed): We need to setup Net Slime...

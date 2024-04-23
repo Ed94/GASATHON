@@ -9,7 +9,10 @@
 
 #include "AbilitySystem/GasaAbilitySystemComponent.h"
 #include "AbilitySystem/GasaAttributeSet.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/PostProcessVolume.h"
 #include "Game/GasaLevelScriptActor.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 void AGasaCharacter::SetHighlight(EHighlight Desired)
 {

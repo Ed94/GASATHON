@@ -23,6 +23,7 @@ public:
 
 	UGasaAttributeSet();
 
+
 	UFUNCTION()
 	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
 	UFUNCTION()

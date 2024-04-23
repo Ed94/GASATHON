@@ -1610,7 +1610,7 @@ void CodeConstructor::to_string_fwd( String& result )
 	if ( ast->InlineCmt )
 		result.append_fmt( "; // %S\n", ast->InlineCmt->Content );
 	else
-		result.append( ";" );
+		result.append( ";\n" );
 }
 
 String CodeClass::to_string()
@@ -6278,6 +6278,16 @@ namespace parser
 			move_forward();
 			preprocess_content.Length++;
 
+			if ( current == '\r' && scanner[1] == '\n' )
+			{
+				move_forward();
+				move_forward();
+			}
+			else if ( current == '\n' )
+			{
+				move_forward();
+			}
+
 			Tokens.append( preprocess_content );
 			return Lex_Continue;    // Skip found token, its all handled here.
 		}
@@ -7262,7 +7272,7 @@ namespace parser
 		Tokens            = Array<Token>::init_reserve( LexArena, ( LexAllocator_Size - sizeof( Array<Token>::Header ) ) / sizeof( Token ) );
 
 		defines_map_arena = Arena_256KB::init();
-		defines           = HashTable<StrC>::init( defines_map_arena );
+		defines           = HashTable<StrC>::init_reserve( defines_map_arena, 256 );
 	}
 
 	internal void deinit()

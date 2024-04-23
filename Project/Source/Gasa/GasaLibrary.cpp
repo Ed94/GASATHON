@@ -8,6 +8,7 @@
 #include "Game/GasaGameState.h"
 #include "Game/GasaPlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Misc/ConfigCacheIni.h"
 
 #pragma region Game
 UGasaDevOptions* UGasaLib::GetGasaDevOptions(UObject* Context) {

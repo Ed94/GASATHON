@@ -8,10 +8,10 @@ using namespace Gasa;
 
 void AGasaHUD::InitHostWidget(FWidgetControllerData const* WidgetControllerData)
 {
-	HostWidget = CreateWidget<UHUDHostWidget>( GetWorld() 
+	HostWidget = CreateWidget<UHUDHostWidget>( GetWorld()  
 		, GetDevOptions()->Template_HUD_HostUI.LoadSynchronous() );
 
-	HostWidgetController = NewObject<UHostWidgetController>(this, GetDevOptions()->Template_HostWidgetController.Get());
+	HostWidgetController       = NewObject<UHostWidgetController>(this, GetDevOptions()->Template_HostWidgetController.Get());
 	HostWidgetController->Data = (* WidgetControllerData);
 	HostWidget->SetWidgetController(HostWidgetController);
 	HostWidgetController->BindCallbacksToDependencies();

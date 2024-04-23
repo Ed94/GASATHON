@@ -13,6 +13,9 @@ using namespace gen;
 #define path_config              path_source      "Config/"
 #define path_module_gasa         path_source      "Gasa/"
 #define path_gasa_ability_system path_module_gasa "AbilitySystem/"
+#define path_gasa_actors         path_module_gasa "Actors/"
+#define path_gasa_characters     path_module_gasa "Characters/"
+#define path_gasa_game           path_module_gasa "Game/"
 #define path_gasa_ui             path_module_gasa "UI/"
 
 constexpr StrC str_DECLARE_CLASS                                         = txt("DECLARE_CLASS(");

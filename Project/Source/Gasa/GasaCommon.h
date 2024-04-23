@@ -1,12 +1,15 @@
-﻿
-#pragma once
+﻿#pragma once
 
-#include "CoreMinimal.h"
-// #define private protected
+#include "GasaEngineMinimal.h"
 
 #define global        
 #define internal      static
 #define local_persist static
+
+#define ccast( Type, Value ) ( *const_cast<(Type)*>( &( Value ) ) )
+#define pcast( Type, Value ) ( *reinterpret_cast<(Type)*>( &( Value ) ) )
+#define rcast( Type, Value ) reinterpret_cast<Type>( Value )
+#define scast( Type, Value ) static_cast<Type>( Value )
 
 #pragma region Math
 #define m_pow2( value ) (value * value)
@@ -15,6 +18,9 @@
 #pragma region Engine Forwards
 struct FInputActionValue;
 struct FOnAttributeChangeData;
+
+class AActor;
+class APostProcessVolume;
 
 class IAbilitySystemInterface;
 
@@ -45,11 +51,13 @@ class AGasaGameState;
 class AGasaLevelScriptActor;
 class AGasaPlayerController;
 class AGasaPlayerState;
+class APlayerCharacter;
 
 class UGasaAbilitySystemComp;
 class UGasaAttributeSet;
 class UGasaDevOptions;
 class UGasaImage;
+class UGasaObject;
 class UGasaOverlay;
 class UGasaProgressBar;
 class UGasaSizeBox;
@@ -57,6 +65,21 @@ class UHostWidgetController;
 class UHUDHostWidget;
 class UWidgetController;
 #pragma endregion Forwards
+
+#pragma region Bitfields
+namespace Gasa
+{
+	inline
+	bool Bitfield_IsSet(int32 Bitfield, int32 Bitmask) {
+		int32 Result = Bitmask == (Bitfield & Bitmask);
+		return scast(bool, Result);
+	}
+
+	inline void Bitfield_Set   ( int32& Bitfield, int32 BitsToAdd )    { Bitfield |= BitsToAdd; }
+	inline void Bitfield_Remove( int32& Bitfield, int32 BitsToRemove ) { Bitfield &= (! BitsToRemove); }
+	inline void Bitfield_Toggle( int32& Bitfield, int32 Bitmask )      { Bitfield ^= Bitmask; }
+}
+#pragma endregion Bitfields
 
 #pragma region Logging
 // Straight from the Engine
@@ -107,7 +130,6 @@ namespace Gasa
 {
 	using ELogV = EGasaVerbosity;
 
-	//◞ ‸ ◟//
 	// Works for Unreal 5.4, Win64 MSVC (untested in other scenarios, for now)
 	inline
 	void Log( FString Message, EGasaVerbosity Verbosity = EGasaVerbosity::Log

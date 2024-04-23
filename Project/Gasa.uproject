@@ -302,10 +302,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "GitSourceControl",
-			"Enabled": true
-		},
-		{
 			"Name": "SlateInsights",
 			"Enabled": true
 		},

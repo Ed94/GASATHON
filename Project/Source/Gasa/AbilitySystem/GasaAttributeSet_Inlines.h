@@ -4,6 +4,7 @@
 #include "GasaAttributeSet.h"
 #include "AbilitySystemComponent.h"
 
+#pragma region Attribute Setters
 FORCEINLINE
 void UGasaAttributeSet::SetHealth( float NewVal )
 {
@@ -40,6 +41,7 @@ void UGasaAttributeSet::SetMaxMana( float NewVal )
 		AbilityComp->SetNumericAttributeBase( GetMaxManaAttribute(), NewVal );
 	};
 }
+#pragma endregion Attribute Setters
 
 namespace Gasa
 {

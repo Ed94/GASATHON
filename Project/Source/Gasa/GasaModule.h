@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Modules/ModuleInterface.h"
+#include "Modules/ModuleManager.h"
 
 class GASA_API FGasaModule : public IModuleInterface
 {

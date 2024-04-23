@@ -5,6 +5,8 @@
 
 AGasaPlayerState::AGasaPlayerState()
 {
+	bAutoAbilitySystem = true;
+	
 	AbilitySystem = CreateDefaultSubobject<UGasaAbilitySystemComp>("Ability System");
 	AbilitySystem->SetIsReplicated(true);
 	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);

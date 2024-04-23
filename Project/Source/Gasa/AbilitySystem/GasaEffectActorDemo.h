@@ -1,12 +1,14 @@
 ﻿#pragma once
 
 #include "GasaCommon.h"
+#include "Actors/GasaActor.h"
+#include "GameFramework/Actor.h"
 
 #include "GasaEffectActorDemo.generated.h"
 
 // Old demonstration code used before part 37.
 UCLASS()
-class GASA_API AGasaEffectActorDemo : public AActor
+class GASA_API AGasaEffectActorDemo : public AGasaActor
 {
 	GENERATED_BODY()
 public:

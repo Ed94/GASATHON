@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-
+using UnrealBuildTool;
 using ModuleRules = UnrealBuildTool.ModuleRules;
 using ReadOnlyTargetRules = UnrealBuildTool.ReadOnlyTargetRules;
 using TargetRules = UnrealBuildTool.TargetRules;
@@ -10,7 +10,33 @@ public class Gasa : ModuleRules
 {
     public Gasa(ReadOnlyTargetRules Target) : base(Target)
     {
-	    bUseUnity = false;
+	    bUseUnity           = false;
+	    bMergeUnityFiles    = false;
+	    IWYUSupport         = IWYUSupport.None;
+	    PCHUsage            = PCHUsageMode.NoPCHs;
+	    OptimizeCode        = CodeOptimization.Never;
+	    MinCpuArchX64       = MinimumCpuArchitectureX64.AVX512;
+	    IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+	    
+	    bCodeCoverage                      = false;
+	    bDisableStaticAnalysis             = true;
+	    bValidateCircularDependencies      = true;
+	    bValidateFormatStrings             = false;
+	    bValidateInternalApi               = false;
+	    bEnableExceptions                  = false;
+	    bEnableBufferSecurityChecks        = false;
+	    bEnableNonInlinedGenCppWarnings    = false;
+	    bEnableUndefinedIdentifierWarnings = false;
+	    bIgnoreUnresolvedSymbols           = false;
+	    
+	    bEnableObjCAutomaticReferenceCounting = false;
+	    bEnableObjCExceptions                 = false;
+	    
+	    var Kilobyte = 1024;
+	    NumIncludedBytesPerUnityCPPOverride    = Kilobyte * 32;
+	    MinFilesUsingPrecompiledHeaderOverride = 1;
+	    
+	    PrivatePCHHeaderFile = "GasaColdHeadersPCH.h";
 	    
     #region Engine
         PrivateIncludePathModuleNames.AddRange(new string[] {
@@ -32,6 +58,7 @@ public class Gasa : ModuleRules
             "InputCore", 
             "NetCore",
             "Niagara",
+            "OnlineSubsystem",
             "SlateCore",
             "UMG", 
         });

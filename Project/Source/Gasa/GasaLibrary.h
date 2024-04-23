@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "GasaCommon.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "GasaLibrary.Generated.h"
 

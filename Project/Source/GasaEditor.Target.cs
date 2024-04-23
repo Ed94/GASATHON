@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime;
+using UnrealBuildTool;
 using BuildSettingsVersion = UnrealBuildTool.BuildSettingsVersion;
 using TargetInfo = UnrealBuildTool.TargetInfo;
 using TargetRules = UnrealBuildTool.TargetRules;
@@ -17,6 +18,7 @@ public class GasaEditorTarget : TargetRules
         
         bUseUnityBuild = true;
         // bUseXGEController = false;
+        LinkType = TargetLinkType.Modular;
         
 		ExtraModuleNames.Add("Gasa");
 		ExtraModuleNames.Add("GasaEditor");

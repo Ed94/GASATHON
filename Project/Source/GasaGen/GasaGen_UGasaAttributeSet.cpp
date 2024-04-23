@@ -272,6 +272,7 @@ void def_attribute_field_value_setters( CodeBody body, Array<StringCached> prope
 
 void def_attribute_field_property_setter_inlines( CodeBody body, StrC class_name, Array<StringCached> properties )
 {
+	body.append(def_pragma( txt("region Attribute Setters")));
 	for ( String property : properties )
 	{
 		CodeFn generated_get_attribute = parse_function(
@@ -288,6 +289,7 @@ void def_attribute_field_property_setter_inlines( CodeBody body, StrC class_name
 			)));
 		body.append( generated_get_attribute );
 	}
+	body.append(def_pragma( txt("endregion Attribute Setters")));
 }
 
 void def_attribute_field_initers ( CodeBody body, Array<StringCached> properties )
@@ -307,11 +309,10 @@ void def_attribute_field_initers ( CodeBody body, Array<StringCached> properties
 
 void impl_attribute_fields( CodeBody body, StrC class_name, Array<StringCached> properties )
 {
+	body.append(fmt_newline);
 	body.append(def_pragma( txt("region Rep Notifies")));
 	for ( String property : properties )
 	{
-		body.append(fmt_newline);
-
 		CodeFn field_impl = parse_function( token_fmt(
 			"class_name", class_name, "property", (StrC)property, "from_notice", txt("\n// From GAMEPLAYATTRIBUTE_REPNOTIFY\n"),
 		stringize(
@@ -326,6 +327,7 @@ void impl_attribute_fields( CodeBody body, StrC class_name, Array<StringCached> 
 		body.append( field_impl );
 	}
 	body.append( def_pragma( txt("endregion Rep Notifies")));
+	body.append(fmt_newline);
 }
 
 inline
