@@ -19,5 +19,6 @@ void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEf
 	Context.AddSourceObject(Actor);
 	
 	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
-	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+	if (Spec.IsValid())
+		AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
 }

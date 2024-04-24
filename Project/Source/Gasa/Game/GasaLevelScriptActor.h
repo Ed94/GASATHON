@@ -52,7 +52,7 @@ public:
 
 #pragma region Actor
     void BeginPlay() override;
-#pragma region endActor
+#pragma endregion endActor
 };
 
 namespace Gasa

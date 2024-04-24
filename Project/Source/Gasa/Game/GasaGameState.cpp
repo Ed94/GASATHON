@@ -29,7 +29,6 @@ AGasaGameState::AGasaGameState()
 void AGasaGameState::OnGameFrameworkInitialized()
 {
 	NetLog("Received gameplay framework initialization.");
-
 	if (IsServer())
 	{
 		if (PlayerArray.Num() > 0)
@@ -41,7 +40,6 @@ void AGasaGameState::OnGameFrameworkInitialized()
 			NetLog("Was not able to assign HostingPlayer!", ELogV::Error);
 		}
 	}
-
 	BP_OnGameFrameworkInitialized();
 }
 #pragma endregion GameFramework
@@ -71,7 +69,6 @@ void AGasaGameState::HandleBeginPlay()
 void AGasaGameState::SeamlessTravelTransitionCheckpoint(bool bToTransitionMap)
 {
 	Super::SeamlessTravelTransitionCheckpoint(bToTransitionMap);
-
 	NetLog("SeamlessTravelTransitionCheckpoint");
 	NetLog(FString("ToTransitionMap: ") + FString(bToTransitionMap ? "true" : "false"));
 
@@ -90,7 +87,6 @@ void AGasaGameState::SeamlessTravelTransitionCheckpoint(bool bToTransitionMap)
 void AGasaGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
 	NetLog("BeginPlay");
 
 	// Notified as initialized here as any possible components should also be initialized by this point.
@@ -100,18 +96,20 @@ void AGasaGameState::BeginPlay()
 	GI->NotifyGameFrameworkClassReady(EGameFrameworkClassFlag::GameState);
 	
 #if ENABLE_COG
-    CogWindowManager = NewObject<UCogWindowManager>(this);
-    CogWindowManagerRef = CogWindowManager;
+	for (local_persist int32 do_once = 0; do_once == 0; ++ do_once )
+	{
+		CogWindowManager = NewObject<UCogWindowManager>(this);
+		CogWindowManagerRef = CogWindowManager;
 
-    // Add all the built-in windows
-    Cog::AddAllWindows(*CogWindowManager);
+		// Add all the built-in windows
+		Cog::AddAllWindows(*CogWindowManager);
+	}
 #endif //ENABLE_COG
 }
 
 void AGasaGameState::PostInitializeComponents()
 {
 	NetLog("PostInitializeComponents");
-
 	Super::PostInitializeComponents();
 
 	if ( ! GetWorld()->IsEditorWorld() && IsServer())
@@ -135,7 +133,8 @@ void AGasaGameState::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 #if ENABLE_COG
-    CogWindowManager->Tick(DeltaSeconds);
+	if (CogWindowManager)
+		CogWindowManager->Tick(DeltaSeconds);
 #endif //ENABLE_COG
 }
 #pragma endregion Actor
