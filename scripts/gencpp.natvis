@@ -55,6 +55,21 @@
 		</Expand>
 	</Type>
 
+	<Type Name="gen::StringCached">
+		<DisplayString Condition="Data == nullptr">null</DisplayString>
+		<DisplayString>{Data,na}</DisplayString>
+		<Expand>
+			<Synthetic Name="Header">
+				<DisplayString>{(Header*)((char*)Data - sizeof(Header))}</DisplayString>
+				<Expand>
+					<Item Name="Allocator">((Header*)((char*)Data - sizeof(Header)))->Allocator</Item>
+					<Item Name="Capacity">((Header*)((char*)Data - sizeof(Header)))->Capacity</Item>
+					<Item Name="Length">((Header*)((char*)Data - sizeof(Header)))->Length</Item>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
+
 	<Type Name="gen::String::Header">
 		<DisplayString>Length: {Length}, Capacity: {Capacity}</DisplayString>
 		<Expand>

@@ -77,6 +77,9 @@ CodeBody parse_file( char const* path ) {
 	return code;
 }
 
+// inline
+// CodeConstructor find_constructor( StrC parent_name, )
+
 inline
 void format_file( char const* path )
 {

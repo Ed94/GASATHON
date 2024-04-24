@@ -8,9 +8,9 @@
 
 UGasaAttributeSet::UGasaAttributeSet()
 {
-	InitHealth( 50.f );
+	InitHealth( 100.f );
 	InitMaxHealth( 100.f );
-	InitMana( 25.f );
+	InitMana( 50.f );
 	InitMaxMana( 50.f );
 }
 
@@ -41,6 +41,27 @@ void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMan
 }
 #pragma endregion Rep Notifies
 
+void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )
+{
+	Super::PreAttributeChange( Attribute, NewValue );
+
+	if ( Attribute == GetHealthAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, GetMaxHealth() );
+	}
+	if ( Attribute == GetMaxHealthAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 99999.000000 );
+	}
+	if ( Attribute == GetManaAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, GetMaxMana() );
+	}
+	if ( Attribute == GetMaxManaAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 99999.000000 );
+	}
+}
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );

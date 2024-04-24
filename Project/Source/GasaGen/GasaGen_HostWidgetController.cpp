@@ -4,11 +4,12 @@
 #include "gen.hpp"
 #include "gen.builder.hpp"
 #include "GasaGenCommon.cpp"
+#include "GasaGen_UGasaAttributeSet.cpp"
 #endif
 
 void gen_UHostWidgetController()
 {
-	Array<StringCached> attribute_fields = get_gasa_attribute_fields();
+	Array<GAS_AttributeEntry> attribute_fields = get_gasa_attribute_fields();
 
 	CodeBody ori_HostWidgetController_header = parse_file(path_gasa_ui "HostWidgetController.h");
 	{
@@ -64,21 +65,21 @@ void gen_UHostWidgetController()
 
 			for ( s32 id = 0; id < attribute_fields.num(); ++id )
 			{
-				StringCached attribute_field = attribute_fields[id];
+				GAS_AttributeEntry attribute_field = attribute_fields[id];
 
 				attribute_events.append( code_str(
 					UPROPERTY(BlueprintAssignable, Category = "Attributes")
 				));
 				attribute_events.append(fmt_newline);
 				attribute_events.append( parse_variable(
-					token_fmt( "field", (StrC) attribute_field, stringize( FAttributeFloatChangedSig Event_On<field>Changed; ))
+					token_fmt( "field", (StrC) attribute_field.Name, stringize( FAttributeFloatChangedSig Event_On<field>Changed; ))
 				));
 				attribute_events.append(fmt_newline);
 			}
 
 			for ( s32 id = 0; id < attribute_fields.num(); ++id )
 			{
-				StringCached attribute_field = attribute_fields[id];
+				StringCached attribute_field = attribute_fields[id].Name;
 
 				attribute_events.append( parse_function(
 					token_fmt( "field", (StrC) attribute_field, stringize( void <field>Changed(FOnAttributeChangeData const& Data); ))
@@ -154,9 +155,9 @@ void gen_UHostWidgetController()
 		CodeFn BroadcastInitialValues = NoCode;
 		{
 			CodeBody broadcast_calls = def_body(ECode::Function_Body);
-			for (StringCached field : attribute_fields)
+			for (GAS_AttributeEntry field : attribute_fields)
 			{
-				broadcast_calls.append( code_fmt( "field", (StrC)field,
+				broadcast_calls.append( code_fmt( "field", (StrC)field.Name,
 					stringize( Event_On<field>Changed.Broadcast( GasaAttribs->Get<field>() ); )
 				));
 			}
@@ -185,9 +186,9 @@ void gen_UHostWidgetController()
 			CodeBody bindings = def_body(ECode::Function_Body);
 			bindings.append(fmt_newline);
 			bindings.append(fmt_newline);
-			for (StringCached field : attribute_fields)
+			for (GAS_AttributeEntry field : attribute_fields)
 			{
-				bindings.append( code_fmt( "field", (StrC)field,
+				bindings.append( code_fmt( "field", (StrC)field.Name,
 				stringize(
 					FOnGameplayAttributeValueChange& <field>AttributeChangedDelegate = AbilitySystem->GetGameplayAttributeValueChangeDelegate(GasaAttribs->Get<field>Attribute());
 					<field>AttributeChangedDelegate.AddUObject(this, &ThisClass::<field>Changed);
@@ -219,7 +220,7 @@ void gen_UHostWidgetController()
 
 			for ( s32 id = 0; id < attribute_fields.num(); )
 			{
-				StringCached attribute_field = attribute_fields[id];
+				StringCached attribute_field = attribute_fields[id].Name;
 
 				attribute_callbacks.append( parse_function( token_fmt(
 					"field", (StrC) attribute_field,

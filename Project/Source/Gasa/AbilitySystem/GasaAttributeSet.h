@@ -9,20 +9,16 @@ class GASA_API UGasaAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY( ReplicatedUsing = Client_OnRep_Health, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
-	FGameplayAttributeData Health;
-
-	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxHealth, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
-	FGameplayAttributeData MaxHealth;
-
-	UPROPERTY( ReplicatedUsing = Client_OnRep_Mana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
-	FGameplayAttributeData Mana;
-
-	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxMana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
-	FGameplayAttributeData MaxMana;
-
 	UGasaAttributeSet();
 
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Health, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Health;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxHealth, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData MaxHealth;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Mana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Mana;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxMana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData MaxMana;
 
 	UFUNCTION()
 	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
@@ -62,8 +58,7 @@ public:
 	#pragma endregion Getters
 
 #pragma region Setters
-	    FORCEINLINE void
-	                 SetHealth( float NewVal );
+	FORCEINLINE void SetHealth( float NewVal );
 	FORCEINLINE void SetMaxHealth( float NewVal );
 	FORCEINLINE void SetMana( float NewVal );
 	FORCEINLINE void SetMaxMana( float NewVal );
@@ -90,8 +85,11 @@ public:
 	}
 	#pragma endregion Setters
 
+#pragma region AttributeSet
+	    void PreAttributeChange( const FGameplayAttribute& Attribute, float& NewValue ) override;
+#pragma endregion AttributeSet
+
 #pragma region UObject
-	    void
-	    GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
+	    void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 #pragma endregion UObject
 };
