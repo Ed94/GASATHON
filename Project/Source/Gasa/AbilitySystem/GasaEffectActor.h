@@ -12,13 +12,11 @@ enum class EEffectUsagePolicy : uint8
 	None               = 0 UMETA(Hidden),
 	ApplyOnOverlap     = bit(0),
 	ApplyOnEndOverlap  = bit(1),
-	DoNotApply         = bit(2),
 	RemoveOnOverlap    = bit(3),
 	RemoveOnEndOverlap = bit(4),
-	DoNotRemove        = bit(5),
 };
 
-constexpr int32 DefaultEffectUsagePolicy = (int32(EEffectUsagePolicy::DoNotApply) | int32(EEffectUsagePolicy::RemoveOnEndOverlap));
+constexpr int32 DefaultEffectUsagePolicy = (int32(EEffectUsagePolicy::RemoveOnEndOverlap));
 
 UCLASS()
 class GASA_API AGasaEffectActor : public AGasaActor
