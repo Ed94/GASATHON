@@ -80,13 +80,30 @@ namespace Gasa
 {
 	inline
 	bool Bitfield_IsSet(int32 Bitfield, int32 Bitmask) {
-		int32 Result = Bitmask == (Bitfield & Bitmask);
-		return scast(bool, Result);
+		bool Result = Bitmask == (Bitfield & Bitmask);
+		return Result;
+	}
+	inline
+	bool Bitfield_IsSetExactly(int32 Bitfield, int32 Bitmask)
+	{
+		bool Result = Bitfield == (Bitfield & Bitmask);
+		return Result;
 	}
 
 	inline void Bitfield_Set   ( int32& Bitfield, int32 BitsToAdd )    { Bitfield |= BitsToAdd; }
 	inline void Bitfield_Remove( int32& Bitfield, int32 BitsToRemove ) { Bitfield &= (! BitsToRemove); }
 	inline void Bitfield_Toggle( int32& Bitfield, int32 Bitmask )      { Bitfield ^= Bitmask; }
+
+	template<typename EnumType>
+	inline
+	bool Bitfield_IsSet(int32 Bitfield, EnumType Mask)
+	{
+		bool Result = int32(Mask) == (Bitfield & int32(Mask));
+		return Result;
+	}
+	template<typename EnumType> inline void Bitfield_Set   ( int32& Bitfield, EnumType BitToAdd )    { Bitfield |= int32(BitToAdd); }
+	template<typename EnumType> inline void Bitfield_Remove( int32& Bitfield, EnumType BitToRemove ) { Bitfield &= (! int32(BitToRemove)); }
+	template<typename EnumType> inline void Bitfield_Toggle( int32& Bitfield, EnumType BitToToggle ) { Bitfield ^= int32(BitToToggle); }
 }
 #pragma endregion Bitfields
 

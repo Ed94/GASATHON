@@ -45,7 +45,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameFramework")
 	EGameFrameworkState GameFrameworkState;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameFramework", meta=(Bitmask, BitmaskEnum = EGameFrameworkClassFlag))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameFramework", meta=(Bitmask, BitmaskEnum = "/Script/Gasa.EGameFrameworkClassFlag"))
 	int32 GameFrameworkClassesState;
 
 	UFUNCTION(BlueprintCallable, Category="GameFramework")

@@ -1,6 +1,7 @@
 ﻿#include "GasaEffectActor.h"
 
 #include "GasaAbilitySystemComponent_Inlines.h"
+#include "GasaContainers.h"
 using namespace Gasa;
 
 AGasaEffectActor::AGasaEffectActor()
@@ -9,21 +10,24 @@ AGasaEffectActor::AGasaEffectActor()
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 
-	InstantEffectUsage  = DefaultEffectUsagePolicy;
+	InstantEffectUsage  = EInstantEffectUsagePolicy::DoNotApply;
 	DurationEffectUsage = DefaultEffectUsagePolicy;
 	InfiniteEffectUsage = DefaultEffectUsagePolicy;
+
+	bDestroyOnEffectRemoval = false;
 }
 
-void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEffect> EffectClass)
+void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEffect> EffectClass, bool bRemoveOnEndOverlap)
 {
 	UGasaAbilitySystemComp* AS = GetAbilitySystem(Actor, true);
-
 	FGameplayEffectContextHandle
 	Context = AS->MakeEffectContext();
 	Context.AddSourceObject(Actor);
 
-	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
-	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+	FGameplayEffectSpecHandle   Spec         = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
+	FActiveGameplayEffectHandle ActiveEffect = AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+	if (bRemoveOnEndOverlap)
+		ActiveEffectsToRemove.Add(ActiveEffect, AS);
 }
 
 void AGasaEffectActor::OnOverlap(AActor* Actor)
@@ -33,40 +37,37 @@ void AGasaEffectActor::OnOverlap(AActor* Actor)
 	Context = AS->MakeEffectContext();
 	Context.AddSourceObject(Actor);
 	
-	if (InstantEffectClass.Get())
+	if (InstantEffectClass && InstantEffectUsage == EInstantEffectUsagePolicy::ApplyOnOverlap)
 	{
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::ApplyOnOverlap))
-		{
-        	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-        	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
-		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnOverlap))
-		{
-        	AS->RemoveActiveGameplayEffectBySourceEffect( InstantEffectClass, AS );
-		}
+		FGameplayEffectSpecHandle Spec= AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
+		AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
 	}
-	if (DurationEffectClass.Get())
+	if (DurationEffectClass)
 	{
-		if (Bitfield_IsSet(DurationEffectUsage, (int32)EEffectUsagePolicy::ApplyOnOverlap))
+		if (Bitfield_IsSet(DurationEffectUsage, EEffectUsagePolicy::ApplyOnOverlap))
 		{
-        	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-        	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
+        	FGameplayEffectSpecHandle   Spec         = AS->MakeOutgoingSpec( DurationEffectClass, 1.0f, Context );
+			FActiveGameplayEffectHandle ActiveEffect = AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+			if (Bitfield_IsSet(DurationEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
+				ActiveDuration = ActiveEffect;
 		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnOverlap))
-		{
-        	AS->RemoveActiveGameplayEffectBySourceEffect( DurationEffectClass, AS );
-		}
+		if (ActiveDuration.IsValid() && Bitfield_IsSet(DurationEffectUsage, EEffectUsagePolicy::RemoveOnOverlap))
+			AS->RemoveActiveGameplayEffect(ActiveDuration);
 	}
-	if (InfiniteEffectClass.Get())
+	if (InfiniteEffectClass)
 	{
-		if (Bitfield_IsSet(InfiniteEffectUsage, (int32)EEffectUsagePolicy::ApplyOnOverlap))
+		bool bApplyOnOverlap = Bitfield_IsSet(InfiniteEffectUsage, EEffectUsagePolicy::ApplyOnOverlap);
+		if (bApplyOnOverlap)
 		{
-        	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-        	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
+			FGameplayEffectSpecHandle   Spec         = AS->MakeOutgoingSpec( InfiniteEffectClass, 1.0f, Context );
+			FActiveGameplayEffectHandle ActiveEffect = AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+			if (Bitfield_IsSet(InfiniteEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
+				ActiveInfinite = ActiveEffect;
 		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnOverlap))
+		if (ActiveInfinite.IsValid() && Bitfield_IsSet(InfiniteEffectUsage, EEffectUsagePolicy::RemoveOnOverlap))
 		{
-			AS->RemoveActiveGameplayEffectBySourceEffect( InfiniteEffectClass, AS );
+			if (ActiveInfinite.IsValid())
+				AS->RemoveActiveGameplayEffect(ActiveInfinite);
 		}
 	}
 }
@@ -78,40 +79,46 @@ void AGasaEffectActor::OnEndOverlap(AActor* Actor)
 	Context = AS->MakeEffectContext();
 	Context.AddSourceObject(Actor);
 	
-	if (InstantEffectClass.Get())
+	if (InstantEffectClass && InstantEffectUsage == EInstantEffectUsagePolicy::ApplyOnEndOverlap)
 	{
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::ApplyOnEndOverlap))
+		FGameplayEffectSpecHandle Spec= AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
+		AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+	}
+	if (DurationEffectClass)
+	{
+		if (Bitfield_IsSet(DurationEffectUsage, EEffectUsagePolicy::ApplyOnEndOverlap))
 		{
-			FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-			AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
+			FGameplayEffectSpecHandle   Spec         = AS->MakeOutgoingSpec( DurationEffectClass, 1.0f, Context );
+			FActiveGameplayEffectHandle ActiveEffect = AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+			if (Bitfield_IsSet(DurationEffectUsage, (int32)EEffectUsagePolicy::RemoveOnOverlap))
+				ActiveDuration = ActiveEffect;
 		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
+		if (ActiveDuration.IsValid() && Bitfield_IsSet(DurationEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
+			AS->RemoveActiveGameplayEffect(ActiveDuration);
+	}
+	if (InfiniteEffectClass)
+	{
+		if (Bitfield_IsSet(InfiniteEffectUsage, EEffectUsagePolicy::ApplyOnEndOverlap))
 		{
-			AS->RemoveActiveGameplayEffectBySourceEffect( InstantEffectClass, AS );
+			FGameplayEffectSpecHandle   Spec         = AS->MakeOutgoingSpec( InfiniteEffectClass, 1.0f, Context );
+			FActiveGameplayEffectHandle ActiveEffect = AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+			if (Bitfield_IsSet(InfiniteEffectUsage, (int32)EEffectUsagePolicy::RemoveOnOverlap))
+				ActiveInfinite = ActiveEffect;
+		}
+		if (ActiveInfinite.IsValid() && Bitfield_IsSet(InfiniteEffectUsage, EEffectUsagePolicy::RemoveOnEndOverlap))
+		{
+			if (ActiveInfinite.IsValid())
+				AS->RemoveActiveGameplayEffect(ActiveInfinite);
 		}
 	}
-	if (DurationEffectClass.Get())
+
+	TArray<FActiveGameplayEffectHandle> EffectsRemoved;
+	for (ActiveEffectEntry ActiveEffect : ActiveEffectsToRemove)
 	{
-		if (Bitfield_IsSet(DurationEffectUsage, (int32)EEffectUsagePolicy::ApplyOnEndOverlap))
-		{
-			FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-			AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
-		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
-		{
-			AS->RemoveActiveGameplayEffectBySourceEffect( DurationEffectClass, AS );
-		}
+		if (ActiveEffect.Value != AS)
+			continue;
+		AS->RemoveActiveGameplayEffect(ActiveEffect.Key, 1);
+		EffectsRemoved.Add(ActiveEffect.Key);
 	}
-	if (InfiniteEffectClass.Get())
-	{
-		if (Bitfield_IsSet(InfiniteEffectUsage, (int32)EEffectUsagePolicy::ApplyOnEndOverlap))
-		{
-			FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( InstantEffectClass, 1.0f, Context );
-			AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );	
-		}
-		if (Bitfield_IsSet(InstantEffectUsage, (int32)EEffectUsagePolicy::RemoveOnEndOverlap))
-		{
-			AS->RemoveActiveGameplayEffectBySourceEffect( InfiniteEffectClass, AS );
-		}
-	}
+	RemoveKeys(ActiveEffectsToRemove, EffectsRemoved);
 }
