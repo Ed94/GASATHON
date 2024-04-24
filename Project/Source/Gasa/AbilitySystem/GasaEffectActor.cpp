@@ -8,6 +8,10 @@ AGasaEffectActor::AGasaEffectActor()
 	PrimaryActorTick.bCanEverTick = false;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
+
+	InstantEffectUsage  = DefaultEffectUsagePolicy;
+	DurationEffectUsage = DefaultEffectUsagePolicy;
+	InfiniteEffectUsage = DefaultEffectUsagePolicy;
 }
 
 void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEffect> EffectClass)
@@ -20,4 +24,12 @@ void AGasaEffectActor::ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEf
 
 	FGameplayEffectSpecHandle Spec = AS->MakeOutgoingSpec( EffectClass, 1.0f, Context );
 	AS->ApplyGameplayEffectSpecToSelf( * Spec.Data );
+}
+
+void AGasaEffectActor::OnOverlap(AActor* Actor)
+{
+}
+
+void AGasaEffectActor::OnEndOverlap(AActor* Actor)
+{
 }

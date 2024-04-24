@@ -13,6 +13,8 @@
 #define rcast( Type, Value ) reinterpret_cast<Type>( Value )
 #define scast( Type, Value ) static_cast<Type>( Value )
 
+#define bit(position) (1 << position)
+
 #pragma region Math
 #define m_pow2( value ) (value * value)
 #pragma endregion Math
