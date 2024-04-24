@@ -13,7 +13,10 @@ class GASA_API AGasaEffectActor : public AGasaActor
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Effects")
-	TSoftClassPtr<UGameplayEffect> InstantEffectClass;
+	TSubclassOf<UGameplayEffect> InstantEffectClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Effects")
+	TSubclassOf<UGameplayEffect> DurationEffectClass;
 	
 	AGasaEffectActor();
 
