@@ -35,6 +35,11 @@ class GASA_API AGasaEffectActor : public AGasaActor
 	GENERATED_BODY()
 public:
 
+	AGasaEffectActor();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Effects")
+	float Level;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay Effects")
 	TSubclassOf<UGameplayEffect> InstantEffectClass;
 
@@ -61,9 +66,7 @@ public:
 	
 	FActiveGameplayEffectHandle ActiveDuration;
 	FActiveGameplayEffectHandle ActiveInfinite;
-
-	AGasaEffectActor();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Gameplay Effects")
 	void ApplyEffectToActor(AActor* Actor, TSubclassOf<UGameplayEffect> EffectClass, bool bRemoveOnEndOverlap = false);
 
@@ -73,4 +76,3 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnEndOverlap(AActor* Actor);
 };
-

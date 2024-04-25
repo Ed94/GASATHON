@@ -8,50 +8,46 @@ UCLASS()
 class GASA_API UGasaAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
-
 public:
 	UGasaAttributeSet();
 
-	UPROPERTY(ReplicatedUsing = Client_OnRep_Health, EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Health, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
 	FGameplayAttributeData Health;
-	UPROPERTY(ReplicatedUsing = Client_OnRep_MaxHealth, EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxHealth, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
 	FGameplayAttributeData MaxHealth;
-	UPROPERTY(ReplicatedUsing = Client_OnRep_Mana, EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Mana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
 	FGameplayAttributeData Mana;
-	UPROPERTY(ReplicatedUsing = Client_OnRep_MaxMana, EditAnywhere, BlueprintReadWrite, Category = "Attributes")
+	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxMana, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
 	FGameplayAttributeData MaxMana;
 
 	UFUNCTION()
-	void Client_OnRep_Health(FGameplayAttributeData& PrevHealth);
+	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
 	UFUNCTION()
-	void Client_OnRep_MaxHealth(FGameplayAttributeData& PrevMaxHealth);
+	void Client_OnRep_MaxHealth( FGameplayAttributeData& PrevMaxHealth );
 	UFUNCTION()
-	void Client_OnRep_Mana(FGameplayAttributeData& PrevMana);
+	void Client_OnRep_Mana( FGameplayAttributeData& PrevMana );
 	UFUNCTION()
-	void Client_OnRep_MaxMana(FGameplayAttributeData& PrevMaxMana);
+	void Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana );
 
 #pragma region Getters
 	static FGameplayAttribute GetHealthAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked<FProperty>(UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UGasaAttributeSet, Health));
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetMaxHealthAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked<FProperty>(UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UGasaAttributeSet, MaxHealth));
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxHealth ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetManaAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked<FProperty>(UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UGasaAttributeSet, Mana));
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Mana ) );
 		return Prop;
 	}
-
 	static FGameplayAttribute GetMaxManaAttribute()
 	{
-		static FProperty* Prop = FindFieldChecked<FProperty>(UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UGasaAttributeSet, MaxMana));
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
 		return Prop;
 	}
 
@@ -59,45 +55,45 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth.GetCurrentValue(); }
 	FORCEINLINE float GetMana() const { return Mana.GetCurrentValue(); }
 	FORCEINLINE float GetMaxMana() const { return MaxMana.GetCurrentValue(); }
-#pragma endregion Getters
+	#pragma endregion Getters
 
 #pragma region Setters
-	FORCEINLINE void SetHealth(float NewVal);
-	FORCEINLINE void SetMaxHealth(float NewVal);
-	FORCEINLINE void SetMana(float NewVal);
-	FORCEINLINE void SetMaxMana(float NewVal);
+	    FORCEINLINE void
+	                 SetHealth( float NewVal );
+	FORCEINLINE void SetMaxHealth( float NewVal );
+	FORCEINLINE void SetMana( float NewVal );
+	FORCEINLINE void SetMaxMana( float NewVal );
 
-	FORCEINLINE void InitHealth(float NewVal)
+	FORCEINLINE void InitHealth( float NewVal )
 	{
-		Health.SetBaseValue(NewVal);
-		Health.SetCurrentValue(NewVal);
+		Health.SetBaseValue( NewVal );
+		Health.SetCurrentValue( NewVal );
 	}
-
-	FORCEINLINE void InitMaxHealth(float NewVal)
+	FORCEINLINE void InitMaxHealth( float NewVal )
 	{
-		MaxHealth.SetBaseValue(NewVal);
-		MaxHealth.SetCurrentValue(NewVal);
+		MaxHealth.SetBaseValue( NewVal );
+		MaxHealth.SetCurrentValue( NewVal );
 	}
-
-	FORCEINLINE void InitMana(float NewVal)
+	FORCEINLINE void InitMana( float NewVal )
 	{
-		Mana.SetBaseValue(NewVal);
-		Mana.SetCurrentValue(NewVal);
+		Mana.SetBaseValue( NewVal );
+		Mana.SetCurrentValue( NewVal );
 	}
-
-	FORCEINLINE void InitMaxMana(float NewVal)
+	FORCEINLINE void InitMaxMana( float NewVal )
 	{
-		MaxMana.SetBaseValue(NewVal);
-		MaxMana.SetCurrentValue(NewVal);
+		MaxMana.SetBaseValue( NewVal );
+		MaxMana.SetCurrentValue( NewVal );
 	}
-#pragma endregion Setters
+	#pragma endregion Setters
 
 #pragma region AttributeSet
-	void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
-	void PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data) override;
-#pragma endregion AttributeSet
+	    void
+	     PreAttributeChange( const FGameplayAttribute& Attribute, float& NewValue ) override;
+	void PostGameplayEffectExecute( FGameplayEffectModCallbackData const& Data ) override;
+	#pragma endregion AttributeSet
 
 #pragma region UObject
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	    void
+	    GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 #pragma endregion UObject
 };
