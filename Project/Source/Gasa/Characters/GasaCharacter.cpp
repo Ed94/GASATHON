@@ -155,12 +155,11 @@ void AGasaCharacter::PossessedBy(AController* NewController)
 		if (GetMesh() && IsReplicatingMovement() && (GetRemoteRole() == ROLE_AutonomousProxy && GetNetConnection() != nullptr))
 			GetMesh()->bOnlyAllowAutonomousTickPose = true;
 	}
-	
+
+#if 0
 	if (bAutoAbilitySystem)
-	{
-		// TODO(Ed): Do we need to do this for enemies?
 		AbilitySystem->InitAbilityActorInfo(this, this);
-	}
+#endif
 }
 
 void AGasaCharacter::SetPlayerDefaults()
@@ -179,11 +178,10 @@ void AGasaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// TODO(Ed): Find out if this is the best spot todo this
+	// There is also OnPossessed, PostInitializeComponents, etc...
 	if (bAutoAbilitySystem)
-	{
-		// TODO(Ed): Do we need to do this for enemies?
 		AbilitySystem->InitAbilityActorInfo(this, this);
-	}
 }
 
 void AGasaCharacter::Tick(float DeltaSeconds)
