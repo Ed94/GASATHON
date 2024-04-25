@@ -21,6 +21,8 @@
 
 #pragma region Engine Forwards
 struct FInputActionValue;
+struct FGameplayEffectContextHandle;
+struct FGameplayEffectModCallbackData;
 struct FOnAttributeChangeData;
 struct FReplicationFlags;
 

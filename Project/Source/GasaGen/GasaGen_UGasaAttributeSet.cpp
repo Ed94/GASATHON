@@ -104,7 +104,7 @@ void gen_UGasaAttributeSet()
 					body.append( def_pragma( txt("region AttributeSet")));
 					body.append( code_str(
 						void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
-						// void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+						void PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data) override;
 					));
 					body.append( def_pragma( txt("endregion AttributeSet")));
 					body.append(fmt_newline);
@@ -170,6 +170,7 @@ void gen_UGasaAttributeSet()
 		header.print(fmt_newline);
 		source.print( def_include( txt("GasaAttributeSet.h")));
 		source.print( def_include( txt("GasaAttributeSet_Inlines.h")));
+		source.print( def_include( txt("EffectProperties.h")));
 		source.print(fmt_newline);
 		source.print( def_include( txt("AbilitySystemComponent.h")));
 		source.print( def_include( txt("Net/UnrealNetwork.h")));
@@ -190,6 +191,17 @@ void gen_UGasaAttributeSet()
 			body.append(constructor_for_UGasaAttributeSet );
 
 			impl_attribute_fields( body, class_name, attribute_fields);
+
+			Code PostGameplayEffectExecute = parse_function( code(
+				void UGasaAttributeSet::PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data)
+				{
+					Super::PostGameplayEffectExecute(Data);
+					FEffectProperties Props;
+					Props.Populate(Data);
+				}
+			));
+			body.append(PostGameplayEffectExecute);
+			body.append(fmt_newline);
 
 			CodeFn PreAttributeChange;
 			{
@@ -221,6 +233,8 @@ void gen_UGasaAttributeSet()
 						}
 					)));
 				}
+				attribute_clamps.append(fmt_newline);
+				attribute_clamps.append(fmt_newline);
 				PreAttributeChange = parse_function( token_fmt( "attribute_clamps", (StrC)attribute_clamps.to_string(), stringize(
 					void UGasaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 					{
@@ -230,6 +244,7 @@ void gen_UGasaAttributeSet()
 				)));
 			}
 			body.append(PreAttributeChange);
+			body.append(fmt_newline);
 
 			CodeFn GetLifetimeOfReplicatedProps;
 			{

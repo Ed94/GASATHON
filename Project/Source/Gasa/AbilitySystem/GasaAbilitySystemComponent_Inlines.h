@@ -18,7 +18,7 @@ namespace Gasa
 
 	// From: UAbilitySystemGlobals::GetAbilitySystemComponentFromActor
 	inline
-	UGasaAbilitySystemComp* GetAbilitySystem(AActor* Actor, bool LookForComponent = false)
+	UGasaAbilitySystemComp* GetAbilitySystem(AActor* Actor, bool LookForComponent = true)
 	{
 		if (Actor == nullptr)
 			return nullptr;
