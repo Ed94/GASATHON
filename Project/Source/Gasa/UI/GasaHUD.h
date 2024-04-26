@@ -21,11 +21,14 @@ public:
 	
 	void InitHostWidget(FWidgetControllerData const* WidgetControllerData);
 	
-#pragma region HUD	
+#pragma region HUD
+	void DrawHUD() override;
 	void ShowHUD() override;
 #pragma endregion HUD	
 
 #pragma region Actor
 	void BeginPlay() override;
+
+	void Tick(float DeltaSeconds) override;
 #pragma endregion Actor
 };

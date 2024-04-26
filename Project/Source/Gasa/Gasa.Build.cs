@@ -84,6 +84,15 @@ public class Gasa : ModuleRules
 	        PrivateIncludePathModuleNames.AddRange( new string[]
 	        {
 		        "CogCommon",
+		        "CogAbility",
+		        "CogAI",
+		        "CogAll",
+		        "CogDebug",
+		        "CogDebugEditor",
+		        "CogEngine",
+		        "CogImgui",
+		        "CogInput",
+		        "CogWindow",
 	        });
             PrivateDependencyModuleNames.AddRange(new string[]
             {

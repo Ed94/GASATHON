@@ -160,7 +160,8 @@ namespace Gasa
 
 	// Works for Unreal 5.4, Win64 MSVC (untested in other scenarios, for now)
 	inline
-	void Log( FString Message, EGasaVerbosity Verbosity = EGasaVerbosity::Log
+	void Log( FString Message
+		, EGasaVerbosity    Verbosity = EGasaVerbosity::Log
 		, FLogCategoryBase& Category  = LogGasa
 		, bool              DumpStack = false
 		, int32             Line      = __builtin_LINE()

@@ -3,6 +3,7 @@
 #include "Networking/GasaNetLibrary_Inlines.h"
 
 #include "AbilitySystemComponent.h"
+#include "DrawDebugHelpers.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -66,14 +67,17 @@ void AGasaPlayerController::NetOwner_OnReady()
 	if (IsClient())
 		ServerRPC_R_NotifyOwningClientReady();
 
+	Cam = GetWorld()->SpawnActor<ACameraMount>(GetDevOptions()->Template_PlayerCamera.Get(), FActorSpawnParameters() );
+	SetViewTarget(Cam);
+
 	AGasaPlayerState* PS         = GetPlayerState();
 	APlayerCharacter* PlayerChar = GetPawn<APlayerCharacter>();
 	{
 		PlayerChar->AbilitySystem = PS->AbilitySystem;
 		PlayerChar->Attributes    = PS->Attributes;
 		PlayerChar->AbilitySystem->InitAbilityActorInfo(PS, this);
-		Cam->AttachToActor(PlayerChar, FAttachmentTransformRules::KeepRelativeTransform);
 	}
+	Cam->AttachToActor(PlayerChar, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 void AGasaPlayerController::OnGameFrameworkInitialized()
@@ -416,15 +420,11 @@ void AGasaPlayerController::BeginPlay()
 void AGasaPlayerController::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	Cam = GetWorld()->SpawnActor<ACameraMount>(GetDevOptions()->Template_PlayerCamera.Get(), FActorSpawnParameters() );
-	SetViewTarget(Cam);
 }
 
 void AGasaPlayerController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
 #if 0
 	switch (HighlightState)
 	{

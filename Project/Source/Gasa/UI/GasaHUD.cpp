@@ -20,6 +20,11 @@ void AGasaHUD::InitHostWidget(FWidgetControllerData const* WidgetControllerData)
 	HostWidget->AddToViewport();
 }
 
+void AGasaHUD::DrawHUD()
+{
+	Super::DrawHUD();
+}
+
 #pragma region HUD
 void AGasaHUD::ShowHUD()
 {
@@ -31,5 +36,10 @@ void AGasaHUD::ShowHUD()
 void AGasaHUD::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AGasaHUD::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }
 #pragma endregion Actor
