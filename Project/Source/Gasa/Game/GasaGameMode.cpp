@@ -232,8 +232,7 @@ void AGasaGameMode::HandleSeamlessTravelPlayer(AController*& Controller)
 
 void AGasaGameMode::InitializeHUDForPlayer_Implementation(APlayerController* NewPlayer)
 {
-	// Super::InitializeHUDForPlayer_Implementation(NewPlayer);
-	NewPlayer->ClientSetHUD(HUDClass);
+	Super::InitializeHUDForPlayer_Implementation(NewPlayer);
 }
 
 void AGasaGameMode::InitSeamlessTravelPlayer(AController* NewController)

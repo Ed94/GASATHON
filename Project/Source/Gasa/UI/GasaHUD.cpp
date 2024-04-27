@@ -14,8 +14,6 @@ void AGasaHUD::InitHostWidget(FWidgetControllerData const* WidgetControllerData)
 	HostWidgetController       = NewObject<UHostWidgetController>(this, GetDevOptions()->Template_HostWidgetController.Get());
 	HostWidgetController->Data = (* WidgetControllerData);
 	HostWidget->SetWidgetController(HostWidgetController);
-	HostWidgetController->BindCallbacksToDependencies();
-	
 	HostWidgetController->BroadcastInitialValues();
 	HostWidget->AddToViewport();
 }

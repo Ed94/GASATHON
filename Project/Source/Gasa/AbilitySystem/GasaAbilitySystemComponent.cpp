@@ -14,11 +14,14 @@ using namespace Gasa;
 
 void UGasaAbilitySystemComp::OnAbilityActorInfoSet()
 {
+	if ( ! OnGameplayEffectAppliedDelegateToSelf.IsBoundToObject(this))
+		OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, & ThisClass::EffectApplied);
 }
 
 void UGasaAbilitySystemComp::EffectApplied(UAbilitySystemComponent* AbilitySystem, FGameplayEffectSpec const& Spec,
 	FActiveGameplayEffectHandle ActiveEffect)
 {
+	Log("EFFECT APPLIED?");
 	FGameplayTagContainer Tags;
 	Spec.GetAllAssetTags(Tags);
 	Event_OnEffectAppliedAssetTags.Broadcast(Tags);
@@ -27,6 +30,4 @@ void UGasaAbilitySystemComp::EffectApplied(UAbilitySystemComponent* AbilitySyste
 void UGasaAbilitySystemComp::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)
 {
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
-
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, & ThisClass::EffectApplied);
 }

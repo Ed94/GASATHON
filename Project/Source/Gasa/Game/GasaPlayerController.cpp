@@ -19,6 +19,7 @@
 #include "GasaGameInstance.h"
 #include "GasaGameState.h"
 #include "GasaPlayerState.h"
+#include "AbilitySystem/GasaAbilitySystemComponent.h"
 #include "Actors/CameraMount.h"
 #include "UI/GasaHUD.h"
 #include "UI/WidgetController.h"
@@ -75,7 +76,8 @@ void AGasaPlayerController::NetOwner_OnReady()
 	{
 		PlayerChar->AbilitySystem = PS->AbilitySystem;
 		PlayerChar->Attributes    = PS->Attributes;
-		PlayerChar->AbilitySystem->InitAbilityActorInfo(PS, this);
+		PS->AbilitySystem->InitAbilityActorInfo(PS, PlayerChar);
+		Cast<UGasaAbilitySystemComp>(PS->AbilitySystem)->OnAbilityActorInfoSet();
 	}
 	Cam->AttachToActor(PlayerChar, FAttachmentTransformRules::KeepRelativeTransform);
 }

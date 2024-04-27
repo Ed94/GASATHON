@@ -158,7 +158,9 @@ void AGasaCharacter::PossessedBy(AController* NewController)
 
 #if 0
 	if (bAutoAbilitySystem)
+	{
 		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
 #endif
 }
 
@@ -181,7 +183,10 @@ void AGasaCharacter::BeginPlay()
 	// TODO(Ed): Find out if this is the best spot todo this
 	// There is also OnPossessed, PostInitializeComponents, etc...
 	if (bAutoAbilitySystem)
+	{
 		AbilitySystem->InitAbilityActorInfo(this, this);
+		Cast<UGasaAbilitySystemComp>(AbilitySystem)->OnAbilityActorInfoSet();
+	}
 }
 
 void AGasaCharacter::Tick(float DeltaSeconds)
