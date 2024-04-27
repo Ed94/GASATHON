@@ -23,6 +23,7 @@
 struct FInputActionValue;
 struct FGameplayEffectContextHandle;
 struct FGameplayEffectModCallbackData;
+struct FGameplayTagContainer;
 struct FOnAttributeChangeData;
 struct FReplicationFlags;
 
@@ -44,6 +45,7 @@ class UInputAction;
 class UInputMappingContext;
 class USphereComponent;
 class USpringArmComponent;
+class UTexture2D;
 #pragma endregion Engine Forwards
 
 #pragma region Engine Plugin Forwards
@@ -72,6 +74,7 @@ class UGasaObject;
 class UGasaOverlay;
 class UGasaProgressBar;
 class UGasaSizeBox;
+class UGasaUserWidget;
 class UHostWidgetController;
 class UHUDHostWidget;
 class UWidgetController;

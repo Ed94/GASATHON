@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Engine/DataTable.h"
 #include "Engine/DeveloperSettings.h"
 
 #include "GasaCommon.h"
-
 #include "GasaDevOptions.generated.h"
+
 
 UCLASS(Config=Game, DefaultConfig, meta=(DisplayName="Gasa"))
 class GASA_API UGasaDevOptions : public UDeveloperSettings
@@ -14,6 +15,9 @@ public:
 
 	// NOTE(Ed): Any Soft-References must have their includes defined in GasaDevOptions.cpp
 	// They are used by GasaGen for the GasaDevOptionsCache
+
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="UI")
+	TSoftObjectPtr<UDataTable> TaggedMessageTable;
 
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="UI")
 	TSoftClassPtr<ACameraMount> Template_PlayerCamera;

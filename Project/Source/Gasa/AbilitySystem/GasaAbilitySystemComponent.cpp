@@ -21,12 +21,7 @@ void UGasaAbilitySystemComp::EffectApplied(UAbilitySystemComponent* AbilitySyste
 {
 	FGameplayTagContainer Tags;
 	Spec.GetAllAssetTags(Tags);
-	for (FGameplayTag const& Tag : Tags)
-	{
-		// TODO(Ed): Broadcast the tag to the widget controller
-		FString Msg = FString::Printf(TEXT("GE Tag: %s"), * Tag.ToString());
-		Log(Msg);
-	}
+	Event_OnEffectAppliedAssetTags.Broadcast(Tags);
 }
 
 void UGasaAbilitySystemComp::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)

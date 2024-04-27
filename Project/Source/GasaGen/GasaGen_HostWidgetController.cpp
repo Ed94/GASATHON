@@ -209,6 +209,8 @@ void gen_UHostWidgetController()
 					UGasaAttributeSet*      GasaAttribs   = Cast<UGasaAttributeSet>( Data.Attributes );
 
 					<bindings>
+
+					AbilitySystem->Event_OnEffectAppliedAssetTags.AddUObject(this, & UHostWidgetController::OnEffectAppliedAssetTags);
 				})
 			));
 		}

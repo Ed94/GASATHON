@@ -11,6 +11,9 @@ void FGasaDevOptionsCache::CachedDevOptions()
 {
 	UGasaDevOptions* DevOpts = GetMutDevOptions();
 
+	TaggedMessageTable = DevOpts->TaggedMessageTable.LoadSynchronous();
+	ensureMsgf( TaggedMessageTable != nullptr, TEXT( "TaggedMessageTable is null, DO NOT RUN PIE or else you may get a crash if not handled in BP or C++" ) );
+
 	Template_PlayerCamera = DevOpts->Template_PlayerCamera.LoadSynchronous();
 	ensureMsgf(
 	    Template_PlayerCamera != nullptr, TEXT( "Template_PlayerCamera is null, DO NOT RUN PIE or else you may get a crash if not handled in BP or C++" )

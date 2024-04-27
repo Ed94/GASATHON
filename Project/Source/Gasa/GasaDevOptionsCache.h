@@ -9,6 +9,8 @@ struct GASA_API FGasaDevOptionsCache
 	GENERATED_BODY()
 
 	UPROPERTY()
+	UObject* TaggedMessageTable;
+	UPROPERTY()
 	UClass* Template_PlayerCamera;
 	UPROPERTY()
 	UClass* Template_HUD_HostUI;

@@ -1,7 +1,10 @@
 #pragma once
 
+#include "GasaCommon.h"
+#include "TaggedMessageRow.h"
 #include "WidgetController.h"
 #include "HostWidgetController.generated.h"
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FAttributeFloatChangedSig, float, NewValue );
 
 UCLASS( Blueprintable, BlueprintType )
@@ -29,6 +32,11 @@ public:
 	void ManaChanged( FOnAttributeChangeData const& Data );
 	void MaxManaChanged( FOnAttributeChangeData const& Data );
 #pragma endregion Attribute Events
+
+	UPROPERTY( BlueprintAssignable, Category = "Messages" )
+	FTaggedMessageRowSig OnTaggedAssetMessage;
+
+	void OnEffectAppliedAssetTags( FGameplayTagContainer const& AssetTags );
 
 #pragma region WidgetController
 	void BroadcastInitialValues() override;

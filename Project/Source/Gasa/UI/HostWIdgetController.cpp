@@ -2,6 +2,9 @@
 #include "AbilitySystem/GasaAbilitySystemComponent_Inlines.h"
 #include "AbilitySystem/GasaAttributeSet.h"
 #include "GameplayEffectTypes.h"
+#include "GasaDevOptions.h"
+#include "TaggedMessageRow.h"
+using namespace Gasa;
 
 
 
@@ -29,6 +32,20 @@ void UHostWidgetController::MaxManaChanged( FOnAttributeChangeData const& Attrib
 	Event_OnMaxManaChanged.Broadcast( Attribute.NewValue );
 }
 #pragma endregion Attribute Changed Callbacks
+
+void UHostWidgetController::OnEffectAppliedAssetTags( FGameplayTagContainer const& AssetTags )
+{
+	UDataTable* TaggedMessages = GetDevOptions()->TaggedMessageTable.Get();
+	for ( FGameplayTag const& Tag : AssetTags )
+	{
+		FGameplayTag MessageTagCategory = FGameplayTag::RequestGameplayTag( FName( "Message" ) );
+		if ( ! Tag.MatchesTag( MessageTagCategory ) )
+			continue;
+
+		FTaggedMessageRow* Row = TaggedMessages->FindRow<FTaggedMessageRow>( Tag.GetTagName(), TEXT( "" ) );
+		OnTaggedAssetMessage.Broadcast( *Row );
+	}
+}
 
 void UHostWidgetController::BroadcastInitialValues()
 {
@@ -66,4 +83,6 @@ void UHostWidgetController::BindCallbacksToDependencies()
 	FOnGameplayAttributeValueChange& MaxManaAttributeChangedDelegate =
 	    AbilitySystem->GetGameplayAttributeValueChangeDelegate( GasaAttribs->GetMaxManaAttribute() );
 	MaxManaAttributeChangedDelegate.AddUObject( this, &ThisClass::MaxManaChanged );
+
+	AbilitySystem->Event_OnEffectAppliedAssetTags.AddUObject( this, &UHostWidgetController::OnEffectAppliedAssetTags );
 }
