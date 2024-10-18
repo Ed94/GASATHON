@@ -73,20 +73,21 @@ function Remove-ContentFromGitHistory {
         Write-Verbose "Relative content path: $path_content_relative"
 
         Write-Verbose "Removing Content directory from Git history..."
-        
+
         # Construct and execute filter-branch command
         $filter_command = "git rm -r --cached --ignore-unmatch `"$path_content_relative`""
         $filter_branch_cmd = "git $cgit_filter_branch $fgit_force $fgit_index_filter '$filter_command' $fgit_prune_empty $fgit_tag_name_filter $fgit_filter_concat $fgit_filter_separate $fgit_all"
         Write-Verbose "Executing command: $filter_branch_cmd"
-        $job = Start-Job -ScriptBlock { Invoke-Expression $args[0] } -ArgumentList $filter_branch_cmd
-        Wait-Job $job -Timeout 3600  # Wait for 1 hour max
-        if ($job.State -eq 'Running') {
-            Stop-Job $job
-            throw "Filter-branch operation timed out after 1 hour"
-        } else {
-            Receive-Job $job
+        $output = Invoke-Expression $filter_branch_cmd 2>&1
+        $output | ForEach-Object {
+            if ($_ -match "WARNING:") {
+                Write-Warning $_
+            } elseif ($_ -match "fatal:") {
+                throw $_
+            } else {
+                Write-Verbose $_
+            }
         }
-        Remove-Job $job
 
         Write-Verbose "Cleaning up refs..."
         # Clean up refs using git directly
