@@ -75,28 +75,19 @@ function Remove-ContentFromGitHistory {
         Write-Verbose "Removing Content directory from Git history..."
 
         # Construct and execute filter-branch command
-        $filter_branch_args = @(
-            $fgit_force,
-            $fgit_index_filter,
-            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_content_relative`"",
-            $fgit_prune_empty,
-            $fgit_tag_name_filter,
-            $fgit_filter_concat,
-            $fgit_filter_separate,
-            $fgit_all
-        )
-        $filter_branch_cmd = "git $cgit_filter_branch $($filter_branch_args -join ' ')"
+        $filter_command = "git rm -r --cached --ignore-unmatch `"$path_content_relative`""
+        $filter_branch_cmd = "git $cgit_filter_branch $fgit_force $fgit_index_filter '$filter_command' $fgit_prune_empty $fgit_tag_name_filter $fgit_filter_concat $fgit_filter_separate $fgit_all"
         Write-Verbose "Executing command: $filter_branch_cmd"
         Invoke-Expression $filter_branch_cmd
 
         Write-Verbose "Cleaning up refs..."
         # Clean up refs using git directly
-        $refs = git show-ref --heads | ForEach-Object { $_.Split()[1] }
+        $refs = & git show-ref --heads | ForEach-Object { $_.Split()[1] }
         foreach ($ref in $refs) {
             $originalRef = "$original_refs/$ref"
-            if (git show-ref --verify --quiet $originalRef) {
+            if (& git show-ref --verify --quiet $originalRef) {
                 Write-Verbose "Deleting ref: $originalRef"
-                git $cgit_update_ref -d $originalRef
+                & git $cgit_update_ref -d $originalRef
             }
         }
 
@@ -108,10 +99,10 @@ function Remove-ContentFromGitHistory {
         }
 
         Write-Verbose "Expiring reflog..."
-        git $cgit_reflog_expire $fgit_expire_now $fgit_all
+        & git $cgit_reflog_expire $fgit_expire_now $fgit_all
 
         Write-Verbose "Running garbage collection..."
-        git $cgit_garbage_collect $fgit_prune_now $fgit_aggressive
+        & git $cgit_garbage_collect $fgit_prune_now $fgit_aggressive
 
         Write-Verbose "Content removal from Git history completed successfully."
     }
