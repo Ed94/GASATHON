@@ -1,83 +1,107 @@
-# PowerShell script to set up Git LFS for Content directory
-clear-host
+# PowerShell script to remove Content directory from Git history
+Clear-Host
 
+# Script setup
+$ErrorActionPreference = "Stop"
+$VerbosePreference = "Continue"
+
+# Path setup
 $path_scripts = $PSScriptRoot
-$path_helpers = join-path $path_scripts 'helpers'
-$path_root    = split-path -Parent -Path $path_scripts
-$path_ue      = join-path '../../Surgo' 'UE'
-$path_project = join-path $path_root 'Project'
-
-
-# Set your repository paths here
-$path_content = join-path $path_project 'Content'
-
+$path_helpers = Join-Path $path_scripts 'helpers'
+$path_root    = Split-Path -Parent -Path $path_scripts
+$path_project = Join-Path $path_root 'Project'
+$path_content = Join-Path $path_project 'Content'
 
 # Function to remove Content directory from Git history
 function Remove-ContentFromGitHistory {
-    push-location $path_repo
+    param([string]$repoPath)
 
-	$cgit_filter_branch   = 'filter-branch'
-	$cgit_for_each_ref    = 'for-each-ref'
-	$cgit_update_ref      = 'update-ref'
-	$cgit_reflog_expire   = 'reflog expire'
-	$cgit_garbage_collect = 'gc'
+    # Git commands and flags
+    $cgit_filter_branch   = 'filter-branch'
+    $cgit_for_each_ref    = 'for-each-ref'
+    $cgit_update_ref      = 'update-ref'
+    $cgit_reflog_expire   = 'reflog expire'
+    $cgit_garbage_collect = 'gc'
 
-	$fgit_agressive       = '--aggressive'
-	$fgit_all             = '--all'
-	$fgit_cached          = '--cached'
-	$fgit_format          = '--format'
-	$fgit_expire_now      = '--expire=now'
-	$fgit_ignore_unmatch  = '--ignore-unmatch'
-	$fgit_index_filter    = '--index-filter'
-	$fgit_force           = '--force'
+    $fgit_aggressive      = '--aggressive'
+    $fgit_all             = '--all'
+    $fgit_cached          = '--cached'
+    $fgit_format          = '--format'
+    $fgit_expire_now      = '--expire=now'
+    $fgit_ignore_unmatch  = '--ignore-unmatch'
+    $fgit_index_filter    = '--index-filter'
+    $fgit_force           = '--force'
     $fgit_prune_empty     = '--prune-empty'
-	$fgit_prune_now       = '--prune=now'
+    $fgit_prune_now       = '--prune=now'
     $fgit_tag_name_filter = '--tag-name-filter'
-	$fgit_stdin           = '--stdin'
+    $fgit_stdin           = '--stdin'
 
-	$fgit_filter_concat   = 'cat'
-	$fgit_filter_separate = '--'
+    $fgit_filter_concat   = 'cat'
+    $fgit_filter_separate = '--'
 
-	$fmt_delete_refs = 'delete $(refname)'
-	$original_refs   = 'refs/original'
+    $fmt_delete_refs = 'delete %(refname)'
+    $original_refs   = 'refs/original'
 
-	$filter_cmd = 'git rm -r --cached'
+    # Navigate to repository root
+    Push-Location $repoPath
 
-    # Construct filter-branch command
-    $filter_branch_args = @()
-    $filter_branch_args += $fgit_force
-    $filter_branch_args += $fgit_index_filter
-    $filter_branch_args += "git rm -r $fgit_cached $fgit_ignore_unmatch $path_content"
-    $filter_branch_args += $fgit_prune_empty
-    $filter_branch_args += $fgit_tag_name_filter
-    $filter_branch_args += $fgit_filter_concat
-    $filter_branch_args += $fgit_filter_separate
-    $filter_branch_args += $fgit_all
+    try {
+        Write-Verbose "Removing Content directory from Git history..."
+        
+        # Construct and execute filter-branch command
+        $filter_branch_args = @(
+            $fgit_force,
+            $fgit_index_filter,
+            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_content`"",
+            $fgit_prune_empty,
+            $fgit_tag_name_filter,
+            $fgit_filter_concat,
+            $fgit_filter_separate,
+            $fgit_all
+        )
+        & git $cgit_filter_branch $filter_branch_args
+        if ($LASTEXITCODE -ne 0) { throw "Error during filter-branch operation" }
 
-    # Execute filter-branch command
-    & git $cgit_filter_branch $filter_branch_args
+        Write-Verbose "Cleaning up refs..."
+        # Clean up refs
+        $for_each_ref_args = @("$fgit_format='$fmt_delete_refs'", $original_refs)
+        $refs_to_delete = & git $cgit_for_each_ref $for_each_ref_args
+        $refs_to_delete | & git $cgit_update_ref $fgit_stdin
+        if ($LASTEXITCODE -ne 0) { throw "Error during ref cleanup" }
 
-    # Construct for-each-ref command
-    $for_each_ref_args = @()
-    $for_each_ref_args += "$fgit_format='$fmt_delete_refs'"
-    $for_each_ref_args += $original_refs
+        Write-Verbose "Expiring reflog..."
+        # Expire reflog
+        $reflog_expire_args = @($fgit_expire_now, $fgit_all)
+        & git $cgit_reflog_expire $reflog_expire_args
+        if ($LASTEXITCODE -ne 0) { throw "Error during reflog expiration" }
 
-    # Execute for-each-ref and pipe to update-ref
-    $refs_to_delete = & git $cgit_for_each_ref $for_each_ref_args
-    $refs_to_delete | & git $cgit_update_ref $fgit_stdin
+        Write-Verbose "Running garbage collection..."
+        # Garbage collection
+        $gc_args = @($fgit_prune_now, $fgit_aggressive)
+        & git $cgit_garbage_collect $gc_args
+        if ($LASTEXITCODE -ne 0) { throw "Error during garbage collection" }
 
-    # Construct and execute reflog expire command
-    $reflog_expire_args = @()
-    $reflog_expire_args += $fgit_expire_now
-    $reflog_expire_args += $fgit_all
-    & git $cgit_reflog_expire $reflog_expire_args
-
-    # Construct and execute garbage collect command
-    $gc_args = @()
-    $gc_args += $fgit_prune_now
-    $gc_args += $fgit_aggressive
-    & git $cgit_garbage_collect $gc_args
-
-	pop-location
+        Write-Verbose "Content removal from Git history completed successfully."
+    }
+    catch {
+        Write-Error "An error occurred: $_"
+    }
+    finally {
+        Pop-Location
+    }
 }
-Remove-ContentFromGitHistory
+
+# Main execution
+Write-Host "This script will remove the Content directory from your Git history."
+Write-Host "This action is IRREVERSIBLE. Make sure you have a backup before proceeding."
+$confirmation = Read-Host "Are you sure you want to continue? (y/n)"
+if ($confirmation -ne 'y') {
+    Write-Host "Operation cancelled."
+    exit
+}
+
+# Execute the function
+Remove-ContentFromGitHistory $path_root
+
+Write-Host "Script execution completed. Please review your repository to ensure the desired outcome."
+Write-Host "Remember to force-push these changes if you want to update the remote repository."
