@@ -1,9 +1,9 @@
 # PowerShell script to remove Content directory from Git history
-Clear-Host
+clear-host
 
 # Script setup
 $ErrorActionPreference = "Stop"
-$VerbosePreference = "Continue"
+$VerbosePreference     = "Continue"
 
 # Path setup
 $path_scripts = $PSScriptRoot
@@ -42,13 +42,21 @@ function Remove-ContentFromGitHistory {
     $fmt_delete_refs = 'delete %(refname)'
     $original_refs   = 'refs/original'
 
+    Write-Verbose "Received path_repo: $path_repo"
+
+    if ([string]::IsNullOrWhiteSpace($path_repo)) {
+        throw "Repository path is null or empty"
+    }
+
+    if (-not (Test-Path $path_repo)) {
+        throw "Repository path does not exist: $path_repo"
+    }
+
     # Navigate to repository root
     Push-Location $path_repo
 
-	try {
+    try {
         Write-Verbose "Current directory: $(Get-Location)"
-        Write-Verbose "Repository path: $path_repo"
-        Write-Verbose "Content path: $path_content"
 
         # Check if we're in a git repository
         if (-not (Test-Path (Join-Path $path_repo '.git'))) {
@@ -61,8 +69,8 @@ function Remove-ContentFromGitHistory {
         }
 
         # Get the relative path of the content directory
-        $path_relative = Resolve-Path -Relative -Path $path_content
-        Write-Verbose "Relative content path: $path_relative"
+        $path_content_relative = Resolve-Path -Relative -Path $path_content
+        Write-Verbose "Relative content path: $path_content_relative"
 
         Write-Verbose "Removing Content directory from Git history..."
 
@@ -70,48 +78,40 @@ function Remove-ContentFromGitHistory {
         $filter_branch_args = @(
             $fgit_force,
             $fgit_index_filter,
-            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_relative`"",
+            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_content_relative`"",
             $fgit_prune_empty,
             $fgit_tag_name_filter,
             $fgit_filter_concat,
             $fgit_filter_separate,
             $fgit_all
         )
-        & git $cgit_filter_branch $filter_branch_args
-        if ($LASTEXITCODE -ne 0) { throw "Error during filter-branch operation" }
+        $filter_branch_cmd = "git $cgit_filter_branch $($filter_branch_args -join ' ')"
+        Write-Verbose "Executing command: $filter_branch_cmd"
+        Invoke-Expression $filter_branch_cmd
 
         Write-Verbose "Cleaning up refs..."
-		# Clean up refs using git directly
-		$refs = & git show-ref --heads | ForEach-Object { $_.Split()[1] }
-		foreach ($ref in $refs) {
-			$originalRef = "refs/original/$ref"
-			if (& git show-ref --verify --quiet $originalRef) {
-				Write-Verbose "Deleting ref: $originalRef"
-				& git update-ref -d $originalRef
-				if ($LASTEXITCODE -ne 0) { 
-					Write-Warning "Error deleting ref: $originalRef"
-				}
-			}
-		}
-	
-		# Remove any remaining refs/original directory
-		$originalRefsPath = Join-Path $repoPath ".git\refs\original"
-		if (Test-Path $originalRefsPath) {
-			Write-Verbose "Removing refs/original directory"
-			Remove-Item -Recurse -Force $originalRefsPath
-		}
+        # Clean up refs using git directly
+        $refs = git show-ref --heads | ForEach-Object { $_.Split()[1] }
+        foreach ($ref in $refs) {
+            $originalRef = "$original_refs/$ref"
+            if (git show-ref --verify --quiet $originalRef) {
+                Write-Verbose "Deleting ref: $originalRef"
+                git $cgit_update_ref -d $originalRef
+            }
+        }
+
+        # Remove any remaining refs/original directory
+        $originalRefsPath = Join-Path $path_repo ".git\$original_refs"
+        if (Test-Path $originalRefsPath) {
+            Write-Verbose "Removing refs/original directory"
+            Remove-Item -Recurse -Force $originalRefsPath
+        }
 
         Write-Verbose "Expiring reflog..."
-        # Expire reflog
-        $reflog_expire_args = @($fgit_expire_now, $fgit_all)
-        & git $cgit_reflog_expire $reflog_expire_args
-        if ($LASTEXITCODE -ne 0) { throw "Error during reflog expiration" }
+        git $cgit_reflog_expire $fgit_expire_now $fgit_all
 
         Write-Verbose "Running garbage collection..."
-        # Garbage collection
-        $gc_args = @($fgit_prune_now, $fgit_aggressive)
-        & git $cgit_garbage_collect $gc_args
-        if ($LASTEXITCODE -ne 0) { throw "Error during garbage collection" }
+        git $cgit_garbage_collect $fgit_prune_now $fgit_aggressive
 
         Write-Verbose "Content removal from Git history completed successfully."
     }
@@ -133,6 +133,7 @@ if ($confirmation -ne 'y') {
 }
 
 # Execute the function
+Write-Verbose "Calling Remove-ContentFromGitHistory with path_root: $path_root"
 Remove-ContentFromGitHistory $path_root
 
 Write-Host "Script execution completed. Please review your repository to ensure the desired outcome."
