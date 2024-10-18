@@ -73,12 +73,20 @@ function Remove-ContentFromGitHistory {
         Write-Verbose "Relative content path: $path_content_relative"
 
         Write-Verbose "Removing Content directory from Git history..."
-
+        
         # Construct and execute filter-branch command
         $filter_command = "git rm -r --cached --ignore-unmatch `"$path_content_relative`""
         $filter_branch_cmd = "git $cgit_filter_branch $fgit_force $fgit_index_filter '$filter_command' $fgit_prune_empty $fgit_tag_name_filter $fgit_filter_concat $fgit_filter_separate $fgit_all"
         Write-Verbose "Executing command: $filter_branch_cmd"
-        Invoke-Expression $filter_branch_cmd
+        $job = Start-Job -ScriptBlock { Invoke-Expression $args[0] } -ArgumentList $filter_branch_cmd
+        Wait-Job $job -Timeout 3600  # Wait for 1 hour max
+        if ($job.State -eq 'Running') {
+            Stop-Job $job
+            throw "Filter-branch operation timed out after 1 hour"
+        } else {
+            Receive-Job $job
+        }
+        Remove-Job $job
 
         Write-Verbose "Cleaning up refs..."
         # Clean up refs using git directly
@@ -87,7 +95,7 @@ function Remove-ContentFromGitHistory {
             $originalRef = "$original_refs/$ref"
             if (& git show-ref --verify --quiet $originalRef) {
                 Write-Verbose "Deleting ref: $originalRef"
-                & git $cgit_update_ref -d $originalRef
+                & git update-ref -d $originalRef
             }
         }
 
@@ -99,10 +107,10 @@ function Remove-ContentFromGitHistory {
         }
 
         Write-Verbose "Expiring reflog..."
-        & git $cgit_reflog_expire $fgit_expire_now $fgit_all
+        & git reflog expire $fgit_expire_now $fgit_all
 
         Write-Verbose "Running garbage collection..."
-        & git $cgit_garbage_collect $fgit_prune_now $fgit_aggressive
+        & git gc $fgit_prune_now $fgit_aggressive
 
         Write-Verbose "Content removal from Git history completed successfully."
     }
