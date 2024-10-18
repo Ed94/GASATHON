@@ -14,7 +14,7 @@ $path_content = Join-Path $path_project 'Content'
 
 # Function to remove Content directory from Git history
 function Remove-ContentFromGitHistory {
-    param([string]$repoPath)
+    param([string]$path_repo)
 
     # Git commands and flags
     $cgit_filter_branch   = 'filter-branch'
@@ -43,16 +43,34 @@ function Remove-ContentFromGitHistory {
     $original_refs   = 'refs/original'
 
     # Navigate to repository root
-    Push-Location $repoPath
+    Push-Location $path_repo
 
-    try {
+	try {
+        Write-Verbose "Current directory: $(Get-Location)"
+        Write-Verbose "Repository path: $path_repo"
+        Write-Verbose "Content path: $path_content"
+
+        # Check if we're in a git repository
+        if (-not (Test-Path (Join-Path $path_repo '.git'))) {
+            throw "Not in a git repository. Please run this script from the root of your git repository."
+        }
+
+        # Check if the Content directory exists
+        if (-not (Test-Path $path_content)) {
+            throw "Content directory not found at $path_content"
+        }
+
+        # Get the relative path of the content directory
+        $path_relative = Resolve-Path -Relative -Path $path_content
+        Write-Verbose "Relative content path: $path_relative"
+
         Write-Verbose "Removing Content directory from Git history..."
-        
+
         # Construct and execute filter-branch command
         $filter_branch_args = @(
             $fgit_force,
             $fgit_index_filter,
-            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_content`"",
+            "git rm -r $fgit_cached $fgit_ignore_unmatch `"$path_relative`"",
             $fgit_prune_empty,
             $fgit_tag_name_filter,
             $fgit_filter_concat,
