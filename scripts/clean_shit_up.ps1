@@ -81,11 +81,25 @@ function Remove-ContentFromGitHistory {
         if ($LASTEXITCODE -ne 0) { throw "Error during filter-branch operation" }
 
         Write-Verbose "Cleaning up refs..."
-        # Clean up refs
-        $for_each_ref_args = @("$fgit_format='$fmt_delete_refs'", $original_refs)
-        $refs_to_delete = & git $cgit_for_each_ref $for_each_ref_args
-        $refs_to_delete | & git $cgit_update_ref $fgit_stdin
-        if ($LASTEXITCODE -ne 0) { throw "Error during ref cleanup" }
+		# Clean up refs using git directly
+		$refs = & git show-ref --heads | ForEach-Object { $_.Split()[1] }
+		foreach ($ref in $refs) {
+			$originalRef = "refs/original/$ref"
+			if (& git show-ref --verify --quiet $originalRef) {
+				Write-Verbose "Deleting ref: $originalRef"
+				& git update-ref -d $originalRef
+				if ($LASTEXITCODE -ne 0) { 
+					Write-Warning "Error deleting ref: $originalRef"
+				}
+			}
+		}
+	
+		# Remove any remaining refs/original directory
+		$originalRefsPath = Join-Path $repoPath ".git\refs\original"
+		if (Test-Path $originalRefsPath) {
+			Write-Verbose "Removing refs/original directory"
+			Remove-Item -Recurse -Force $originalRefsPath
+		}
 
         Write-Verbose "Expiring reflog..."
         # Expire reflog
