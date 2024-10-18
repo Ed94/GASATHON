@@ -1,4 +1,4 @@
-﻿#include "GasaUserWidget.h"
+#include "GasaUserWidget.h"
 
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Blueprint/WidgetTree.h"
@@ -227,7 +227,7 @@ bool UGasaUserWidget::Initialize()
 
 		// For backward compatibility, run the initialize event on widget that doesn't have a player context only when the class authorized it.
 		bool bClassWantsToRunInitialized = BGClass && BGClass->bCanCallInitializedWithoutPlayerContext;
-		if (!IsDesignTime() && (PlayerContext.IsValid() || bClassWantsToRunInitialized))
+		if (!IsDesignTime() && (GetPlayerContext().IsValid() || bClassWantsToRunInitialized))
 		{
 			NativeOnInitialized();
 		}

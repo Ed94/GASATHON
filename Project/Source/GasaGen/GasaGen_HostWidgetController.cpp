@@ -72,7 +72,7 @@ void gen_UHostWidgetController()
 				));
 				attribute_events.append(fmt_newline);
 				attribute_events.append( parse_variable(
-					token_fmt( "field", (StrC) attribute_field.Name, stringize( FAttributeFloatChangedSig Event_On<field>Changed; ))
+					token_fmt( "field", (StrC) attribute_field.Name, stringize( FAttributeChangedSig Event_On<field>Changed; ))
 				));
 				attribute_events.append(fmt_newline);
 			}

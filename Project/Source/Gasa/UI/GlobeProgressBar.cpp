@@ -1,4 +1,4 @@
-﻿#include "GlobeProgressBar.h"
+#include "GlobeProgressBar.h"
 
 #include "GasaImage.h"
 #include "GasaOverlay.h"

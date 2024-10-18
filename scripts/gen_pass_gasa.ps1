@@ -54,7 +54,7 @@ elseif ( $release -eq $false ) {
 else {
 	$optimize = $true
 }
-
+#endregion Configuration
 
 . $vendor_toolchain
 . $incremental_checks
@@ -103,3 +103,4 @@ function run-gengasa
 	Pop-Location
 }
 run-gengasa
+#endregion Building
