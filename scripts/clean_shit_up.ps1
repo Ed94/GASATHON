@@ -13,8 +13,11 @@ $path_project = Join-Path $path_root 'Project'
 $path_content = Join-Path $path_project 'Content'
 
 # Function to remove Content directory from Git history
-function Remove-ContentFromGitHistory {
-    param([string]$path_repo)
+function Remove-ContentFromGitHistory
+{
+    param(
+		[string]$path_repo
+	)
 
     # Git commands and flags
     $cgit_filter_branch   = 'filter-branch'
@@ -55,7 +58,8 @@ function Remove-ContentFromGitHistory {
     # Navigate to repository root
     Push-Location $path_repo
 
-    try {
+    try
+	{
         Write-Verbose "Current directory: $(Get-Location)"
 
         # Check if we're in a git repository
@@ -75,26 +79,30 @@ function Remove-ContentFromGitHistory {
         Write-Verbose "Removing Content directory from Git history..."
 
         # Construct and execute filter-branch command
-        $filter_command = "git rm -r --cached --ignore-unmatch `"$path_content_relative`""
+        $filter_command    = "git rm -r --cached --ignore-unmatch `"$path_content_relative`""
         $filter_branch_cmd = "git $cgit_filter_branch $fgit_force $fgit_index_filter '$filter_command' $fgit_prune_empty $fgit_tag_name_filter $fgit_filter_concat $fgit_filter_separate $fgit_all"
         Write-Verbose "Executing command: $filter_branch_cmd"
+
         $output = Invoke-Expression $filter_branch_cmd 2>&1
         $output | ForEach-Object {
             if ($_ -match "WARNING:") {
                 Write-Warning $_
-            } elseif ($_ -match "fatal:") {
+            }
+			elseif ($_ -match "fatal:") {
                 throw $_
-            } else {
+            }
+			else {
                 Write-Verbose $_
             }
         }
 
         Write-Verbose "Cleaning up refs..."
-        # Clean up refs using git directly
         $refs = & git show-ref --heads | ForEach-Object { $_.Split()[1] }
-        foreach ($ref in $refs) {
+        foreach ($ref in $refs)
+		{
             $originalRef = "$original_refs/$ref"
-            if (& git show-ref --verify --quiet $originalRef) {
+            if (& git show-ref --verify --quiet $originalRef)
+			{
                 Write-Verbose "Deleting ref: $originalRef"
                 & git update-ref -d $originalRef
             }
@@ -102,7 +110,8 @@ function Remove-ContentFromGitHistory {
 
         # Remove any remaining refs/original directory
         $originalRefsPath = Join-Path $path_repo ".git\$original_refs"
-        if (Test-Path $originalRefsPath) {
+        if (Test-Path $originalRefsPath)
+		{
             Write-Verbose "Removing refs/original directory"
             Remove-Item -Recurse -Force $originalRefsPath
         }
