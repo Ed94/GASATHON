@@ -54,6 +54,9 @@ int gen_main()
 		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_OneParam));
 		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_ThreeParams));
 		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_TwoParams));
+		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_OneParam));
+		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams));
+		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams));
 		PreprocessorDefines.append( get_cached_string(str_DEFINE_ACTORDESC_TYPE));
 		PreprocessorDefines.append( get_cached_string(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
 		PreprocessorDefines.append( get_cached_string(str_ENUM_CLASS_FLAGS));
@@ -76,6 +79,7 @@ int gen_main()
 		PreprocessorDefines.append( get_cached_string(str_UPARAM));
 		PreprocessorDefines.append( get_cached_string(str_UPROPERTY));
 		PreprocessorDefines.append( get_cached_string(str_USTRUCT));
+		PreprocessorDefines.append( get_cached_string(str_UE_REQUIRES));
 	}
 
 	gen_UGasaAttributeSet();
@@ -84,9 +88,9 @@ int gen_main()
 	// gen_netslime_interfaces();
 
 	// One offs
-	if (0)
+	if (1)
 	{
-		ue_parse_testing();
+		// ue_parse_testing();
 		swap_SBlueprintActionMenu_Construct();
 	}
 	return 0;

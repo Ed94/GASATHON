@@ -830,7 +830,7 @@ struct AST
 			union
 			{
 				AST* ArrExpr;        // Typename
-				AST* Body;           // Class, Constructr, Destructor, Enum, Friend, Function, Namespace, Struct, Union
+				AST* Body;           // Class, Constructor, Destructor, Enum, Friend, Function, Namespace, Struct, Union
 				AST* Declaration;    // Friend, Template
 				AST* Value;          // Parameter, Variable
 			};
@@ -840,6 +840,7 @@ struct AST
 				AST* NextVar;    // Variable; Possible way to handle comma separated variables declarations. ( , NextVar->Specs NextVar->Name NextVar->ArrExpr =
 				                 // NextVar->Value )
 				AST* SuffixSpecs;    // Only used with typenames, to store the function suffix if typename is function signature. ( May not be needed )
+				AST* PostNameMacro; // Only used with parameters for specifically UE_REQUIRES (Thanks Unreal)
 			};
 		};
 
@@ -921,6 +922,7 @@ struct AST_POD
 				AST* NextVar;    // Variable; Possible way to handle comma separated variables declarations. ( , NextVar->Specs NextVar->Name NextVar->ArrExpr =
 				                 // NextVar->Value )
 				AST* SuffixSpecs;    // Only used with typenames, to store the function suffix if typename is function signature. ( May not be needed )
+				AST* PostNameMacro; // Only used with parameters for specifically UE_REQUIRES (Thanks Unreal)
 			};
 		};
 
@@ -2630,7 +2632,8 @@ struct AST_Param
 			CodeType ValueType;
 			Code     Macro;
 			Code     Value;
-			char     _PAD_PROPERTIES_3_[sizeof( AST* )];
+			Code     PostNameMacro; // Thanks Unreal
+			// char     _PAD_PROPERTIES_3_[sizeof( AST* )];
 		};
 	};
 

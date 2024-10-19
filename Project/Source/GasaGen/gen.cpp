@@ -2314,6 +2314,11 @@ void CodeParam::to_string( String& result )
 	else if ( ast->ValueType )
 		result.append_fmt( " %S", ast->ValueType.to_string() );
 
+	if ( ast->PostNameMacro )
+	{
+		result.append_fmt(" %S", ast->PostNameMacro.to_string() );
+	}
+
 	if ( ast->Value )
 		result.append_fmt( " = %S", ast->Value.to_string() );
 
@@ -9708,10 +9713,11 @@ namespace parser
 			return { nullptr };
 		}
 
-		Code     macro = { nullptr };
-		CodeType type  = { nullptr };
-		Code     value = { nullptr };
-		Token    name  = NullToken;
+		Code     macro           = { nullptr };
+		CodeType type            = { nullptr };
+		Code     value           = { nullptr };
+		Token    name            = NullToken;
+		Code     post_name_macro = { nullptr };
 
 		if ( check( TokType::Varadic_Argument ) )
 		{
@@ -9750,6 +9756,15 @@ namespace parser
 				name = currtok;
 				eat( TokType::Identifier );
 				// ( <Macro> <ValueType> <Name>
+			}
+
+			// Unreal has yet another type of macro:
+			// template<class T UE_REQUIRES(TPointerIsConvertibleFromTo<T, UInterface>::Value)>
+			// class T ... and then ^this^ UE_REQUIRES shows up
+			// So we need to consume that.
+			if ( check( TokType::Preprocess_Macro ))
+			{
+				post_name_macro = parse_simple_preprocess( ETokType::Preprocess_Macro );
 			}
 
 			// In template captures you can have a typename have direct assignment without a name
@@ -9853,6 +9868,15 @@ namespace parser
 					name = currtok;
 					eat( TokType::Identifier );
 					// ( <Macro> <ValueType> <Name> = <Expression>, <Macro> <ValueType> <Name>
+				}
+
+				// Unreal has yet another type of macro:
+				// template<class T UE_REQUIRES(TPointerIsConvertibleFromTo<T, UInterface>::Value)>
+				// class T ... and then ^this^ UE_REQUIRES shows up
+				// So we need to consume that.
+				if ( check( TokType::Preprocess_Macro ))
+				{
+					post_name_macro = parse_simple_preprocess( ETokType::Preprocess_Macro );
 				}
 
 				// In template captures you can have a typename have direct assignment without a name

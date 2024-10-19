@@ -36,6 +36,9 @@ constexpr StrC str_DECLARE_LOG_CATEGORY_EXTERN                           = txt("
 constexpr StrC str_DECLARE_MULTICAST_DELEGATE_OneParam                   = txt("DECLARE_MULTICAST_DELEGATE_OneParam(");
 constexpr StrC str_DECLARE_MULTICAST_DELEGATE_ThreeParams                = txt("DECLARE_MULTICAST_DELEGATE_ThreeParams(");
 constexpr StrC str_DECLARE_MULTICAST_DELEGATE_TwoParams                  = txt("DECLARE_MULTICAST_DELEGATE_TwoParams(");
+constexpr StrC str_DECLARE_TS_MULTICAST_DELEGATE_OneParam                = txt("DECLARE_TS_MULTICAST_DELEGATE_OneParam(");
+constexpr StrC str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams               = txt("DECLARE_TS_MULTICAST_DELEGATE_TwoParams(");
+constexpr StrC str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams             = txt("DECLARE_TS_MULTICAST_DELEGATE_ThreeParams(");
 constexpr StrC str_DEFINE_ACTORDESC_TYPE                                 = txt("DEFINE_ACTORDESC_TYPE(");
 constexpr StrC str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL    = txt("DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(");
 constexpr StrC str_ENUM_CLASS_FLAGS                                      = txt("ENUM_CLASS_FLAGS(");
@@ -58,6 +61,7 @@ constexpr StrC str_UMETA                                                 = txt("
 constexpr StrC str_UPARAM                                                = txt("UPARAM(");
 constexpr StrC str_UPROPERTY                                             = txt("UPROPERTY(");
 constexpr StrC str_USTRUCT                                               = txt("USTRUCT(");
+constexpr StrC str_UE_REQUIRES                                           = txt("UE_REQUIRES(");
 
 constexpr StrC str_GASA_API = txt("GASA_API");
 
