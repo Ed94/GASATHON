@@ -9932,6 +9932,8 @@ namespace parser
 			if ( name.Length > 0 )
 				param->Name = get_cached_string( name );
 
+			param->PostNameMacro = post_name_macro;
+
 			param->ValueType = type;
 
 			if ( value )
