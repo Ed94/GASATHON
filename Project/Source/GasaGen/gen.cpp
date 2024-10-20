@@ -9933,8 +9933,7 @@ namespace parser
 				param->Name = get_cached_string( name );
 
 			param->PostNameMacro = post_name_macro;
-
-			param->ValueType = type;
+			param->ValueType     = type;
 
 			if ( value )
 				param->Value = value;

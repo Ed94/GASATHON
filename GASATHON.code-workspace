@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../Surgo/UE"
+		}
+	],
+	"settings": {
+		"autoHide.autoHideSideBar": false,
+		"autoHide.autoHidePanel": false,
+		"files.associations": {
+			"*.rmd": "markdown",
+			"*.ipp": "cpp",
+			"__hash_table": "cpp",
+			"string": "cpp"
+		}
+	}
+}

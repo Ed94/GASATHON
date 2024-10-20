@@ -9,7 +9,8 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE",
-                "GASA_INTELLISENSE_DIRECTIVES=1"
+                "GASA_INTELLISENSE_DIRECTIVES=1",
+				"WITH_EDITOR=1",
             ],
             "windowsSdkVersion": "10.0.22621.0",
             "compilerPath": "cl.exe"

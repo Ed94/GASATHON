@@ -8,6 +8,7 @@
 #include "Components/OverlaySlot.h"
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Blueprint/WidgetTree.h"
+#include "TimerManager.h"
 #include "Extensions/WidgetBlueprintGeneratedClassExtension.h"
 
 #if WITH_EDITOR
@@ -61,6 +62,11 @@ void UGlobeProgressBar::GenerateDesignerWidgetTemplate()
 #endif
 }
 
+void UGlobeProgressBar::GhostPercentUpdateViaTimer()
+{
+	GhostTargetPercent = Bar->GetPercent();
+}
+
 #pragma region Bindings
 void UGlobeProgressBar::SetBezelStyle(FSlateBrush brush)
 {
@@ -78,6 +84,11 @@ void UGlobeProgressBar::SetBarStyle(FProgressBarStyle style)
 	Bar->SetWidgetStyle( style );
 }
 
+void UGlobeProgressBar::SetGhostBarStyle(FProgressBarStyle style)
+{
+	GhostBar->SetWidgetStyle( style );
+}
+
 void UGlobeProgressBar::SetGlassPadding(FMargin margin)
 {
 	UOverlaySlot* GlassSlot = CastChecked<UOverlaySlot>(Glass->Slot);
@@ -91,7 +102,26 @@ void UGlobeProgressBar::SetGlassStyle(FSlateBrush brush)
 
 void UGlobeProgressBar::SetPercentage(float CurrentValue, float MaxValue)
 {
-	Bar->SetPercent( MaxValue > 0.f ? CurrentValue / MaxValue : 0.f );
+	float PreviousValue       = Bar->GetPercent();
+	float CurrentValueClamped = MaxValue > 0.f ? CurrentValue / MaxValue : 0.f;
+	Bar->SetPercent( CurrentValueClamped );
+	
+	UWorld*        World = GetWorld();
+	FTimerManager& TM    = World->GetTimerManager();
+	
+	if ( CurrentValueClamped < PreviousValue )
+	{
+		// Timer will auto-clear previous set delay
+		TM.SetTimer( GhostPercentChangeTimer, this, & UGlobeProgressBar::GhostPercentUpdateViaTimer, GhostPercentChangeDelay );
+	}
+	else
+	{
+		if ( TM.TimerExists( GhostPercentChangeTimer ))
+			TM.ClearTimer( GhostPercentChangeTimer );
+			
+		GhostBar->SetPercent( CurrentValueClamped );
+		GhostTargetPercent = CurrentValueClamped;
+	}
 }
 
 void UGlobeProgressBar::SetSize(float width, float height)
@@ -131,10 +161,31 @@ void UGlobeProgressBar::NativePreConstruct()
 
 	DesiredFocusWidget.Resolve(WidgetTree);
 
+	// Basic initialization
+	{
+		GhostTargetPercent = Bar->GetPercent();
+		GhostBar->SetPercent( GhostTargetPercent );
+	}
+
 	// Blueprint Callback
 	PreConstruct(bIsDesignTime);	
 }
 
+void UGlobeProgressBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	
+	UWorld*        World = GetWorld();
+	FTimerManager& TM    = World->GetTimerManager();
+
+	// Ghost Percent Interpolation
+	if ( ! TM.TimerExists( GhostPercentChangeTimer ))
+	{
+		float NextPercent = FMath::FInterpTo( GhostBar->GetPercent(), GhostTargetPercent, InDeltaTime, GhostPercentInterpolationSpeed );
+		GhostBar->SetPercent( NextPercent );
+	}
+}
+			
 void UGlobeProgressBar::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
@@ -145,3 +196,4 @@ void UGlobeProgressBar::Serialize(FStructuredArchive::FRecord Record)
 	Super::Serialize(Record);
 }
 #pragma endregion UserWidget
+

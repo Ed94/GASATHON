@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "GasaCommon.h"
 #include "GasaUserWidget.h"
@@ -15,6 +15,20 @@ public:
 	// Just learning: https://benui.ca/unreal/build-widgets-in-editor/?utm_medium=social&utm_source=Discord
 	UFUNCTION(CallInEditor, Category="Generate Designer Widget Template")
 	void GenerateDesignerWidgetTemplate();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Globe")
+	float GhostTargetPercent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Globe")
+	float GhostPercentInterpolationSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Globe")
+	float GhostPercentChangeDelay;
+	
+	FTimerHandle GhostPercentChangeTimer;
+	
+	UFUNCTION()
+	void GhostPercentUpdateViaTimer();
 	
 #pragma region Bindings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
@@ -27,11 +41,14 @@ public:
 	UGasaImage* Bezel;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
+	UGasaProgressBar* GhostBar;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
 	UGasaProgressBar* Bar;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidgetOptional), Category="Globe")
 	UGasaImage* Glass;
-	
+
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetBezelStyle(FSlateBrush brush);
 
@@ -41,6 +58,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetBarStyle(FProgressBarStyle style);
 
+	UFUNCTION(BlueprintCallable, Category="Globe")
+	void SetGhostBarStyle(FProgressBarStyle style);
+	
 	UFUNCTION(BlueprintCallable, Category="Globe")
 	void SetGlassPadding( FMargin margin );
 	
@@ -64,6 +84,8 @@ public:
 
 #pragma region UserWidget
 	void NativePreConstruct() override;
+
+	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
 #pragma endregion UserWidget
 
 #pragma region Object
