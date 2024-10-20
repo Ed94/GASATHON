@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Networking/GasaNetLibrary.h"
+#include "GameplayEffectExtension.h"
 
 UGasaAttributeSet::UGasaAttributeSet()
 {
@@ -47,6 +48,23 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	Super::PostGameplayEffectExecute( Data );
 	FEffectProperties Props;
 	Props.Populate( Data );
+
+	if ( Data.EvaluatedData.Attribute == GetHealthAttribute() )
+	{
+		SetHealth( FMath::Clamp( GetHealth(), 0, GetMaxHealth() ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetMaxHealthAttribute() )
+	{
+		SetMaxHealth( FMath::Clamp( GetMaxHealth(), 0, 99999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetManaAttribute() )
+	{
+		SetMana( FMath::Clamp( GetMana(), 0, GetMaxMana() ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetMaxManaAttribute() )
+	{
+		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
+	}
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )

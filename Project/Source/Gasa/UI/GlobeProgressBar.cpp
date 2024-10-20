@@ -109,12 +109,12 @@ void UGlobeProgressBar::SetPercentage(float CurrentValue, float MaxValue)
 	UWorld*        World = GetWorld();
 	FTimerManager& TM    = World->GetTimerManager();
 	
-	if ( CurrentValueClamped < PreviousValue )
+	if ( CurrentValueClamped <= PreviousValue )
 	{
 		// Timer will auto-clear previous set delay
 		TM.SetTimer( GhostPercentChangeTimer, this, & UGlobeProgressBar::GhostPercentUpdateViaTimer, GhostPercentChangeDelay );
 	}
-	else
+	else if ( Bar->GetPercent() >= GhostBar->GetPercent() )
 	{
 		if ( TM.TimerExists( GhostPercentChangeTimer ))
 			TM.ClearTimer( GhostPercentChangeTimer );
@@ -179,7 +179,7 @@ void UGlobeProgressBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 	FTimerManager& TM    = World->GetTimerManager();
 
 	// Ghost Percent Interpolation
-	if ( ! TM.TimerExists( GhostPercentChangeTimer ))
+	if ( ! TM.TimerExists( GhostPercentChangeTimer )  )
 	{
 		float NextPercent = FMath::FInterpTo( GhostBar->GetPercent(), GhostTargetPercent, InDeltaTime, GhostPercentInterpolationSpeed );
 		GhostBar->SetPercent( NextPercent );

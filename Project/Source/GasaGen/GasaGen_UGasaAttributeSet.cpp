@@ -175,6 +175,7 @@ void gen_UGasaAttributeSet()
 		source.print( def_include( txt("AbilitySystemComponent.h")));
 		source.print( def_include( txt("Net/UnrealNetwork.h")));
 		source.print( def_include( txt("Networking/GasaNetLibrary.h")));
+		source.print( def_include( txt("GameplayEffectExtension.h")));
 		{
 			CodeBody body = def_body( CodeT::Global_Body );
 			body.append(fmt_newline);
@@ -192,22 +193,17 @@ void gen_UGasaAttributeSet()
 
 			impl_attribute_fields( body, class_name, attribute_fields);
 
-			Code PostGameplayEffectExecute = parse_function( code(
-				void UGasaAttributeSet::PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data)
-				{
-					Super::PostGameplayEffectExecute(Data);
-					FEffectProperties Props;
-					Props.Populate(Data);
-				}
-			));
-			body.append(PostGameplayEffectExecute);
-			body.append(fmt_newline);
-
+			CodeFn PostGameplayEffectExecute;
 			CodeFn PreAttributeChange;
 			{
-				CodeBody attribute_clamps = def_body( CodeT::Function_Body );
-				attribute_clamps.append(fmt_newline);
-				attribute_clamps.append(fmt_newline);
+				CodeBody pre_attribute_clamps = def_body( CodeT::Function_Body );
+				pre_attribute_clamps.append(fmt_newline);
+				pre_attribute_clamps.append(fmt_newline);
+
+				CodeBody post_attribute_clamps = def_body( CodeT::Function_Body );
+				post_attribute_clamps.append(fmt_newline);
+				post_attribute_clamps.append(fmt_newline);
+
 				for (GAS_AttributeEntry field : attribute_fields)
 				{
 					String clamp_min;
@@ -222,7 +218,7 @@ void gen_UGasaAttributeSet()
 					else
 						clamp_max = String::fmt_buf(GlobalAllocator, "%f", field.Max);
 
-					attribute_clamps.append( code_fmt(
+					pre_attribute_clamps.append( code_fmt(
 						"field",     (StrC)field.Name,
 						"clamp_min", (StrC)clamp_min,
 						"clamp_max", (StrC)clamp_max,
@@ -232,17 +228,44 @@ void gen_UGasaAttributeSet()
 							NewValue = FMath::Clamp(NewValue, <clamp_min>, <clamp_max>);
 						}
 					)));
+
+					post_attribute_clamps.append( code_fmt(
+						"field",     (StrC)field.Name,
+						"clamp_min", (StrC)clamp_min,
+						"clamp_max", (StrC)clamp_max,
+					stringize(
+						if ( Data.EvaluatedData.Attribute == Get<field>Attribute() )
+						{
+							Set<field>(FMath::Clamp(Get<field>(), <clamp_min>, <clamp_max> ));
+						}
+					)));
 				}
-				attribute_clamps.append(fmt_newline);
-				attribute_clamps.append(fmt_newline);
-				PreAttributeChange = parse_function( token_fmt( "attribute_clamps", (StrC)attribute_clamps.to_string(), stringize(
+
+				pre_attribute_clamps.append(fmt_newline);
+				pre_attribute_clamps.append(fmt_newline);
+				PreAttributeChange = parse_function( token_fmt( "attribute_clamps", (StrC)pre_attribute_clamps.to_string(), stringize(
 					void UGasaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 					{
 						Super::PreAttributeChange(Attribute, NewValue);
 						<attribute_clamps>
 					}
 				)));
+
+				post_attribute_clamps.append(fmt_newline);
+				post_attribute_clamps.append(fmt_newline);
+				PostGameplayEffectExecute = parse_function( token_fmt( "attribute_clamps", (StrC)post_attribute_clamps.to_string(), stringize(
+					void UGasaAttributeSet::PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data)
+					{
+						Super::PostGameplayEffectExecute(Data);
+						FEffectProperties Props;
+						Props.Populate(Data);
+						<attribute_clamps>
+					}
+				)));
 			}
+			body.append(PostGameplayEffectExecute);
+			body.append(fmt_newline);
+
 			body.append(PreAttributeChange);
 			body.append(fmt_newline);
 
