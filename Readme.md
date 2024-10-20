@@ -1,8 +1,8 @@
 # GASATHON
 
-Binging this [course](https://www.udemy.com/course/unreal-engine-5-gas-top-down-rpg/)
+Completing this [course](https://www.udemy.com/course/unreal-engine-5-gas-top-down-rpg/)
 
-The project is organized as a monolothic module with an auxillary editor module.
+The project is organized as a monolithic module with an auxillary editor module and a Codegen module not handled by Unreal utilizing the [gencpp](https://github.com/Ed94/gencpp.git) library.
 
 Implementation design perfs:
 
@@ -15,5 +15,5 @@ Implementation design perfs:
 * Keep static module functions within C++ namesapces and have the in BP function libraries to expose to BPs.
 * Perfer stage-metaprogramming to C++ compiler provided templating (when possible).
 
-The latest version is hosted on : [https://git.cozyair.dev/ed/GASATHON](https://git.cozyair.dev/ed/GASATHON)
-For now the github is out of date due to lfs issues (I'm eventually just going to push a repo or corrections without lfs for this site)
+The repo is also hosted on : [https://git.cozyair.dev/ed/GASATHON](https://git.cozyair.dev/ed/GASATHON)
+It should be mirrored here however to latest.
