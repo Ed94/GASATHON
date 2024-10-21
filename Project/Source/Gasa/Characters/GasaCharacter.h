@@ -34,6 +34,11 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Ability System")
 	TObjectPtr<UAttributeSet> Attributes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability System")
+	TSubclassOf<UGameplayEffect> DefaultAttributes;
+	
+	void InitDefaultAttributes();
 #pragma endregion Ability System
 	
 #pragma region Combat

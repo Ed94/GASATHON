@@ -17,6 +17,34 @@ UGasaAttributeSet::UGasaAttributeSet()
 }
 
 #pragma region Rep Notifies
+void UGasaAttributeSet::Client_OnRep_Strength( FGameplayAttributeData& PrevStrength )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Strength ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Strength, PrevStrength );
+}
+void UGasaAttributeSet::Client_OnRep_Intelligence( FGameplayAttributeData& PrevIntelligence )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Intelligence ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), Intelligence, PrevIntelligence
+	);
+}
+void UGasaAttributeSet::Client_OnRep_Resilience( FGameplayAttributeData& PrevResilience )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Resilience ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), Resilience, PrevResilience
+	);
+}
+void UGasaAttributeSet::Client_OnRep_Vigor( FGameplayAttributeData& PrevVigor )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Vigor ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Vigor, PrevVigor );
+}
 void UGasaAttributeSet::Client_OnRep_Health( FGameplayAttributeData& PrevHealth )
 {
 	// From GAMEPLAYATTRIBUTE_REPNOTIFY
@@ -49,6 +77,22 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	FEffectProperties Props;
 	Props.Populate( Data );
 
+	if ( Data.EvaluatedData.Attribute == GetStrengthAttribute() )
+	{
+		SetStrength( FMath::Clamp( GetStrength(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetIntelligenceAttribute() )
+	{
+		SetIntelligence( FMath::Clamp( GetIntelligence(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetResilienceAttribute() )
+	{
+		SetResilience( FMath::Clamp( GetResilience(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetVigorAttribute() )
+	{
+		SetVigor( FMath::Clamp( GetVigor(), 0, 999.000000 ) );
+	}
 	if ( Data.EvaluatedData.Attribute == GetHealthAttribute() )
 	{
 		SetHealth( FMath::Clamp( GetHealth(), 0, GetMaxHealth() ) );
@@ -65,12 +109,30 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	{
 		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
 	}
+
+	PostAttributeChange_Custom();
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )
 {
 	Super::PreAttributeChange( Attribute, NewValue );
 
+	if ( Attribute == GetStrengthAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetIntelligenceAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetResilienceAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetVigorAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
 	if ( Attribute == GetHealthAttribute() )
 	{
 		NewValue = FMath::Clamp( NewValue, 0, GetMaxHealth() );
@@ -87,12 +149,18 @@ void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute,
 	{
 		NewValue = FMath::Clamp( NewValue, 0, 99999.000000 );
 	}
+
+	PreAttributeChange_Custom();
 }
 
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Strength );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Intelligence );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Resilience );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Vigor );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Health );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, MaxHealth );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Mana );

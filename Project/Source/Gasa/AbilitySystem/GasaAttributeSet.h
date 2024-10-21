@@ -11,6 +11,19 @@ class GASA_API UGasaAttributeSet : public UAttributeSet
 public:
 	UGasaAttributeSet();
 
+	// Primary Attribute Fields
+
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Strength, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Strength;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Intelligence, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Intelligence;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Resilience, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Resilience;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Vigor, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
+	FGameplayAttributeData Vigor;
+
+	// Vital Attribute Fields
+
 	UPROPERTY( ReplicatedUsing = Client_OnRep_Health, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
 	FGameplayAttributeData Health;
 	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxHealth, EditAnywhere, BlueprintReadWrite, Category = "Attributes" )
@@ -21,6 +34,14 @@ public:
 	FGameplayAttributeData MaxMana;
 
 	UFUNCTION()
+	void Client_OnRep_Strength( FGameplayAttributeData& PrevStrength );
+	UFUNCTION()
+	void Client_OnRep_Intelligence( FGameplayAttributeData& PrevIntelligence );
+	UFUNCTION()
+	void Client_OnRep_Resilience( FGameplayAttributeData& PrevResilience );
+	UFUNCTION()
+	void Client_OnRep_Vigor( FGameplayAttributeData& PrevVigor );
+	UFUNCTION()
 	void Client_OnRep_Health( FGameplayAttributeData& PrevHealth );
 	UFUNCTION()
 	void Client_OnRep_MaxHealth( FGameplayAttributeData& PrevMaxHealth );
@@ -30,6 +51,26 @@ public:
 	void Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana );
 
 #pragma region Getters
+	static FGameplayAttribute GetStrengthAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Strength ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetIntelligenceAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Intelligence ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetResilienceAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Resilience ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetVigorAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Vigor ) );
+		return Prop;
+	}
 	static FGameplayAttribute GetHealthAttribute()
 	{
 		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Health ) );
@@ -51,6 +92,10 @@ public:
 		return Prop;
 	}
 
+	FORCEINLINE float GetStrength() const { return Strength.GetCurrentValue(); }
+	FORCEINLINE float GetIntelligence() const { return Intelligence.GetCurrentValue(); }
+	FORCEINLINE float GetResilience() const { return Resilience.GetCurrentValue(); }
+	FORCEINLINE float GetVigor() const { return Vigor.GetCurrentValue(); }
 	FORCEINLINE float GetHealth() const { return Health.GetCurrentValue(); }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth.GetCurrentValue(); }
 	FORCEINLINE float GetMana() const { return Mana.GetCurrentValue(); }
@@ -59,11 +104,35 @@ public:
 
 #pragma region Setters
 	    FORCEINLINE void
-	                 SetHealth( float NewVal );
+	                 SetStrength( float NewVal );
+	FORCEINLINE void SetIntelligence( float NewVal );
+	FORCEINLINE void SetResilience( float NewVal );
+	FORCEINLINE void SetVigor( float NewVal );
+	FORCEINLINE void SetHealth( float NewVal );
 	FORCEINLINE void SetMaxHealth( float NewVal );
 	FORCEINLINE void SetMana( float NewVal );
 	FORCEINLINE void SetMaxMana( float NewVal );
 
+	FORCEINLINE void InitStrength( float NewVal )
+	{
+		Strength.SetBaseValue( NewVal );
+		Strength.SetCurrentValue( NewVal );
+	}
+	FORCEINLINE void InitIntelligence( float NewVal )
+	{
+		Intelligence.SetBaseValue( NewVal );
+		Intelligence.SetCurrentValue( NewVal );
+	}
+	FORCEINLINE void InitResilience( float NewVal )
+	{
+		Resilience.SetBaseValue( NewVal );
+		Resilience.SetCurrentValue( NewVal );
+	}
+	FORCEINLINE void InitVigor( float NewVal )
+	{
+		Vigor.SetBaseValue( NewVal );
+		Vigor.SetCurrentValue( NewVal );
+	}
 	FORCEINLINE void InitHealth( float NewVal )
 	{
 		Health.SetBaseValue( NewVal );

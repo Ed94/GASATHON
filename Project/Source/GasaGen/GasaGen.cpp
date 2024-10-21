@@ -88,7 +88,7 @@ int gen_main()
 	// gen_netslime_interfaces();
 
 	// One offs
-	if (1)
+	if (0)
 	{
 		// ue_parse_testing();
 		swap_SBlueprintActionMenu_Construct();

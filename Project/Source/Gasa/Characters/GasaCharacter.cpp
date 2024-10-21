@@ -64,6 +64,18 @@ AGasaCharacter::AGasaCharacter()
 	ACharacter::SetReplicateMovement(true);
 }
 
+#pragma region Ability System
+void AGasaCharacter::InitDefaultAttributes()
+{
+	UAbilitySystemComponent*     ASC     = GetAbilitySystemComponent();
+	ensure(ASC);
+	ensure(DefaultAttributes);
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	FGameplayEffectSpecHandle    Spec    = ASC->MakeOutgoingSpec(DefaultAttributes, 1.0f, Context );
+	ASC->ApplyGameplayEffectSpecToTarget( * Spec.Data, ASC );
+}
+#pragma endregion Ability System
+
 #pragma region GameFramework
 void AGasaCharacter::Controller_OnPawnPossessed()
 {
@@ -186,6 +198,8 @@ void AGasaCharacter::BeginPlay()
 	{
 		AbilitySystem->InitAbilityActorInfo(this, this);
 		Cast<UGasaAbilitySystemComp>(AbilitySystem)->OnAbilityActorInfoSet();
+		
+		InitDefaultAttributes();
 	}
 }
 
@@ -233,3 +247,4 @@ void AGasaCharacter::Tick(float DeltaSeconds)
 	}
 }
 #pragma endregion Actor
+

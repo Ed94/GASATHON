@@ -6,6 +6,42 @@
 
 #pragma region Attribute Setters
 FORCEINLINE
+void UGasaAttributeSet::SetStrength( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetStrengthAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetIntelligence( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetIntelligenceAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetResilience( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetResilienceAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetVigor( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetVigorAttribute(), NewVal );
+	};
+}
+FORCEINLINE
 void UGasaAttributeSet::SetHealth( float NewVal )
 {
 	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();

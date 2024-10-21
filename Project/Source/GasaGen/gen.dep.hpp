@@ -1557,6 +1557,11 @@ struct Array
 	{
 		return 2 * value + 8;
 	}
+	
+	bool append( Array other )
+	{
+		return append( other, other.num() );
+	}
 
 	bool append( Type value )
 	{

@@ -9,7 +9,7 @@
 
 void gen_UHostWidgetController()
 {
-	Array<GAS_AttributeEntry> attribute_fields = get_gasa_attribute_fields();
+	Array<GAS_AttributeEntry> attribute_fields = get_gasa_vital_attribute_fields();
 
 	CodeBody ori_HostWidgetController_header = parse_file(path_gasa_ui "HostWidgetController.h");
 	{
