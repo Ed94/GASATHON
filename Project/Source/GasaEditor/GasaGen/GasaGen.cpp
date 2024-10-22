@@ -1,5 +1,6 @@
 #include "GasaGen.h"
 #include "GasaGen_Common.h"
+#include "GasaGen_AttributeSets.h"
 #include "GasaGen_DevOptionsCache.h"
 
 // Editor Module
@@ -19,9 +20,9 @@ global Code UModule_GASA_API;
 void Execute_GasaModule_Codegen()
 {
 	FScopedSlowTask SlowTask(100.0f, LOCTEXT("RunningGasaGen", "Running GasaGen..."));
-	SlowTask.MakeDialog();  // Shows a progress dialog
+	SlowTask.MakeDialog(false, true);  // Shows a progress dialog
 
-	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [&SlowTask]()
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [&SlowTask]()
 	{
 		Gasa::LogEditor("Executing: Gasa Module code generation.");
 
@@ -36,9 +37,7 @@ void Execute_GasaModule_Codegen()
 		char const* ue_ansi_rooot_path = TCHAR_TO_ANSI(*ue_project_path);
 
 		Project_Path = String::make_length(GlobalAllocator, ue_ansi_project_path, ue_project_path.Len());
-		Root_Path = String::make_length(GlobalAllocator, ue_ansi_rooot_path, ue_root_path.Len());
-		UE_LOG(LogTemp, Log, TEXT("Current ROOT    Directory: %s"), *ue_project_path);
-		UE_LOG(LogTemp, Log, TEXT("Current Project Directory: %s"), *ue_root_path);
+		Root_Path    = String::make_length(GlobalAllocator, ue_ansi_rooot_path, ue_root_path.Len());
 
 		// Initialize Globals
 		{
@@ -112,16 +111,11 @@ void Execute_GasaModule_Codegen()
 			PreprocessorDefines.append(get_cached_string(str_UE_REQUIRES));
 		}
 
-		//generate_AttributeSets();
-		generate_DevOptionsCache();
+		generate_AttributeSets();
+		//generate_DevOptionsCache();
 		//generate_HostWidgetController();
 
 		gen::deinit();
-
-		AsyncTask(ENamedThreads::GameThread, []()
-		{
-			// UI updates if needed
-		});
 	});
 }
 

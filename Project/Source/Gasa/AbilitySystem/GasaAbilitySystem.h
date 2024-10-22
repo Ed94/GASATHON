@@ -13,8 +13,8 @@ struct GASA_API FAttributeSetField : public FTableRowBase
 	
 	FAttributeSetField() 
 		: Name("Provide_Name")
-		, Description("Provide Description")
 		, Category("Optional Category")
+		, Description("Provide Description")
 		, BaseValue(0)
 		, bUseMinAttribute(false)
 		, bUseMaxAttribute(false)
@@ -27,13 +27,13 @@ struct GASA_API FAttributeSetField : public FTableRowBase
 	{}
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute")
-	FString Name;
+	FName Name;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute")
+	FName Category;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute")
 	FString Description;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute")
-	FString Category;
 	
 //	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute")
 //	FGameplayTag Tag;
@@ -59,4 +59,3 @@ struct GASA_API FAttributeSetField : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute", meta =( EditCondition="bUseMaxAttribute==false", EditConditionHides))
 	float MaxValue;
 };
-

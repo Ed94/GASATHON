@@ -9,8 +9,6 @@ struct GASA_API FGasaDevOptionsCache
 	GENERATED_BODY()
 
 	UPROPERTY()
-	UObject* RandomBullshit;
-	UPROPERTY()
 	TArray<UObject*> AttributeSets;
 	UPROPERTY()
 	UObject* TaggedMessageTable;

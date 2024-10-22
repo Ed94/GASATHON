@@ -105,9 +105,9 @@ void gen_UGasaAttributeSet()
 	Array<GAS_AttributeEntry> primary_attribute_fields   = get_gasa_primary_attribute_fields();
 	Array<GAS_AttributeEntry> secondary_attribute_fields = get_gasa_secondary_attribute_fields();
 	Array<GAS_AttributeEntry> vital_attribute_fields     = get_gasa_vital_attribute_fields();
-	
+
 	s32 all_attrib_count = primary_attribute_fields.num() + secondary_attribute_fields.num() + vital_attribute_fields.num();
-	
+
 	Array< GAS_AttributeEntry>
 	all_attribute_fields = Array<GAS_AttributeEntry>::init_reserve(GlobalAllocator, all_attrib_count);
 	all_attribute_fields.append( primary_attribute_fields);
@@ -124,6 +124,9 @@ void gen_UGasaAttributeSet()
 		{
 			CodeInclude Include_AttributeSet               = def_include(txt("AttributeSet.h"));
 			CodeInclude Include_GasaAttributeSet_Generated = def_include(txt("GasaAttributeSet.generated.h"));
+			header.print( Include_AttributeSet);
+			header.print( Include_GasaAttributeSet_Generated);
+			header.print( fmt_newline);
 
 			CodeAttributes api_attribute = def_attributes( UModule_GASA_API->Name);
 
@@ -144,8 +147,7 @@ void gen_UGasaAttributeSet()
 					body.append(fmt_newline);
 					
 //					body.append( def_comment(txt("Secondary Attribute Fields")));
-//					body.append(fmt_newline);
-//					def_attribute_properties( body, secondary_attribute_fields);
+//					body.append(fmt_newline);sssss//					def_attribute_properties( body, secondary_attribute_fields);
 //					body.append(fmt_newline);
 //					body.append(fmt_newline);
 					
@@ -205,9 +207,6 @@ void gen_UGasaAttributeSet()
 				);
 			}
 
-			header.print( Include_AttributeSet);
-			header.print( Include_GasaAttributeSet_Generated);
-			header.print( fmt_newline);
 			header.print( UHT_UCLASS );
 			header.print(GasaAttributeSet);
 		}

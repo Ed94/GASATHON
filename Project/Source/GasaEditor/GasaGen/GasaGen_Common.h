@@ -4,8 +4,6 @@
 #include "gencpp/gen.builder.hpp"
 using namespace gen;
 
-#undef check
-
 // Codegen assumes its working directory is the project
 #define path_scripts             "/scripts/"
 #define path_project             "/Project/"
@@ -121,11 +119,20 @@ void format_file( char const* path )
 		log_fmt("\tRunning clang-format on file:\n");
 		system( command );
 		log_fmt("\tclang-format finished reformatting.\n");
-
-	FString command_fstr = FString( command.Data, command.length());
-	UE_LOG(LogTemp, Log, TEXT("clang format command: %s"), *command_fstr );
 	#undef cf_cmd
 	#undef cf_format_inplace
 	#undef cf_style
 	#undef cf_verbse
+}
+
+FORCEINLINE
+String to_string( FString ue_string ) { 
+	char const* ansi_str = TCHAR_TO_ANSI(*ue_string);
+	return String::make_length(GlobalAllocator, ansi_str, ue_string.Len());
+}
+
+FORCEINLINE
+String to_string( FName ue_fname ) { 
+	char const* ansi_str = TCHAR_TO_ANSI(*ue_fname.ToString());
+	return String::make_length(GlobalAllocator, ansi_str, ue_fname.GetStringLength());
 }
