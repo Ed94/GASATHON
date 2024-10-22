@@ -73,7 +73,7 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 
 	if ( Data.EvaluatedData.Attribute == GetHealthAttribute() )
 	{
-		SetHealth( FMath::Clamp( GetHealth(), 0, GetMaxHealth() ) );
+		SetHealth( FMath::Clamp( GetHealth(), 0, 300.000000 ) );
 	}
 	if ( Data.EvaluatedData.Attribute == GetManaAttribute() )
 	{
@@ -103,8 +103,6 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	{
 		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
 	}
-	
-	Props.Populate( Data );
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )
@@ -113,7 +111,7 @@ void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute,
 
 	if ( Attribute == GetHealthAttribute() )
 	{
-		NewValue = FMath::Clamp( NewValue, 0, GetMaxHealth() );
+		NewValue = FMath::Clamp( NewValue, 0, 300.000000 );
 	}
 	if ( Attribute == GetManaAttribute() )
 	{

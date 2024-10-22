@@ -2,10 +2,12 @@
 	"ColumnWidths":
 	{
 		"MaxValue": 165,
-		"Description": 135,
+		"Description": 226,
 		"Category": 96,
 		"BaseValue": 106,
 		"Name": 82,
-		"MinAttribute": 327
+		"MinAttribute": 103,
+		"bUseMaxAttribute": 129,
+		"bUseMinAttribute": 134
 	}
 }
