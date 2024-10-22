@@ -14,9 +14,9 @@ APlayerCharacter::APlayerCharacter()
 }
 
 #pragma region ICombat
-int32 APlayerCharacter::GetLevel()
+int32 APlayerCharacter::GetPlayerLevel()
 {
-	return GetPlayerState<AGasaPlayerState>()->Level;
+	return GetPlayerState<AGasaPlayerState>()->PlayerLevel;
 }
 #pragma endregion ICombat
 

@@ -79,13 +79,17 @@ void AGasaCharacter::InitDefaultAttributes()
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ensure(ASC);
+
 	ensure(DefaultVitalAttributes);
 	ensure(DefaultPrimaryAttributes);
 	ensure(DefaultSecondaryAttributes);
-	FGameplayEffectContextHandle Context       = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle    SpecPrimary   = ASC->MakeOutgoingSpec(DefaultPrimaryAttributes,   1.0f, Context );
-	FGameplayEffectSpecHandle    SpecSecondary = ASC->MakeOutgoingSpec(DefaultSecondaryAttributes, 1.0f, Context );
-	FGameplayEffectSpecHandle    SpecVital     = ASC->MakeOutgoingSpec(DefaultVitalAttributes,     1.0f, Context );
+
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	Context.AddSourceObject(this);
+
+	FGameplayEffectSpecHandle SpecPrimary   = ASC->MakeOutgoingSpec(DefaultPrimaryAttributes,   1.0f, Context );
+	FGameplayEffectSpecHandle SpecSecondary = ASC->MakeOutgoingSpec(DefaultSecondaryAttributes, 1.0f, Context );
+	FGameplayEffectSpecHandle SpecVital     = ASC->MakeOutgoingSpec(DefaultVitalAttributes,     1.0f, Context );
 	ASC->ApplyGameplayEffectSpecToTarget( * SpecPrimary.Data,   ASC );
 	ASC->ApplyGameplayEffectSpecToTarget( * SpecSecondary.Data, ASC );
 	ASC->ApplyGameplayEffectSpecToTarget( * SpecVital.Data,     ASC );

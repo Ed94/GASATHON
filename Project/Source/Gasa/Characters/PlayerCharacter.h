@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "GasaCharacter.h"
 
@@ -13,7 +13,7 @@ public:
 	APlayerCharacter();
 
 #pragma region ICombat
-	int32 GetLevel() override;
+	int32 GetPlayerLevel() override;
 #pragma endregion ICombat
 
 #pragma region Pawn

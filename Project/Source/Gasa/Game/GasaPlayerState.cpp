@@ -1,4 +1,4 @@
-﻿#include "GasaPlayerState.h"
+#include "GasaPlayerState.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -12,7 +12,7 @@ AGasaPlayerState::AGasaPlayerState()
 {
 	bAutoAbilitySystem = true;
 	
-	Level = 1;
+	PlayerLevel = 1;
 	
 	AbilitySystem = CreateDefaultSubobject<UGasaAbilitySystemComp>("Ability System");
 	AbilitySystem->SetIsReplicated(true);
@@ -96,6 +96,6 @@ void AGasaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AGasaPlayerState, Level);
+	DOREPLIFETIME(AGasaPlayerState, PlayerLevel);
 }
 #pragma endregion UObject
