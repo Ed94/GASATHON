@@ -69,10 +69,16 @@ void AGasaCharacter::InitDefaultAttributes()
 {
 	UAbilitySystemComponent*     ASC     = GetAbilitySystemComponent();
 	ensure(ASC);
-	ensure(DefaultAttributes);
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-	FGameplayEffectSpecHandle    Spec    = ASC->MakeOutgoingSpec(DefaultAttributes, 1.0f, Context );
-	ASC->ApplyGameplayEffectSpecToTarget( * Spec.Data, ASC );
+	ensure(DefaultVitalAttributes);
+	ensure(DefaultPrimaryAttributes);
+	ensure(DefaultSecondaryAttributes);
+	FGameplayEffectContextHandle Context       = ASC->MakeEffectContext();
+	FGameplayEffectSpecHandle    SpecPrimary   = ASC->MakeOutgoingSpec(DefaultPrimaryAttributes,   1.0f, Context );
+	FGameplayEffectSpecHandle    SpecSecondary = ASC->MakeOutgoingSpec(DefaultSecondaryAttributes, 1.0f, Context );
+	FGameplayEffectSpecHandle    SpecVital     = ASC->MakeOutgoingSpec(DefaultVitalAttributes,     1.0f, Context );
+	ASC->ApplyGameplayEffectSpecToTarget( * SpecPrimary.Data,   ASC );
+	ASC->ApplyGameplayEffectSpecToTarget( * SpecSecondary.Data, ASC );
+	ASC->ApplyGameplayEffectSpecToTarget( * SpecVital.Data,     ASC );
 }
 #pragma endregion Ability System
 
@@ -168,11 +174,15 @@ void AGasaCharacter::PossessedBy(AController* NewController)
 			GetMesh()->bOnlyAllowAutonomousTickPose = true;
 	}
 
-#if 0
-	if (bAutoAbilitySystem)
-	{
-		AbilitySystem->InitAbilityActorInfo(this, this);
-	}
+#if 1
+//	if (bAutoAbilitySystem)
+//	{
+//		// Note(Ed): For the player character; this is manually called by the player controller in NetOwner_Ready()
+//		AbilitySystem->InitAbilityActorInfo(this, this);
+//		Cast<UGasaAbilitySystemComp>(AbilitySystem)->OnAbilityActorInfoSet();
+//		
+//		InitDefaultAttributes();
+//	}
 #endif
 }
 
@@ -196,6 +206,7 @@ void AGasaCharacter::BeginPlay()
 	// There is also OnPossessed, PostInitializeComponents, etc...
 	if (bAutoAbilitySystem)
 	{
+		// Note(Ed): For the player character; this is manually called by the player controller in NetOwner_Ready()
 		AbilitySystem->InitAbilityActorInfo(this, this);
 		Cast<UGasaAbilitySystemComp>(AbilitySystem)->OnAbilityActorInfoSet();
 		

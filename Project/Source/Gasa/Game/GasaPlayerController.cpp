@@ -78,6 +78,8 @@ void AGasaPlayerController::NetOwner_OnReady()
 		PlayerChar->Attributes    = PS->Attributes;
 		PS->AbilitySystem->InitAbilityActorInfo(PS, PlayerChar);
 		Cast<UGasaAbilitySystemComp>(PS->AbilitySystem)->OnAbilityActorInfoSet();
+		
+		PlayerChar->InitDefaultAttributes();
 	}
 	Cam->AttachToActor(PlayerChar, FAttachmentTransformRules::KeepRelativeTransform);
 }

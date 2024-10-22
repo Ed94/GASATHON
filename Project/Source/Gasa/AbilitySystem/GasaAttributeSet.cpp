@@ -103,6 +103,8 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	{
 		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
 	}
+	
+	Props.Populate( Data );
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )

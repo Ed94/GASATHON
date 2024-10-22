@@ -13,7 +13,7 @@ UENUM(BlueprintType)
 enum class EHighlight : uint8
 {
 	Disabled,
-	Enabled,
+	Enabled,ddddddd
 };
 
 UCLASS(Abstract)
@@ -36,7 +36,13 @@ public:
 	TObjectPtr<UAttributeSet> Attributes;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability System")
-	TSubclassOf<UGameplayEffect> DefaultAttributes;
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability System")
+	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability System")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 	
 	void InitDefaultAttributes();
 #pragma endregion Ability System

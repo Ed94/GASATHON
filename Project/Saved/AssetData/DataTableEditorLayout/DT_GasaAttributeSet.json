@@ -5,6 +5,7 @@
 		"Description": 135,
 		"Category": 96,
 		"BaseValue": 106,
-		"Name": 82
+		"Name": 82,
+		"MinAttribute": 327
 	}
 }

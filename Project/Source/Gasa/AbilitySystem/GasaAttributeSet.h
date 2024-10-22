@@ -115,47 +115,6 @@ public:
 	FORCEINLINE void SetVigor( float NewVal );
 	FORCEINLINE void SetMaxHealth( float NewVal );
 	FORCEINLINE void SetMaxMana( float NewVal );
-
-	FORCEINLINE void InitHealth( float NewVal )
-	{
-		Health.SetBaseValue( NewVal );
-		Health.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitMana( float NewVal )
-	{
-		Mana.SetBaseValue( NewVal );
-		Mana.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitStrength( float NewVal )
-	{
-		Strength.SetBaseValue( NewVal );
-		Strength.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitIntelligence( float NewVal )
-	{
-		Intelligence.SetBaseValue( NewVal );
-		Intelligence.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitResilience( float NewVal )
-	{
-		Resilience.SetBaseValue( NewVal );
-		Resilience.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitVigor( float NewVal )
-	{
-		Vigor.SetBaseValue( NewVal );
-		Vigor.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitMaxHealth( float NewVal )
-	{
-		MaxHealth.SetBaseValue( NewVal );
-		MaxHealth.SetCurrentValue( NewVal );
-	}
-	FORCEINLINE void InitMaxMana( float NewVal )
-	{
-		MaxMana.SetBaseValue( NewVal );
-		MaxMana.SetCurrentValue( NewVal );
-	}
 	#pragma endregion Setters
 
 #pragma region AttributeSet

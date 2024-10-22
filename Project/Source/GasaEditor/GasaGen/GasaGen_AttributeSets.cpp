@@ -159,22 +159,6 @@ void gen_attribute_set_from_table( UDataTable* table, FString asset_name )
 							FORCEINLINE void Set<property>(float NewVal);
 						)));
 					}
-					body.append(fmt_newline);
-					body.append(fmt_newline);
-
-					// Generate initers
-					for ( TPair< FName, TArray<FAttributeSetField>>& attributes : AttributesByCategory )
-					for (FAttributeSetField attribute : attributes.Value)
-					{
-						body.append(code_fmt("property", (StrC)to_string(attribute.Name),
-						stringize(
-							FORCEINLINE void Init<property>(float NewVal)
-							{
-								<property>.SetBaseValue(NewVal);
-								<property>.SetCurrentValue(NewVal);
-							}
-						)));
-					}
 				}
 				body.append(def_pragma(txt("endregion Setters")));
 				body.append(fmt_newline);
