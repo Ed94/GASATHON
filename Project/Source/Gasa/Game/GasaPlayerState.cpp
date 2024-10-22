@@ -1,5 +1,7 @@
 ﻿#include "GasaPlayerState.h"
 
+#include "Net/UnrealNetwork.h"
+
 #include "Networking/GasaNetLibrary_Inlines.h"
 #include "GasaGameInstance.h"
 #include "GasaPlayerController.h"
@@ -10,6 +12,8 @@ AGasaPlayerState::AGasaPlayerState()
 {
 	bAutoAbilitySystem = true;
 	
+	Level = 1;
+	
 	AbilitySystem = CreateDefaultSubobject<UGasaAbilitySystemComp>("Ability System");
 	AbilitySystem->SetIsReplicated(true);
 	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
@@ -18,6 +22,11 @@ AGasaPlayerState::AGasaPlayerState()
 	
 	// Replication
 	NetUpdateFrequency = 100.f;
+}
+
+void AGasaPlayerState::Client_OnRep_Level(int32 OldPlayerLevel)
+{
+
 }
 
 #pragma region GameFramework
@@ -87,6 +96,6 @@ void AGasaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	
+	DOREPLIFETIME(AGasaPlayerState, Level);
 }
 #pragma endregion UObject

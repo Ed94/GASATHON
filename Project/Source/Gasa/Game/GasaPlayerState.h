@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 
 #include "AbilitySystemInterface.h"
@@ -16,6 +16,12 @@ class GASA_API AGasaPlayerState : public APlayerState
 	GENERATED_BODY()
 public:
 	AGasaPlayerState();
+	
+	UPROPERTY(EditAnywhere, ReplicatedUsing="Client_OnRep_Level", Category="Gameplay")
+	int32 PlayerLevel;
+	
+	UFUNCTION()
+	void Client_OnRep_Level(int32 OldLevel);
 	
 #pragma region Ability System
 	UPROPERTY(EditAnywhere, Category="Ability System")

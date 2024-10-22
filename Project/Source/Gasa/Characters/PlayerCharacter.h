@@ -12,6 +12,10 @@ public:
 
 	APlayerCharacter();
 
+#pragma region ICombat
+	int32 GetLevel() override;
+#pragma endregion ICombat
+
 #pragma region Pawn
 	void PossessedBy(AController* NewController) override;
 	

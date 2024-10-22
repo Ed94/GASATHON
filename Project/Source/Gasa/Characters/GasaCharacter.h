@@ -5,6 +5,7 @@
 
 #include "GasaCommon.h"
 #include "Game/GasaGameState.h"
+#include "Interfaces/CombatInterface.h"
 #include "Networking/GasaNetLibrary.h"
 
 #include "GasaCharacter.generated.h"
@@ -19,6 +20,7 @@ enum class EHighlight : uint8
 UCLASS(Abstract)
 class GASA_API AGasaCharacter : public ACharacter
 	, public IAbilitySystemInterface
+	, public ICombat
 {
 	GENERATED_BODY()
 public:

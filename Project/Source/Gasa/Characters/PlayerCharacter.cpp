@@ -1,4 +1,4 @@
-﻿#include "PlayerCharacter.h"
+#include "PlayerCharacter.h"
 
 #include "Networking/GasaNetLibrary_Inlines.h"
 #include "AbilitySystemComponent.h"
@@ -13,6 +13,14 @@ APlayerCharacter::APlayerCharacter()
 	bAutoAbilitySystem = false;
 }
 
+#pragma region ICombat
+int32 APlayerCharacter::GetLevel()
+{
+	return GetPlayerState<AGasaPlayerState>()->Level;
+}
+#pragma endregion ICombat
+
+#pragma region Pawn
 void APlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -22,3 +30,4 @@ void APlayerCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 }
+#pragma endregion Pawn
