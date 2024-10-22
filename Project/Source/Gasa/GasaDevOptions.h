@@ -16,6 +16,9 @@ public:
 	// NOTE(Ed): Any Soft-References must have their includes defined in GasaDevOptions.cpp
 	// They are used by GasaGen for the GasaDevOptionsCache
 
+	UPROPERTY(Config)
+	TSoftObjectPtr<UDataTable> RandomBullshit;
+
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category="GAS")
 	TArray< TSoftObjectPtr<UDataTable>> AttributeSets;
 

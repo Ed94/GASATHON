@@ -6,8 +6,6 @@
 #undef GASA_API
 #undef ensureMsgf
 
-
-PRAGMA_DISABLE_OPTIMIZATION
 void generate_DevOptionsCache()
 {
 	Array<CodeVar> GasaDevOptions_UPROPERTIES = Array<CodeVar>::init(GlobalAllocator);
@@ -162,7 +160,6 @@ void generate_DevOptionsCache()
 		format_file( path_module_gasa "GasaDevOptionsCache.cpp" );
 	}
 }
-PRAGMA_ENABLE_OPTIMIZATION
 
 #pragma pop_macro("ensureMsgf")
 #pragma pop_macro("GASA_API")

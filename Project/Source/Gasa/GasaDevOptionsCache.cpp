@@ -11,6 +11,9 @@ void FGasaDevOptionsCache::CachedDevOptions()
 {
 	UGasaDevOptions* DevOpts = GetMutDevOptions();
 
+	RandomBullshit = DevOpts->RandomBullshit.LoadSynchronous();
+	ensureMsgf( RandomBullshit != nullptr, TEXT( "RandomBullshit is null, DO NOT RUN PIE or else you may get a crash if not handled in BP or C++" ) );
+
 	for ( auto& entry : DevOpts->AttributeSets )
 	{
 		AttributeSets.Push( entry.LoadSynchronous() );
