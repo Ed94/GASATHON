@@ -109,8 +109,6 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	{
 		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
 	}
-
-	PostAttributeChange_Custom();
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )
@@ -149,8 +147,6 @@ void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute,
 	{
 		NewValue = FMath::Clamp( NewValue, 0, 99999.000000 );
 	}
-
-	PreAttributeChange_Custom();
 }
 
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const

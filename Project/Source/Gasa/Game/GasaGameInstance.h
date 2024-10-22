@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "Networking/GasaNetLibrary.h"
 #include "GasaDevOptionsCache.h"

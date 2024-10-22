@@ -9,6 +9,8 @@ struct GASA_API FGasaDevOptionsCache
 	GENERATED_BODY()
 
 	UPROPERTY()
+	TArray<UObject*> AttributeSets;
+	UPROPERTY()
 	UObject* TaggedMessageTable;
 	UPROPERTY()
 	UClass* Template_PlayerCamera;

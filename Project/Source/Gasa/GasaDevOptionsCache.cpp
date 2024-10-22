@@ -11,6 +11,12 @@ void FGasaDevOptionsCache::CachedDevOptions()
 {
 	UGasaDevOptions* DevOpts = GetMutDevOptions();
 
+	for ( auto& entry : DevOpts->AttributeSets )
+	{
+		AttributeSets.Push( entry.LoadSynchronous() );
+		ensureMsgf( entry != nullptr, TEXT( "An AttributeSets entry is null, DO NOT RUN PIE or else you may get a crash if not handled in BP or C++" ) );
+	}
+
 	TaggedMessageTable = DevOpts->TaggedMessageTable.LoadSynchronous();
 	ensureMsgf( TaggedMessageTable != nullptr, TEXT( "TaggedMessageTable is null, DO NOT RUN PIE or else you may get a crash if not handled in BP or C++" ) );
 

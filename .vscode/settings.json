@@ -1,4 +1,8 @@
 {
 	"autoHide.autoHideSideBar": false,
-	"autoHide.autoHidePanel": false
+	"autoHide.autoHidePanel": false,
+	"files.associations": {
+		"*.rmd": "markdown",
+		"*.rh": "cpp"
+	}
 }
