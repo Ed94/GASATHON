@@ -13,14 +13,14 @@ struct GASA_API FAttributeSetField : public FTableRowBase
 	
 	FAttributeSetField() 
 		: Name("Provide_Name")
-		, Category("Optional Category")
+		, Category("Provide Category")
 		, Description("Provide Description")
 		, BaseValue(0)
 		, bUseMinAttribute(false)
 		, bUseMaxAttribute(false)
-		, MinAttribute("Attribute behaving has minimum value")
+		, MinAttribute("")
 		, MinValue(0)
-		, MaxAttribute("Attribute behaving has maximum value")
+		, MaxAttribute("")
 		, MaxValue(0)
 	{}
 	virtual ~FAttributeSetField()
@@ -48,13 +48,13 @@ struct GASA_API FAttributeSetField : public FTableRowBase
 	bool bUseMaxAttribute;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute", meta =( EditCondition="bUseMinAttribute", EditConditionHides))
-	FString MinAttribute;
+	FName MinAttribute;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute", meta =( EditCondition="bUseMinAttribute==false", EditConditionHides))
 	float MinValue;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute", meta =( EditCondition="bUseMaxAttribute", EditConditionHides))
-	FString MaxAttribute;
+	FName MaxAttribute;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Attribute", meta =( EditCondition="bUseMaxAttribute==false", EditConditionHides))
 	float MaxValue;

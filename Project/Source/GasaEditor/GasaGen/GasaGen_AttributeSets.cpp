@@ -10,34 +10,18 @@ using namespace gen;
 #pragma push_macro("UFUNCTION")
 #pragma push_macro("FORCEINLINE")
 #pragma push_macro("ensure")
+#pragma push_macro("GET_MEMBER_NAME_CHECKED")
 #undef UPROPERTY
 #undef UFUNCTION
 #undef FORCEINLINE
 #undef ensure
+#undef GET_MEMBER_NAME_CHECKED
 
-PRAGMA_DISABLE_OPTIMIZATION
-void generate_AttributeSets()
+void gen_attribute_set_from_table( UDataTable* table, FString asset_name )
 {
-	// All attribute sets are tracked in Gasa's dev options for this project.
-	TArray< TSoftObjectPtr<UDataTable>> AttributeSetTables = Gasa::GetDevOptions()->AttributeSets;
-	check( AttributeSetTables.Num() > 0 );
-	
-	// TODO(Ed): Doing one for now
-	FGraphEventRef   LoadTableTask;
-	UDataTable*      AttributeSetTable = nullptr;
-	FGraphEventArray Prerequisites;
-	LoadTableTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-		[ & AttributeSetTable,  & AttributeSetTables ]()
-		{
-			AttributeSetTable = AttributeSetTables[0].LoadSynchronous();
-		}, 
-		TStatId(), &Prerequisites, ENamedThreads::GameThread
-	);
-	FTaskGraphInterface::Get().WaitUntilTaskCompletes(LoadTableTask);
-	
 	TMap<FName, TArray<FAttributeSetField>> AttributesByCategory;
 	{
-		TMap< FName, uint8* > const& RowMap = AttributeSetTable->GetRowMap();
+		TMap< FName, uint8* > const& RowMap = table->GetRowMap();
 		for (const TPair<FName, uint8*>& Row : RowMap)
         {
             FAttributeSetField const* RowData = rcast( FAttributeSetField const* , Row.Value);
@@ -50,11 +34,9 @@ void generate_AttributeSets()
         }
 	}
 	
-	FString AssetName = AttributeSetTables[0].GetAssetName();
-	check( AssetName.StartsWith(TEXT("DT_") ))
-	AssetName = AssetName.RightChop(3);
-
-	String str_AssetName = to_string(AssetName);
+	check( asset_name.StartsWith(TEXT("DT_") ))
+	asset_name = asset_name.RightChop(3);
+	String str_AssetName = to_string(asset_name);
 
 	String class_name        = String::fmt_buf(GlobalAllocator, "U%S",          str_AssetName);
 	String header_file_name  = String::fmt_buf(GlobalAllocator, "%S.h",         str_AssetName);
@@ -454,10 +436,34 @@ void generate_AttributeSets()
 		format_file(path_source_file);
 	}
 }
-PRAGMA_ENABLE_OPTIMIZATION
+
+void generate_AttributeSets()
+{
+	// All attribute sets are tracked in Gasa's dev options for this project.
+	TArray< TSoftObjectPtr<UDataTable>> AttributeSetTables = Gasa::GetDevOptions()->AttributeSets;
+	check( AttributeSetTables.Num() > 0 );
+	
+	for ( TSoftObjectPtr<UDataTable> table : AttributeSetTables )
+	{
+		FGraphEventRef   LoadTableTask;
+		UDataTable*      AttributeSetTable = nullptr;
+		FGraphEventArray Prerequisites;
+		LoadTableTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+			[ & AttributeSetTable,  & AttributeSetTables ]()
+			{
+				AttributeSetTable = AttributeSetTables[0].LoadSynchronous();
+			}, 
+			TStatId(), &Prerequisites, ENamedThreads::GameThread
+		);
+		FTaskGraphInterface::Get().WaitUntilTaskCompletes(LoadTableTask);
+		
+		gen_attribute_set_from_table( AttributeSetTable, table.GetAssetName() );
+	}
+}
 
 #pragma pop_macro("UPROPERTY")
 #pragma pop_macro("UFUNCTION")
 #pragma pop_macro("FORCEINLINE")
 #pragma pop_macro("ensure")
+#pragma pop_macro("GET_MEMBER_NAME_CHECKED")
 
