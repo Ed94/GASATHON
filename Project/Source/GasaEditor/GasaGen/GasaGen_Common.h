@@ -105,8 +105,9 @@ void format_file( char const* path )
 	resolved_path = String::make(GlobalAllocator, StrC(Project_Path));
 	resolved_path.append(path);
 
-	String clang_format_path = String::make(GlobalAllocator, StrC(Root_Path));
-	clang_format_path.append("/scripts/.clang-format");
+	String style_arg = String::make(GlobalAllocator, txt("-style=file:"));
+	style_arg.append(Root_Path);
+	style_arg.append("/scripts/.clang-format ");
 
 	// Need to execute clang format on the generated file to get it to match the original.
 	#define clang_format      "clang-format "
@@ -114,13 +115,12 @@ void format_file( char const* path )
 	#define cf_verbose        "-verbose "
 	String command = String::make( GlobalAllocator, clang_format );
 	command.append( cf_format_inplace );
-	command.append_fmt("-style=file:%S ", *StrC(clang_format_path));
 	command.append( cf_verbose );
+	command.append( style_arg );
 	command.append( resolved_path );
 		log_fmt("\tRunning clang-format on file:\n");
 		system( command );
 		log_fmt("\tclang-format finished reformatting.\n");
-
 
 	FString command_fstr = FString( command.Data, command.length());
 	UE_LOG(LogTemp, Log, TEXT("clang format command: %s"), *command_fstr );
