@@ -1,14 +1,14 @@
-// Used in the GasaGen.cpp translation unit
-#if GASA_INTELLISENSE_DIRECTIVES
-#pragma once
-#define GEN_EXPOSE_BACKEND
-#include "gen.hpp"
-#include "gen.builder.hpp"
-#include "GasaGenCommon.cpp"
-using namespace gen;
-#endif
+#include "GasaGen_DevOptionsCache.h"
+#include "GasaGen_Common.h"
 
-void gen_FGasaDevOptionsCache()
+#pragma push_macro("GASA_API")
+#pragma push_macro("ensureMsgf")
+#undef GASA_API
+#undef ensureMsgf
+
+
+PRAGMA_DISABLE_OPTIMIZATION
+void generate_DevOptionsCache()
 {
 	Array<CodeVar> GasaDevOptions_UPROPERTIES = Array<CodeVar>::init(GlobalAllocator);
 	{
@@ -41,7 +41,7 @@ void gen_FGasaDevOptionsCache()
 	CodeType t_UObjectPtr           = parse_type(code(UObject*));
 	CodeType t_Array_UObjectPtr     = parse_type(code(TArray< UObject* >));
 
-	Builder header = Builder::open( path_module_gasa "GasaDevOptionsCache.h" );
+	Builder header = builder_open( path_module_gasa "GasaDevOptionsCache.h" );
 	{
 		header.print( generation_notice );
 		header.print( pragma_once );
@@ -86,7 +86,7 @@ void gen_FGasaDevOptionsCache()
 		format_file( path_module_gasa "GasaDevOptionsCache.h" );
 	}
 
-	Builder source = Builder::open( path_module_gasa "GasaDevOptionsCache.cpp" );
+	Builder source = builder_open( path_module_gasa "GasaDevOptionsCache.cpp" );
 	{
 		Array<CodeInclude> GasaDevOptions_Includes  = Array<CodeInclude>::init(GlobalAllocator);
 		{
@@ -162,3 +162,8 @@ void gen_FGasaDevOptionsCache()
 		format_file( path_module_gasa "GasaDevOptionsCache.cpp" );
 	}
 }
+PRAGMA_ENABLE_OPTIMIZATION
+
+#pragma pop_macro("ensureMsgf")
+#pragma pop_macro("GASA_API")
+

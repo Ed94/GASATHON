@@ -8,10 +8,12 @@
 #define internal      static
 #define local_persist static
 
+#ifndef ccast
 #define ccast( Type, Value ) ( *const_cast<(Type)*>( &( Value ) ) )
 #define pcast( Type, Value ) ( *reinterpret_cast<(Type)*>( &( Value ) ) )
 #define rcast( Type, Value ) reinterpret_cast<Type>( Value )
 #define scast( Type, Value ) static_cast<Type>( Value )
+#endif
 
 #define bit(position) (1 << position)
 

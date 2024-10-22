@@ -335,8 +335,6 @@ void gen_UGasaAttributeSet()
 						Super::PreAttributeChange(Attribute, NewValue);
 						
 						<attribute_clamps>
-						
-						PreAttributeChange_Custom();
 					}
 				)));
 
@@ -348,8 +346,6 @@ void gen_UGasaAttributeSet()
 						Props.Populate(Data);
 						
 						<attribute_clamps>
-						
-						PostAttributeChange_Custom();
 					}
 				)));
 			}

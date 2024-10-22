@@ -1,15 +1,15 @@
-﻿// Used in the GasaGen.cpp translation unit
-#if GASA_INTELLISENSE_DIRECTIVES
 #pragma once
-#include "gen.hpp"
-// #include "GasaGenCommon.cpp"
-using namespace gen;
-#endif
 
-// Program assumes its working directory is the project
-#define path_root                ""
-#define path_project             path_root        "Project/"
-#define path_source              path_project     "Source/"
+#include "gencpp/gen.hpp"
+#include "gencpp/gen.builder.hpp"
+using namespace gen;
+
+#undef check
+
+// Codegen assumes its working directory is the project
+#define path_scripts             "/scripts/"
+#define path_project             "/Project/"
+#define path_source              "/Source/"
 #define path_config              path_source      "Config/"
 #define path_module_gasa         path_source      "Gasa/"
 #define path_gasa_ability_system path_module_gasa "AbilitySystem/"
@@ -63,22 +63,36 @@ constexpr StrC str_UPROPERTY                                             = txt("
 constexpr StrC str_USTRUCT                                               = txt("USTRUCT(");
 constexpr StrC str_UE_REQUIRES                                           = txt("UE_REQUIRES(");
 
-constexpr StrC str_GASA_API = txt("GASA_API");
-
 #pragma region Globals
+extern String Project_Path;
+extern String Root_Path;
+
 // These Code objects are created before anything else after gencpp does its initializatioon
-global Code UHT_GENERATED_BODY;
-global Code UHT_UCLASS;
-global Code UHT_UPROPERTY;
-global Code UHT_USTRUCT;
-global Code UModule_GASA_API;
+extern Code UHT_GENERATED_BODY;
+extern Code UHT_UCLASS;
+extern Code UHT_UPROPERTY;
+extern Code UHT_USTRUCT;
+extern Code UModule_GASA_API;
 #pragma endregion Globals
 
 inline
 CodeBody parse_file( char const* path ) {
-	FileContents content = file_read_contents( GlobalAllocator, true, path );
+	String
+	resolved_path = String::make(GlobalAllocator, StrC(Project_Path));
+	resolved_path.append(path);
+
+	FileContents content = file_read_contents( GlobalAllocator, true, resolved_path );
 	CodeBody     code    = parse_global_body( StrC { content.size, (char const*)content.data });
 	return code;
+}
+
+// Automatically handles resolving project path
+inline
+Builder builder_open(char const* path) {
+	String
+	resolved_path = String::make(GlobalAllocator, StrC(Project_Path));
+	resolved_path.append(path);
+	return Builder::open( resolved_path );
 }
 
 // inline
@@ -87,19 +101,29 @@ CodeBody parse_file( char const* path ) {
 inline
 void format_file( char const* path )
 {
+	String
+	resolved_path = String::make(GlobalAllocator, StrC(Project_Path));
+	resolved_path.append(path);
+
+	String clang_format_path = String::make(GlobalAllocator, StrC(Root_Path));
+	clang_format_path.append("/scripts/.clang-format");
+
 	// Need to execute clang format on the generated file to get it to match the original.
 	#define clang_format      "clang-format "
 	#define cf_format_inplace "-i "
-	#define cf_style          "-style=file:" "./scripts/.clang-format "
 	#define cf_verbose        "-verbose "
 	String command = String::make( GlobalAllocator, clang_format );
 	command.append( cf_format_inplace );
-	command.append( cf_style );
+	command.append_fmt("-style=file:%S ", *StrC(clang_format_path));
 	command.append( cf_verbose );
-	command.append( path );
+	command.append( resolved_path );
 		log_fmt("\tRunning clang-format on file:\n");
 		system( command );
 		log_fmt("\tclang-format finished reformatting.\n");
+
+
+	FString command_fstr = FString( command.Data, command.length());
+	UE_LOG(LogTemp, Log, TEXT("clang format command: %s"), *command_fstr );
 	#undef cf_cmd
 	#undef cf_format_inplace
 	#undef cf_style

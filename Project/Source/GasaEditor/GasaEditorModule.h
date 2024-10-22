@@ -12,7 +12,7 @@ public:
 	static FGasaEditorModule& Get() 	{
 		return FModuleManager::LoadModuleChecked<FGasaEditorModule>("GasaEditor");
 	}
-	
+
 protected:
 	void StartupModule() override;
 	void ShutdownModule() override;

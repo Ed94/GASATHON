@@ -2,6 +2,24 @@
 
 #include "gen.scanner.hpp"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wswitch"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wvarargs"
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wcomment"
+#pragma GCC diagnostic ignored "-Wswitch"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+
 GEN_NS_BEGIN
 
 #pragma region ADT
@@ -38,7 +56,7 @@ u8 adt_destroy_branch( ADT_Node* node )
 	GEN_ASSERT_NOT_NULL( node );
 	if ( ( node->type == EADT_TYPE_OBJECT || node->type == EADT_TYPE_ARRAY ) && node->nodes )
 	{
-		for ( sw i = 0; i < node->nodes.num(); ++i )
+		for ( sw i = 0; i < scast(sw, node->nodes.num()); ++i )
 		{
 			adt_destroy_branch( node->nodes + i );
 		}
@@ -68,7 +86,7 @@ ADT_Node* adt_find( ADT_Node* node, char const* name, b32 deep_search )
 		return NULL;
 	}
 
-	for ( sw i = 0; i < node->nodes.num(); i++ )
+	for ( sw i = 0; i < scast(sw, node->nodes.num()); i++ )
 	{
 		if ( ! str_compare( node->nodes[i].name, name ) )
 		{
@@ -78,7 +96,7 @@ ADT_Node* adt_find( ADT_Node* node, char const* name, b32 deep_search )
 
 	if ( deep_search )
 	{
-		for ( sw i = 0; i < node->nodes.num(); i++ )
+		for ( sw i = 0; i < scast(sw, node->nodes.num()); i++ )
 		{
 			ADT_Node* res = adt_find( node->nodes + i, name, deep_search );
 
@@ -134,7 +152,7 @@ internal ADT_Node* _adt_get_value( ADT_Node* node, char const* value )
 
 internal ADT_Node* _adt_get_field( ADT_Node* node, char* name, char* value )
 {
-	for ( sw i = 0; i < node->nodes.num(); i++ )
+	for ( sw i = 0; i < scast(sw, node->nodes.num()); i++ )
 	{
 		if ( ! str_compare( node->nodes[i].name, name ) )
 		{
@@ -209,7 +227,7 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 			/* run a value comparison against any child that is an object node */
 			else if ( node->type == EADT_TYPE_ARRAY )
 			{
-				for ( sw i = 0; i < node->nodes.num(); i++ )
+				for ( sw i = 0; i < scast(sw, node->nodes.num()); i++ )
 				{
 					ADT_Node* child = &node->nodes[i];
 					if ( child->type != EADT_TYPE_OBJECT )
@@ -227,7 +245,7 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 		/* [value] */
 		else
 		{
-			for ( sw i = 0; i < node->nodes.num(); i++ )
+			for ( sw i = 0; i < scast(sw, node->nodes.num()); i++ )
 			{
 				ADT_Node* child = &node->nodes[i];
 				if ( _adt_get_value( child, l_b2 ) )
@@ -259,7 +277,7 @@ ADT_Node* adt_query( ADT_Node* node, char const* uri )
 	else
 	{
 		sw idx = (sw)str_to_i64( buf, NULL, 10 );
-		if ( idx >= 0 && idx < node->nodes.num() )
+		if ( idx >= 0 && idx < scast(sw, node->nodes.num()) )
 		{
 			found_node = &node->nodes[idx];
 
@@ -284,7 +302,7 @@ ADT_Node* adt_alloc_at( ADT_Node* parent, sw index )
 	if ( ! parent->nodes )
 		return NULL;
 
-	if ( index < 0 || index > parent->nodes.num() )
+	if ( index < 0 || index > scast(sw, parent->nodes.num()) )
 		return NULL;
 
 	ADT_Node o = { 0 };
@@ -945,7 +963,7 @@ u8 csv_parse_delimiter( CSV_Object* root, char* text, AllocatorInfo allocator, b
 			}
 		}
 
-		if ( columnIndex >= root->nodes.num() )
+		if ( columnIndex >= scast(sw, root->nodes.num()) )
 		{
 			adt_append_arr( root, NULL );
 		}
@@ -987,7 +1005,7 @@ u8 csv_parse_delimiter( CSV_Object* root, char* text, AllocatorInfo allocator, b
 	/* consider first row as a header. */
 	if ( has_header )
 	{
-		for ( sw i = 0; i < root->nodes.num(); i++ )
+		for ( sw i = 0; i < scast(sw, root->nodes.num()); i++ )
 		{
 			CSV_Object* col = root->nodes + i;
 			CSV_Object* hdr = col->nodes;
@@ -1107,3 +1125,11 @@ String csv_write_string_delimiter( AllocatorInfo a, CSV_Object* obj, char delimi
 #pragma endregion CSV
 
 GEN_NS_END
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
