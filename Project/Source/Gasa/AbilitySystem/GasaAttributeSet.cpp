@@ -63,6 +63,70 @@ void UGasaAttributeSet::Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMan
 	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
 	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), MaxMana, PrevMaxMana );
 }
+void UGasaAttributeSet::Client_OnRep_Armor( FGameplayAttributeData& PrevArmor )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Armor ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication( FGameplayAttribute( UGasaAttributeSetProperty ), Armor, PrevArmor );
+}
+void UGasaAttributeSet::Client_OnRep_ArmorPenentration( FGameplayAttributeData& PrevArmorPenentration )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, ArmorPenentration ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), ArmorPenentration, PrevArmorPenentration
+	);
+}
+void UGasaAttributeSet::Client_OnRep_BlockChance( FGameplayAttributeData& PrevBlockChance )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, BlockChance ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), BlockChance, PrevBlockChance
+	);
+}
+void UGasaAttributeSet::Client_OnRep_CriticalHitChance( FGameplayAttributeData& PrevCriticalHitChance )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitChance ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), CriticalHitChance, PrevCriticalHitChance
+	);
+}
+void UGasaAttributeSet::Client_OnRep_CriticalHitDamage( FGameplayAttributeData& PrevCriticalHitDamage )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitDamage ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), CriticalHitDamage, PrevCriticalHitDamage
+	);
+}
+void UGasaAttributeSet::Client_OnRep_CriticalHitResistance( FGameplayAttributeData& PrevCriticalHitResistance )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty =
+	    FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitResistance ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), CriticalHitResistance, PrevCriticalHitResistance
+	);
+}
+void UGasaAttributeSet::Client_OnRep_HealthRegeneration( FGameplayAttributeData& PrevHealthRegeneration )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty =
+	    FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, HealthRegeneration ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), HealthRegeneration, PrevHealthRegeneration
+	);
+}
+void UGasaAttributeSet::Client_OnRep_ManaRegeneration( FGameplayAttributeData& PrevManaRegeneration )
+{
+	// From GAMEPLAYATTRIBUTE_REPNOTIFY
+	static FProperty* UGasaAttributeSetProperty = FindFieldChecked<FProperty>( StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, ManaRegeneration ) );
+	GetOwningAbilitySystemComponentChecked()->SetBaseAttributeValueFromReplication(
+	    FGameplayAttribute( UGasaAttributeSetProperty ), ManaRegeneration, PrevManaRegeneration
+	);
+}
 #pragma endregion Rep Notifies
 
 void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackData const& Data )
@@ -103,6 +167,38 @@ void UGasaAttributeSet::PostGameplayEffectExecute( FGameplayEffectModCallbackDat
 	{
 		SetMaxMana( FMath::Clamp( GetMaxMana(), 0, 99999.000000 ) );
 	}
+	if ( Data.EvaluatedData.Attribute == GetArmorAttribute() )
+	{
+		SetArmor( FMath::Clamp( GetArmor(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetArmorPenentrationAttribute() )
+	{
+		SetArmorPenentration( FMath::Clamp( GetArmorPenentration(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetBlockChanceAttribute() )
+	{
+		SetBlockChance( FMath::Clamp( GetBlockChance(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetCriticalHitChanceAttribute() )
+	{
+		SetCriticalHitChance( FMath::Clamp( GetCriticalHitChance(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetCriticalHitDamageAttribute() )
+	{
+		SetCriticalHitDamage( FMath::Clamp( GetCriticalHitDamage(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetCriticalHitResistanceAttribute() )
+	{
+		SetCriticalHitResistance( FMath::Clamp( GetCriticalHitResistance(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetHealthRegenerationAttribute() )
+	{
+		SetHealthRegeneration( FMath::Clamp( GetHealthRegeneration(), 0, 999.000000 ) );
+	}
+	if ( Data.EvaluatedData.Attribute == GetManaRegenerationAttribute() )
+	{
+		SetManaRegeneration( FMath::Clamp( GetManaRegeneration(), 0, 999.000000 ) );
+	}
 }
 
 void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute, float& NewValue )
@@ -141,6 +237,38 @@ void UGasaAttributeSet::PreAttributeChange( FGameplayAttribute const& Attribute,
 	{
 		NewValue = FMath::Clamp( NewValue, 0, 99999.000000 );
 	}
+	if ( Attribute == GetArmorAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetArmorPenentrationAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetBlockChanceAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetCriticalHitChanceAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetCriticalHitDamageAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetCriticalHitResistanceAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetHealthRegenerationAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
+	if ( Attribute == GetManaRegenerationAttribute() )
+	{
+		NewValue = FMath::Clamp( NewValue, 0, 999.000000 );
+	}
 }
 
 void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
@@ -155,4 +283,12 @@ void UGasaAttributeSet::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& O
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Vigor );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, MaxHealth );
 	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, MaxMana );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, Armor );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, ArmorPenentration );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, BlockChance );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, CriticalHitChance );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, CriticalHitDamage );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, CriticalHitResistance );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, HealthRegeneration );
+	DOREPLIFETIME_DEFAULT_GAS( UGasaAttributeSet, ManaRegeneration );
 }

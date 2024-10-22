@@ -77,6 +77,78 @@ void UGasaAttributeSet::SetMaxMana( float NewVal )
 		AbilityComp->SetNumericAttributeBase( GetMaxManaAttribute(), NewVal );
 	};
 }
+FORCEINLINE
+void UGasaAttributeSet::SetArmor( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetArmorAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetArmorPenentration( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetArmorPenentrationAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetBlockChance( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetBlockChanceAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetCriticalHitChance( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetCriticalHitChanceAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetCriticalHitDamage( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetCriticalHitDamageAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetCriticalHitResistance( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetCriticalHitResistanceAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetHealthRegeneration( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetHealthRegenerationAttribute(), NewVal );
+	};
+}
+FORCEINLINE
+void UGasaAttributeSet::SetManaRegeneration( float NewVal )
+{
+	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
+	if ( ensure( AbilityComp ) )
+	{
+		AbilityComp->SetNumericAttributeBase( GetManaRegenerationAttribute(), NewVal );
+	};
+}
 #pragma endregion Attribute Setters
 
 namespace Gasa

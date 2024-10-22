@@ -35,6 +35,22 @@ public:
 	FGameplayAttributeData MaxHealth;
 	UPROPERTY( ReplicatedUsing = Client_OnRep_MaxMana, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
 	FGameplayAttributeData MaxMana;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_Armor, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData Armor;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_ArmorPenentration, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData ArmorPenentration;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_BlockChance, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData BlockChance;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_CriticalHitChance, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData CriticalHitChance;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_CriticalHitDamage, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData CriticalHitDamage;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_CriticalHitResistance, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData CriticalHitResistance;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_HealthRegeneration, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData HealthRegeneration;
+	UPROPERTY( ReplicatedUsing = Client_OnRep_ManaRegeneration, EditAnywhere, BlueprintReadWrite, Category = "Attributes|Secondary" )
+	FGameplayAttributeData ManaRegeneration;
 
 
 	UFUNCTION()
@@ -53,6 +69,22 @@ public:
 	void Client_OnRep_MaxHealth( FGameplayAttributeData& PrevMaxHealth );
 	UFUNCTION()
 	void Client_OnRep_MaxMana( FGameplayAttributeData& PrevMaxMana );
+	UFUNCTION()
+	void Client_OnRep_Armor( FGameplayAttributeData& PrevArmor );
+	UFUNCTION()
+	void Client_OnRep_ArmorPenentration( FGameplayAttributeData& PrevArmorPenentration );
+	UFUNCTION()
+	void Client_OnRep_BlockChance( FGameplayAttributeData& PrevBlockChance );
+	UFUNCTION()
+	void Client_OnRep_CriticalHitChance( FGameplayAttributeData& PrevCriticalHitChance );
+	UFUNCTION()
+	void Client_OnRep_CriticalHitDamage( FGameplayAttributeData& PrevCriticalHitDamage );
+	UFUNCTION()
+	void Client_OnRep_CriticalHitResistance( FGameplayAttributeData& PrevCriticalHitResistance );
+	UFUNCTION()
+	void Client_OnRep_HealthRegeneration( FGameplayAttributeData& PrevHealthRegeneration );
+	UFUNCTION()
+	void Client_OnRep_ManaRegeneration( FGameplayAttributeData& PrevManaRegeneration );
 
 #pragma region Getters
 	static FGameplayAttribute GetHealthAttribute()
@@ -95,6 +127,52 @@ public:
 		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, MaxMana ) );
 		return Prop;
 	}
+	static FGameplayAttribute GetArmorAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, Armor ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetArmorPenentrationAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, ArmorPenentration ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetBlockChanceAttribute()
+	{
+		static FProperty* Prop = FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, BlockChance ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetCriticalHitChanceAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitChance ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetCriticalHitDamageAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitDamage ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetCriticalHitResistanceAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, CriticalHitResistance ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetHealthRegenerationAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, HealthRegeneration ) );
+		return Prop;
+	}
+	static FGameplayAttribute GetManaRegenerationAttribute()
+	{
+		static FProperty* Prop =
+		    FindFieldChecked<FProperty>( UGasaAttributeSet::StaticClass(), GET_MEMBER_NAME_CHECKED( UGasaAttributeSet, ManaRegeneration ) );
+		return Prop;
+	}
 
 	FORCEINLINE float GetHealth() const { return Health.GetCurrentValue(); }
 	FORCEINLINE float GetMana() const { return Mana.GetCurrentValue(); }
@@ -104,6 +182,14 @@ public:
 	FORCEINLINE float GetVigor() const { return Vigor.GetCurrentValue(); }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth.GetCurrentValue(); }
 	FORCEINLINE float GetMaxMana() const { return MaxMana.GetCurrentValue(); }
+	FORCEINLINE float GetArmor() const { return Armor.GetCurrentValue(); }
+	FORCEINLINE float GetArmorPenentration() const { return ArmorPenentration.GetCurrentValue(); }
+	FORCEINLINE float GetBlockChance() const { return BlockChance.GetCurrentValue(); }
+	FORCEINLINE float GetCriticalHitChance() const { return CriticalHitChance.GetCurrentValue(); }
+	FORCEINLINE float GetCriticalHitDamage() const { return CriticalHitDamage.GetCurrentValue(); }
+	FORCEINLINE float GetCriticalHitResistance() const { return CriticalHitResistance.GetCurrentValue(); }
+	FORCEINLINE float GetHealthRegeneration() const { return HealthRegeneration.GetCurrentValue(); }
+	FORCEINLINE float GetManaRegeneration() const { return ManaRegeneration.GetCurrentValue(); }
 #pragma endregion Getters
 
 #pragma region Setters
@@ -115,6 +201,14 @@ public:
 	FORCEINLINE void SetVigor( float NewVal );
 	FORCEINLINE void SetMaxHealth( float NewVal );
 	FORCEINLINE void SetMaxMana( float NewVal );
+	FORCEINLINE void SetArmor( float NewVal );
+	FORCEINLINE void SetArmorPenentration( float NewVal );
+	FORCEINLINE void SetBlockChance( float NewVal );
+	FORCEINLINE void SetCriticalHitChance( float NewVal );
+	FORCEINLINE void SetCriticalHitDamage( float NewVal );
+	FORCEINLINE void SetCriticalHitResistance( float NewVal );
+	FORCEINLINE void SetHealthRegeneration( float NewVal );
+	FORCEINLINE void SetManaRegeneration( float NewVal );
 	#pragma endregion Setters
 
 #pragma region AttributeSet

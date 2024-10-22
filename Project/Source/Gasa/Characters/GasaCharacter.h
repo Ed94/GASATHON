@@ -44,6 +44,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ability System")
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 	
+	UFUNCTION(BlueprintCallable)
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GE, float Level);
+	
 	void InitDefaultAttributes();
 #pragma endregion Ability System
 	

@@ -65,9 +65,19 @@ AGasaCharacter::AGasaCharacter()
 }
 
 #pragma region Ability System
+void AGasaCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GE, float Level)
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ensure(ASC);
+	ensure(GE);
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	FGameplayEffectSpecHandle    Spec    = ASC->MakeOutgoingSpec(GE, Level, Context );
+	ASC->ApplyGameplayEffectSpecToTarget( * Spec.Data, ASC );
+}
+
 void AGasaCharacter::InitDefaultAttributes()
 {
-	UAbilitySystemComponent*     ASC     = GetAbilitySystemComponent();
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ensure(ASC);
 	ensure(DefaultVitalAttributes);
 	ensure(DefaultPrimaryAttributes);
