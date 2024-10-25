@@ -4,11 +4,14 @@ Project/.idea
 Project/.vs
 Project/.vsconfig
 
-Project/Binaries
+!Project/Binaries/Win64/*
 Project/Binaries/GasaGen.exe
 Project/Binaries/GasaGen.map
 Project/Binaries/GasaGen.obj
-Project/Binaries/vc140.pdb
+Project/Binaries/GasaGen.raddbgi
+Project/Binaries/GasaGen.rdi
+# Project/Binaries/vc140.pdb
+!Project/Binaries/GasaEditor.target
 
 Project/Intermediate
 
@@ -37,3 +40,5 @@ Project/Saved/SourceControl
 
 GasaGen_*.pdb
 Project/Content/
+.vs
+.vs
