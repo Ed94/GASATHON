@@ -24,7 +24,6 @@
 #include "gen.hpp"
 
 GEN_NS_BEGIN
-
 #pragma region StaticData
 
 // TODO : Convert global allocation strategy to use a slab allocation strategy.
@@ -2728,11 +2727,19 @@ void CodeVar::to_string( String& result )
 		}
 
 		if ( ast->Value )
-			result.append_fmt( " = %S", ast->Value.to_string() );
+		{
+			if ( ast->VarConstructorInit )
+				result.append_fmt( "( %S ", ast->Value.to_string() );
+			else
+				result.append_fmt( " = %S", ast->Value.to_string() );
+		}
 
 		// Keep the chain going...
 		if ( ast->NextVar )
 			result.append_fmt( ", %S", ast->NextVar.to_string() );
+		
+		if ( ast->VarConstructorInit )
+			result.append( " )");	
 
 		return;
 	}
@@ -2766,10 +2773,18 @@ void CodeVar::to_string( String& result )
 			result.append_fmt( " : %S", ast->BitfieldSize.to_string() );
 
 		if ( ast->Value )
-			result.append_fmt( " = %S", ast->Value.to_string() );
-
+		{
+			if ( ast->VarConstructorInit )
+				result.append_fmt( "( %S", ast->Value.to_string() );
+			else
+				result.append_fmt( " = %S", ast->Value.to_string() );
+		}
+		
 		if ( ast->NextVar )
 			result.append_fmt( ", %S", ast->NextVar.to_string() );
+
+		if ( ast->VarConstructorInit )
+			result.append( " )" );
 
 		if ( ast->InlineCmt )
 			result.append_fmt( ";  %S", ast->InlineCmt->Content );
@@ -2798,10 +2813,18 @@ void CodeVar::to_string( String& result )
 		result.append_fmt( "%S %S", ast->ValueType.to_string(), ast->Name );
 
 	if ( ast->Value )
-		result.append_fmt( " = %S", ast->Value.to_string() );
+	{
+		if ( ast->VarConstructorInit )
+			result.append_fmt( "( %S ", ast->Value.to_string() );
+		else
+			result.append_fmt( " = %S", ast->Value.to_string() );
+	}
 
 	if ( ast->NextVar )
 		result.append_fmt( ", %S", ast->NextVar.to_string() );
+
+	if ( ast->VarConstructorInit )
+		result.append(")");
 
 	result.append( ";" );
 
@@ -2993,16 +3016,17 @@ internal void define_constants()
 	spec_##Type_ = def_specifiers( num_args( __VA_ARGS__ ), __VA_ARGS__ ); \
 	spec_##Type_.set_global();
 
-#pragma push_macro( "FORCEINLINE" )
-#pragma push_macro( "global" )
-#pragma push_macro( "internal" )
-#pragma push_macro( "local_persist" )
-#pragma push_macro( "neverinline" )
+#pragma push_macro("FORCEINLINE")
+#pragma push_macro("global")
+#pragma push_macro("internal")
+#pragma push_macro("local_persist")
+#pragma push_macro("neverinline")
 #undef FORCEINLINE
 #undef global
 #undef internal
 #undef local_persist
 #undef neverinline
+	
 	def_constant_spec( const, ESpecifier::Const );
 	def_constant_spec( consteval, ESpecifier::Consteval );
 	def_constant_spec( constexpr, ESpecifier::Constexpr );
@@ -3027,14 +3051,14 @@ internal void define_constants()
 	def_constant_spec( virtual, ESpecifier::Virtual );
 	def_constant_spec( volatile, ESpecifier::Volatile )
 
-	    spec_local_persist = def_specifiers( 1, ESpecifier::Local_Persist );
+	spec_local_persist = def_specifiers( 1, ESpecifier::Local_Persist );
 	spec_local_persist.set_global();
 
-#pragma pop_macro( "FORCEINLINE" )
-#pragma pop_macro( "global" )
-#pragma pop_macro( "internal" )
-#pragma pop_macro( "local_persist" )
-#pragma pop_macro( "neverinline" )
+#pragma pop_macro("FORCEINLINE")
+#pragma pop_macro("global")
+#pragma pop_macro("internal")
+#pragma pop_macro("local_persist")
+#pragma pop_macro("neverinline")
 
 #undef def_constant_spec
 }
@@ -7096,6 +7120,26 @@ namespace parser
 						move_forward();
 						token.Length++;
 					}
+
+					// Handle number literal suffixes in a botched way
+					if (left && (
+						current == 'l' || current == 'L' ||  // long/long long
+						current == 'u' || current == 'U' ||  // unsigned
+						current == 'f' || current == 'F' ||  // float
+						current == 'i' || current == 'I' ||  // imaginary
+						current == 'z' || current == 'Z'))   // complex
+					{
+						char prev = current;
+						move_forward();
+						token.Length++;
+        
+						// Handle 'll'/'LL' as a special case when we just processed an 'l'/'L'
+						if (left && (prev == 'l' || prev == 'L') && (current == 'l' || current == 'L'))
+						{
+							move_forward();
+							token.Length++;
+						}
+					}
 				}
 
 				goto FoundToken;
@@ -9563,6 +9607,7 @@ namespace parser
 		return result;
 	}
 
+	__pragma(optimize("",off))
 	internal Code parse_operator_function_or_variable( bool expects_function, CodeAttributes attributes, CodeSpecifiers specifiers )
 	{
 		push_scope();
@@ -9623,7 +9668,14 @@ namespace parser
 			Token name          = parse_identifier();
 			Context.Scope->Name = name;
 
-			if ( check( TokType::Capture_Start ) )
+			bool detected_capture = check( TokType::Capture_Start );
+
+			// Check three tokens ahead to make sure that were not dealing with a constructor initialization...
+			//                  (         350.0f    ,         <---  Could be the scenario
+			// Example : <Capture_Start> <Value> <Comma>
+			//                 idx         +1      +2
+			bool detected_comma = Context.Tokens.Arr[ Context.Tokens.Idx + 2 ].Type == TokType::Comma;
+			if ( detected_capture && ! detected_comma )
 			{
 				// Dealing with a function
 				result = parse_function_after_name( ModuleFlag::None, attributes, specifiers, type, name );
@@ -9647,6 +9699,7 @@ namespace parser
 		Context.pop();
 		return result;
 	}
+	__pragma(optimize("",on))
 
 	internal CodePragma parse_pragma()
 	{
@@ -10150,6 +10203,8 @@ namespace parser
 		Code expr          = { nullptr };
 		Code bitfield_expr = { nullptr };
 
+		b32 using_constructor_initializer = false;
+
 		if ( bitfield_is_equal( u32, currtok.Flags, TF_Assign ) )
 		{
 			// <Attributes> <Specifiers> <ValueType> <Name> = <Expression>
@@ -10179,6 +10234,33 @@ namespace parser
 			expr_tok.Length = ( (sptr)prevtok.Text + prevtok.Length ) - (sptr)expr_tok.Text;
 			expr            = untyped_str( expr_tok );
 			// <Attributes> <Specifiers> <ValueType> <Name> = { <Expression> }
+		}
+		
+		if ( currtok.Type == TokType::Capture_Start )
+		{
+			eat( TokType:: Capture_Start);
+			// <Attributes> <Specifiers> <ValueType> <Name> (
+			
+			Token expr_token = currtok;
+
+			using_constructor_initializer = true;
+
+			s32 level = 0;
+			while ( left && ( currtok.Type != TokType::Capture_End || level > 0 ) )
+			{
+				if ( currtok.Type == TokType::Capture_Start )
+					level++;
+
+				else if ( currtok.Type == TokType::Capture_End && level > 0 )
+					level--;
+
+				eat( currtok.Type );
+			}
+
+			expr_token.Length = ( (sptr)prevtok.Text + prevtok.Length ) - (sptr)expr_token.Text;
+			expr              = untyped_str( expr_token );
+			eat( TokType::Capture_End );
+			// <Attributes> <Specifiers> <ValueType> <Name> ( <Expression> )
 		}
 
 		if ( currtok.Type == TokType::Assign_Classifer )
@@ -10274,6 +10356,8 @@ namespace parser
 			result->NextVar->Parent = result;
 		}
 
+		result->VarConstructorInit = using_constructor_initializer;
+		
 		Context.pop();
 		return result;
 	}
