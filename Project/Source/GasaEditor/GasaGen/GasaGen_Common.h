@@ -1,7 +1,8 @@
 #pragma once
-
+UE_DISABLE_OPTIMIZATION
 #include "gencpp/gen.hpp"
 #include "gencpp/gen.builder.hpp"
+UE_ENABLE_OPTIMIZATION
 using namespace gen;
 
 // Codegen assumes its working directory is the project
@@ -97,10 +98,12 @@ Builder builder_open(char const* path) {
 // CodeConstructor find_constructor( StrC parent_name, )
 
 inline
-void format_file( char const* path )
+void format_file( char const* path, bool relative_path = true )
 {
 	String
-	resolved_path = String::make(GlobalAllocator, StrC(Project_Path));
+	resolved_path = String::make_reserve(GlobalAllocator, Project_Path.length());
+	if (relative_path)
+		resolved_path.append(StrC(Project_Path));
 	resolved_path.append(path);
 
 	String style_arg = String::make(GlobalAllocator, txt("-style=file:"));
@@ -135,4 +138,10 @@ FORCEINLINE
 String to_string( FName ue_fname ) { 
 	char const* ansi_str = TCHAR_TO_ANSI(*ue_fname.ToString());
 	return String::make_length(GlobalAllocator, ansi_str, ue_fname.GetStringLength());
+}
+
+FORCEINLINE
+FString to_fstring( String string )
+{
+	return FString::ConstructFromPtrSize( string.Data, string.length() );
 }

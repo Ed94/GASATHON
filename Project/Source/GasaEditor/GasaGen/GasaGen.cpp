@@ -1,9 +1,11 @@
 #include "GasaGen.h"
 #include "GasaGen_Common.h"
-#include "GasaGen_AttributeSets.h"
-#include "GasaGen_DevOptionsCache.h"
+#include "AttributeSets.h"
+#include "ChangeBPActionMenu.h"
+#include "DevOptionsCache.h"
 
 // Editor Module
+#include "ChangeEditorContentList.h"
 #include "GasaEditorCommon.h"
 
 #define LOCTEXT_NAMESPACE "GasaEditor"
@@ -51,11 +53,11 @@ void Execute_GasaModule_Codegen()
 		#undef USTRUCT
 		#undef GENERATED_BODY
 		#undef GASA_API
-			UHT_UCLASS = code_str(UCLASS());
-			UHT_UPROPERTY = code_str(UPROPERTY());
-			UHT_USTRUCT = code_str(USTRUCT());
+			UHT_UCLASS         = code_str(UCLASS());
+			UHT_UPROPERTY      = code_str(UPROPERTY());
+			UHT_USTRUCT        = code_str(USTRUCT());
 			UHT_GENERATED_BODY = code_str(GENERATED_BODY()\n);
-			UModule_GASA_API = code_str(GASA_API);
+			UModule_GASA_API   = code_str(GASA_API);
 		#pragma pop_macro("UCLASS")
 		#pragma pop_macro("UPROPERTY")
 		#pragma pop_macro("USTRUCT")
@@ -111,9 +113,11 @@ void Execute_GasaModule_Codegen()
 			PreprocessorDefines.append(get_cached_string(str_UE_REQUIRES));
 		}
 
-		generate_AttributeSets();
+		// generate_AttributeSets();
 		//generate_DevOptionsCache();
 		//generate_HostWidgetController();
+		change_SBlueprintActionMenu_Construct();
+		change_EditorContentList();
 
 		gen::deinit();
 	});

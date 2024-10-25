@@ -1,4 +1,4 @@
-#include "GasaGen_AttributeSets.h"
+#include "AttributeSets.h"
 #include "GasaGen_Common.h"
 
 #include "Gasa/AbilitySystem/GasaAbilitySystem.h"
