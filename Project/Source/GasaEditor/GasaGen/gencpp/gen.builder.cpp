@@ -1,10 +1,9 @@
-// This file was generated automatially by gencpp's bootstrap.cpp (See: https://github.com/Ed94/gencpp)
-
-#include "gen.builder.hpp"
+// This file was generated automatially by gencpp's unreal.cpp (See: https://github.com/Ed94/gencpp)
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -20,6 +19,8 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
+#include "gen.builder.hpp"
+
 GEN_NS_BEGIN
 
 Builder Builder::open( char const* path )
@@ -32,6 +33,7 @@ Builder Builder::open( char const* path )
 		log_failure( "gen::File::open - Could not open file: %s", path );
 		return result;
 	}
+
 	result.Buffer = String::make_reserve( GlobalAllocator, Builder_StrBufferReserve );
 
 	// log_fmt("$Builder - Opened file: %s\n", result.File.filename );

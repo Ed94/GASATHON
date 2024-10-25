@@ -1,10 +1,11 @@
-// This file was generated automatially by gencpp's bootstrap.cpp (See: https://github.com/Ed94/gencpp)
+// This file was generated automatially by gencpp's unreal.cpp (See: https://github.com/Ed94/gencpp)
 
 #include "gen.dep.hpp"
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -18,9 +19,6 @@
 #pragma GCC diagnostic ignored "-Wcomment"
 #pragma GCC diagnostic ignored "-Wswitch"
 #pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
-#if ! defined( GEN_DONT_ENFORCE_GEN_TIME_GUARD ) && ! defined( GEN_TIME )
-#error Gen.hpp : GEN_TIME not defined
 #endif
 
 #pragma region Macros and Includes
@@ -2258,7 +2256,7 @@ internal GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 	{
 		Array<u8> arr = { d->buf };
 
-		if ( arr.get_header()->Capacity < uw(new_cap) )
+		if ( arr.get_header()->Capacity < uw( new_cap ) )
 		{
 			if ( ! arr.grow( (s64)( new_cap ) ) )
 				return false;
@@ -2476,4 +2474,3 @@ GEN_NS_END
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
-

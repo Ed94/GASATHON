@@ -1,4 +1,5 @@
 // Used in the GasaGen.cpp translation unit
+#include "ChangeBPActionMenu.h"
 #include "GasaGen_Common.h"
 
 constexpr StrC SBlueprintActionMenu_Construct_Replacement = txt(R"(

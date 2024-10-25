@@ -1,9 +1,11 @@
-// This file was generated automatially by gencpp's bootstrap.cpp (See: https://github.com/Ed94/gencpp)
+// This file was generated automatially by gencpp's unreal.cpp (See: https://github.com/Ed94/gencpp)
+
 #pragma once
 
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 #pragma clang diagnostic ignored "-Wswitch"
 #pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
@@ -148,6 +150,10 @@
 #endif
 
 GEN_NS_BEGIN
+#ifdef GEN_INTELLISENSE_DIRECTIVES
+#pragma once
+#include "header_start.hpp"
+#endif
 
 #pragma region Macros
 
@@ -159,6 +165,7 @@ GEN_NS_BEGIN
 #define internal      static    // Internal linkage
 #define local_persist static    // Local Persisting variables
 
+#pragma region ForceInline Definition
 #ifdef GEN_COMPILER_MSVC
 #define FORCEINLINE __forceinline
 #define neverinline __declspec( noinline )
@@ -177,18 +184,23 @@ GEN_NS_BEGIN
 #define FORCEINLINE
 #define neverinline
 #endif
+#pragma endregion ForceInline Definition
 
 // Bits
 
+#ifndef bit
 #define bit( Value )                           ( 1 << Value )
 #define bitfield_is_equal( Type, Field, Mask ) ( ( Type( Mask ) & Type( Field ) ) == Type( Mask ) )
+#endif
 
 // Casting
 
+#ifndef ccast
 #define ccast( Type, Value ) ( *const_cast<Type*>( &( Value ) ) )
 #define pcast( Type, Value ) ( *reinterpret_cast<Type*>( &( Value ) ) )
 #define rcast( Type, Value ) reinterpret_cast<Type>( Value )
 #define scast( Type, Value ) static_cast<Type>( Value )
+#endif
 
 // Num Arguments (Varadics)
 // #if defined(__GNUC__) || defined(__clang__)
@@ -1105,13 +1117,16 @@ struct Arena
 		return alignment_offset;
 	}
 
-#pragma push_macro("check")
+// This id is defined by Unreal for asserts
+#pragma push_macro( "check" )
 #undef check
+
 	void check()
 	{
 		GEN_ASSERT( TempCount == 0 );
 	}
-#pragma pop_macro("check")
+
+#pragma pop_macro( "check" )
 
 	void free()
 	{
@@ -1575,7 +1590,7 @@ struct Array
 	{
 		return 2 * value + 8;
 	}
-	
+
 	bool append( Array other )
 	{
 		return append( other, other.num() );
@@ -1689,7 +1704,7 @@ struct Array
 		if ( begin < 0 || end > header.Num )
 			return false;
 
-		for ( sw idx = sw(begin); idx < sw(end); idx++ )
+		for ( sw idx = sw( begin ); idx < sw( end ); idx++ )
 		{
 			Data[idx] = value;
 		}
@@ -1847,7 +1862,7 @@ struct HashTable
 
 	static HashTable init( AllocatorInfo allocator )
 	{
-		HashTable<Type> result = init_reserve(allocator, 8);
+		HashTable<Type> result = init_reserve( allocator, 8 );
 		return result;
 	}
 
@@ -1855,10 +1870,10 @@ struct HashTable
 	{
 		HashTable<Type> result          = { { nullptr }, { nullptr } };
 
-		result.Hashes = Array<sw>::init_reserve( allocator, num );
+		result.Hashes                   = Array<sw>::init_reserve( allocator, num );
 		result.Hashes.get_header()->Num = num;
 		result.Hashes.resize( num );
-		result.Hashes.fill( 0, num, -1);
+		result.Hashes.fill( 0, num, -1 );
 
 		result.Entries = Array<Entry>::init_reserve( allocator, num );
 		return result;
@@ -1867,7 +1882,7 @@ struct HashTable
 	void clear( void )
 	{
 		Entries.clear();
-		Hashes.fill( 0, Hashes.num(), -1);
+		Hashes.fill( 0, Hashes.num(), -1 );
 	}
 
 	void destroy( void )
@@ -1894,7 +1909,7 @@ struct HashTable
 	{
 		GEN_ASSERT_NOT_NULL( map_proc );
 
-		for ( sw idx = 0; idx < Entries.num(); idx++ )
+		for ( sw idx = 0; idx < sw( Entries.num() ); ++idx )
 		{
 			map_proc( Entries[idx].Key, Entries[idx].Value );
 		}
@@ -1906,7 +1921,7 @@ struct HashTable
 	{
 		GEN_ASSERT_NOT_NULL( map_proc );
 
-		for ( sw idx = 0; idx < Entries.num(); idx++ )
+		for ( sw idx = 0; idx < sw( Entries.num() ); ++idx )
 		{
 			map_proc( Entries[idx].Key, &Entries[idx].Value );
 		}
@@ -1923,7 +1938,7 @@ struct HashTable
 		sw last_added_index;
 
 		HashTable<Type> new_ht = init_reserve( Hashes.get_header()->Allocator, new_num );
-		for ( sw idx = 0; idx < sw(Entries.num()); ++idx )
+		for ( sw idx = 0; idx < sw( Entries.num() ); ++idx )
 		{
 			FindResult find_result;
 
@@ -1948,13 +1963,13 @@ struct HashTable
 	{
 		sw idx;
 
-		for ( idx = 0; idx < Entries.num(); idx++ )
+		for ( idx = 0; idx < sw( Entries.num() ); idx++ )
 			Entries[idx].Next = -1;
 
-		for ( idx = 0; idx < Hashes.num(); idx++ )
+		for ( idx = 0; idx < sw( Hashes.num() ); idx++ )
 			Hashes[idx] = -1;
 
-		for ( idx = 0; idx < Entries.num(); idx++ )
+		for ( idx = 0; idx < sw( Entries.num() ); idx++ )
 		{
 			Entry*     entry;
 			FindResult find_result;
@@ -2020,7 +2035,7 @@ struct HashTable
 
 	sw slot( u64 key )
 	{
-		for ( sw idx = 0; idx < Hashes.num(); ++idx )
+		for ( sw idx = 0; idx < sw( Hashes.num() ); ++idx )
 			if ( Hashes[idx] == key )
 				return idx;
 
@@ -2065,8 +2080,8 @@ protected:
 
 	b32 full()
 	{
-		uw critical_load = uw( CriticalLoadScale * f32(Hashes.num()) );
-		b32 result = Entries.num() > critical_load;
+		uw  critical_load = uw( CriticalLoadScale * f32( Hashes.num() ) );
+		b32 result        = Entries.num() > critical_load;
 		return result;
 	}
 };
@@ -2088,26 +2103,25 @@ struct StrC
 	sw          Len;
 	char const* Ptr;
 
-	char const& operator[]( sw index ) const
-	{
-		return Ptr[index];
-	}
-
 	operator char const*() const
 	{
 		return Ptr;
 	}
+
+	char const& operator[]( sw index ) const
+	{
+		return Ptr[index];
+	}
 };
 
-#define cast_to_strc( str ) *rcast( StrC*, str - sizeof( sw ) )
-#define txt( text )              \
-	StrC                         \
-	{                            \
-		sizeof( (text) ) - 1, (text) \
+#define cast_to_strc( str ) *rcast( StrC*, ( str ) - sizeof( sw ) )
+#define txt( text )                  \
+	StrC                             \
+	{                                \
+		sizeof( text ) - 1, ( text ) \
 	}
 
-inline
-StrC to_str( char const* str )
+inline StrC to_str( char const* str )
 {
 	return { str_len( str ), str };
 }
@@ -2179,7 +2193,7 @@ struct String
 
 	static bool are_equal( String lhs, StrC rhs )
 	{
-		if ( lhs.length() != (rhs.Len - 1) )
+		if ( lhs.length() != ( rhs.Len ) )
 			return false;
 
 		for ( sw idx = 0; idx < lhs.length(); ++idx )
@@ -2218,7 +2232,7 @@ struct String
 
 			header.Length           = curr_len + length;
 		}
-		return true;
+		return str != nullptr;
 	}
 
 	bool append( StrC str )
@@ -2257,24 +2271,6 @@ struct String
 		get_header().Length = 0;
 	}
 
-	b32 starts_with( StrC substring ) const
-	{
-		if (substring.Len > length())
-			return false;
-
-		b32 result = str_compare(Data, substring.Ptr, substring.Len ) == 0;
-		return result;
-	}
-
-	b32 starts_with( String substring ) const
-	{
-		if (substring.length() > length())
-			return false;
-
-		b32 result = str_compare(Data, substring, substring.length() - 1 ) == 0;
-		return result;
-	}
-
 	String duplicate( AllocatorInfo allocator ) const
 	{
 		return make_length( allocator, Data, length() );
@@ -2300,6 +2296,24 @@ struct String
 		Header const& header = *rcast( Header const*, Data - sizeof( Header ) );
 
 		return header.Length;
+	}
+
+	b32 starts_with( StrC substring ) const
+	{
+		if ( substring.Len > length() )
+			return false;
+
+		b32 result = str_compare( Data, substring.Ptr, substring.Len ) == 0;
+		return result;
+	}
+
+	b32 starts_with( String substring ) const
+	{
+		if ( substring.length() > length() )
+			return false;
+
+		b32 result = str_compare( Data, substring, substring.length() - 1 ) == 0;
+		return result;
 	}
 
 	void skip_line()
@@ -2428,7 +2442,7 @@ struct String
 
 	operator bool()
 	{
-		return Data !=  nullptr;
+		return Data != nullptr;
 	}
 
 	operator char*()
@@ -2883,4 +2897,3 @@ GEN_NS_END
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
-

@@ -1,7 +1,25 @@
-// This file was generated automatially by gencpp's bootstrap.cpp (See: https://github.com/Ed94/gencpp)
+// This file was generated automatially by gencpp's unreal.cpp (See: https://github.com/Ed94/gencpp)
 
-// This file is intended to be included within gen.cpp (There is no pragma diagnostic ignores)
+#include "gen.dep.hpp"
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#pragma clang diagnostic ignored "-Wswitch"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wvarargs"
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wcomment"
+#pragma GCC diagnostic ignored "-Wswitch"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 
 #pragma region Macros and Includes
 
@@ -1651,7 +1669,7 @@ bool String::make_space_for( char const* str, sw add_len )
 
 		Data              = rcast( char*, header + 1 );
 
-		return str;
+		return true;
 	}
 }
 
@@ -2238,7 +2256,7 @@ internal GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 	{
 		Array<u8> arr = { d->buf };
 
-		if ( arr.get_header()->Capacity < new_cap )
+		if ( arr.get_header()->Capacity < uw( new_cap ) )
 		{
 			if ( ! arr.grow( (s64)( new_cap ) ) )
 				return false;
@@ -2448,3 +2466,11 @@ f64 time_rel( void )
 #pragma endregion Timing
 
 GEN_NS_END
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif

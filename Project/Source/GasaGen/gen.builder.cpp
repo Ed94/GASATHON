@@ -1,4 +1,23 @@
-// This file was generated automatially by gencpp's bootstrap.cpp (See: https://github.com/Ed94/gencpp)
+// This file was generated automatially by gencpp's unreal.cpp (See: https://github.com/Ed94/gencpp)
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#pragma clang diagnostic ignored "-Wswitch"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wvarargs"
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wcomment"
+#pragma GCC diagnostic ignored "-Wswitch"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 
 #include "gen.builder.hpp"
 
@@ -14,6 +33,7 @@ Builder Builder::open( char const* path )
 		log_failure( "gen::File::open - Could not open file: %s", path );
 		return result;
 	}
+
 	result.Buffer = String::make_reserve( GlobalAllocator, Builder_StrBufferReserve );
 
 	// log_fmt("$Builder - Opened file: %s\n", result.File.filename );
@@ -49,7 +69,7 @@ void Builder::print_fmt( char const* fmt, ... )
 
 void Builder::write()
 {
-	bool result = file_write( &File, Buffer, Buffer.length() );
+	b32 result = file_write( &File, Buffer, Buffer.length() );
 
 	if ( result == false )
 		log_failure( "gen::File::write - Failed to write to file: %s\n", file_name( &File ) );
@@ -60,3 +80,11 @@ void Builder::write()
 }
 
 GEN_NS_END
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif

@@ -3,6 +3,7 @@
 #define GEN_EXPOSE_BACKEND
 // #define GEN_DEFINE_ATTRIBUTE_TOKENS
 #define GEN_IMPLEMENTATION
+#include "gen.dep.cpp"
 #include "gen.cpp"
 #include "gen.builder.cpp"
 // #include "gen.scanner.hpp"
@@ -82,16 +83,16 @@ int gen_main()
 		PreprocessorDefines.append( get_cached_string(str_UE_REQUIRES));
 	}
 
-	gen_UGasaAttributeSet();
-	gen_FGasaDevOptionsCache();
-	gen_UHostWidgetController();
+	// gen_UGasaAttributeSet();
+	// gen_FGasaDevOptionsCache();
+	// gen_UHostWidgetController();
 	// gen_netslime_interfaces();
 
 	// One offs
-	if (0)
+	if (1)
 	{
-		// ue_parse_testing();
-		swap_SBlueprintActionMenu_Construct();
+		ue_parse_testing();
+		//swap_SBlueprintActionMenu_Construct();
 	}
 	return 0;
 }
