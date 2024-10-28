@@ -28,8 +28,8 @@ public class GasaEditor : ModuleRules
 		PrivateDependencyModuleNames.Add("Gasa");
 
 		bWarningsAsErrors = false;
-		ShadowVariableWarningLevel = UnrealBuildTool.WarningLevel.Warning;
-		UndefinedIdentifierWarningLevel = UnrealBuildTool.WarningLevel.Warning;
+		ShadowVariableWarningLevel = UnrealBuildTool.WarningLevel.Off;
+		UndefinedIdentifierWarningLevel = UnrealBuildTool.WarningLevel.Off;
 
 		// gencpp related defines
 		PublicDefinitions.Add("Build_Debug=1");
