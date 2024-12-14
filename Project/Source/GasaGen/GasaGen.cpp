@@ -23,8 +23,11 @@ using namespace gen;
 
 int gen_main()
 {
-	gen::init();
+	ctx = {};
+	gen::init(& ctx);
 	log_fmt("Generating code for the Gasa module\n");
+
+	Array(StrCached)& PreprocessorDefines = ctx.PreprocessorDefines;
 
 	// Initialize Globals
 	{
@@ -37,50 +40,50 @@ int gen_main()
 
 	// Populate Defines
 	{
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_CLASS));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DELEGATE_RetVal_OneParam));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DELEGATE_RetVal_ThreeParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DELEGATE_SixParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_EVENT_ThreeParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_EVENT_TwoParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_FUNCTION));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_LOG_CATEGORY_EXTERN));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_ThreeParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_MULTICAST_DELEGATE_TwoParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams));
-		PreprocessorDefines.append( get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams));
-		PreprocessorDefines.append( get_cached_string(str_DEFINE_ACTORDESC_TYPE));
-		PreprocessorDefines.append( get_cached_string(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
-		PreprocessorDefines.append( get_cached_string(str_ENUM_CLASS_FLAGS));
-		PreprocessorDefines.append( get_cached_string(str_FORCEINLINE_DEBUGGABLE));
+		PreprocessorDefines.append( cache_str(str_DECLARE_CLASS));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_RetVal_OneParam));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_RetVal_ThreeParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_SixParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_EVENT_ThreeParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_EVENT_TwoParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_FUNCTION));
+		PreprocessorDefines.append( cache_str(str_DECLARE_LOG_CATEGORY_EXTERN));
+		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_OneParam));
+		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_ThreeParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_TwoParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_OneParam));
+		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams));
+		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams));
+		PreprocessorDefines.append( cache_str(str_DEFINE_ACTORDESC_TYPE));
+		PreprocessorDefines.append( cache_str(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
+		PreprocessorDefines.append( cache_str(str_ENUM_CLASS_FLAGS));
+		PreprocessorDefines.append( cache_str(str_FORCEINLINE_DEBUGGABLE));
 		// PreprocessorDefines.append( get_cached_string(str_FORCEINLINE));
-		PreprocessorDefines.append( get_cached_string(str_GENERATED_BODY));
-		PreprocessorDefines.append( get_cached_string(str_GENERATED_UCLASS_BODY));
-		PreprocessorDefines.append( get_cached_string(str_GENERATED_USTRUCT_BODY));
-		PreprocessorDefines.append( get_cached_string(str_PRAGMA_DISABLE_DEPRECATION_WARNINGS));
-		PreprocessorDefines.append( get_cached_string(str_PRAGMA_ENABLE_DEPRECATION_WARNINGS));
-		PreprocessorDefines.append( get_cached_string(str_PROPERTY_BINDING_IMPLEMENTATION));
-		PreprocessorDefines.append( get_cached_string(str_RESULT_DECL));
-		PreprocessorDefines.append( get_cached_string(str_SLATE_BEGIN_ARGS));
-		PreprocessorDefines.append( get_cached_string(str_SLATE_END_ARGS));
-		PreprocessorDefines.append( get_cached_string(str_TEXT));
-		PreprocessorDefines.append( get_cached_string(str_UCLASS));
-		PreprocessorDefines.append( get_cached_string(str_UENUM));
-		PreprocessorDefines.append( get_cached_string(str_UFUNCTION));
-		PreprocessorDefines.append( get_cached_string(str_UMETA));
-		PreprocessorDefines.append( get_cached_string(str_UPARAM));
-		PreprocessorDefines.append( get_cached_string(str_UPROPERTY));
-		PreprocessorDefines.append( get_cached_string(str_USTRUCT));
-		PreprocessorDefines.append( get_cached_string(str_UE_REQUIRES));
+		PreprocessorDefines.append( cache_str(str_GENERATED_BODY));
+		PreprocessorDefines.append( cache_str(str_GENERATED_UCLASS_BODY));
+		PreprocessorDefines.append( cache_str(str_GENERATED_USTRUCT_BODY));
+		PreprocessorDefines.append( cache_str(str_PRAGMA_DISABLE_DEPRECATION_WARNINGS));
+		PreprocessorDefines.append( cache_str(str_PRAGMA_ENABLE_DEPRECATION_WARNINGS));
+		PreprocessorDefines.append( cache_str(str_PROPERTY_BINDING_IMPLEMENTATION));
+		PreprocessorDefines.append( cache_str(str_RESULT_DECL));
+		PreprocessorDefines.append( cache_str(str_SLATE_BEGIN_ARGS));
+		PreprocessorDefines.append( cache_str(str_SLATE_END_ARGS));
+		PreprocessorDefines.append( cache_str(str_TEXT));
+		PreprocessorDefines.append( cache_str(str_UCLASS));
+		PreprocessorDefines.append( cache_str(str_UENUM));
+		PreprocessorDefines.append( cache_str(str_UFUNCTION));
+		PreprocessorDefines.append( cache_str(str_UMETA));
+		PreprocessorDefines.append( cache_str(str_UPARAM));
+		PreprocessorDefines.append( cache_str(str_UPROPERTY));
+		PreprocessorDefines.append( cache_str(str_USTRUCT));
+		PreprocessorDefines.append( cache_str(str_UE_REQUIRES));
 	}
 
 	// gen_UGasaAttributeSet();

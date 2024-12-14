@@ -9,35 +9,35 @@
 
 struct GAS_AttributeEntry
 {
-	StringCached Name;
+	StrCached Name;
 //	StringCached Description;
 //	StringCached Category;
-	StringCached MinName;
-	StringCached MaxName;
+	StrCached MinName;
+	StrCached MaxName;
 	float Min;
 	float Max;
 };
 
 void def_attribute_properties                   ( CodeBody body, Array<GAS_AttributeEntry> properties );
 void def_attribute_field_on_reps                ( CodeBody body, Array<GAS_AttributeEntry> properties );
-void def_attribute_field_property_getters       ( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties );
+void def_attribute_field_property_getters       ( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties );
 void def_attribute_field_value_getters          ( CodeBody body, Array<GAS_AttributeEntry> properties );
 void def_attribute_field_value_setters          ( CodeBody body, Array<GAS_AttributeEntry> properties );
-void def_attribute_field_property_setter_inlines( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties );
+void def_attribute_field_property_setter_inlines( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties );
 void def_attribute_field_initers                ( CodeBody body, Array<GAS_AttributeEntry> properties );
-void impl_attribute_fields                      ( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties );
+void impl_attribute_fields                      ( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties );
 
 Array<GAS_AttributeEntry> get_gasa_primary_attribute_fields()
 {
 	local_persist
-	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(GlobalAllocator, 64);
+	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(ctx.Allocator_Temp, 64);
 	
 	for (local_persist s32 do_once = 0; do_once == 0; ++ do_once)
 	{
-		StringCached str_Strength     = get_cached_string(txt("Strength"));
-		StringCached str_Intelligence = get_cached_string(txt("Intelligence"));
-		StringCached str_Resilience   = get_cached_string(txt("Resilience"));
-		StringCached str_Vigor        = get_cached_string(txt("Vigor"));
+		StrCached str_Strength     = cache_str(txt("Strength"));
+		StrCached str_Intelligence = cache_str(txt("Intelligence"));
+		StrCached str_Resilience   = cache_str(txt("Resilience"));
+		StrCached str_Vigor        = cache_str(txt("Vigor"));
 
 		GAS_AttributeEntry Strength     = { str_Strength,     {nullptr}, {nullptr}, 0, 999.f };
 		GAS_AttributeEntry Intelligence = { str_Intelligence, {nullptr}, {nullptr}, 0, 999.f };
@@ -55,14 +55,14 @@ Array<GAS_AttributeEntry> get_gasa_primary_attribute_fields()
 Array<GAS_AttributeEntry> get_gasa_secondary_attribute_fields()
 {
 	local_persist
-	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(GlobalAllocator, 64);
+	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(ctx.Allocator_Temp, 64);
 	
 	for (local_persist s32 do_once = 0; do_once == 0; ++ do_once)
 	{
-//		StringCached str_Strength     = get_cached_string(txt("Strength"));
-//		StringCached str_Intelligence = get_cached_string(txt("Intelligence"));
-//		StringCached str_Resilience   = get_cached_string(txt("Resilience"));
-//		StringCached str_Vigor        = get_cached_string(txt("Vigor"));
+//		StrCached str_Strength     = cache_str(txt("Strength"));
+//		StrCached str_Intelligence = cache_str(txt("Intelligence"));
+//		StrCached str_Resilience   = cache_str(txt("Resilience"));
+//		StrCached str_Vigor        = cache_str(txt("Vigor"));
 //
 //		GAS_AttributeEntry Health    = { str_Health,    {nullptr}, str_MaxHealth, 0, 100.f   };
 //		GAS_AttributeEntry MaxHealth = { str_MaxHealth, {nullptr}, {nullptr},     0, 99999.f };
@@ -75,14 +75,14 @@ Array<GAS_AttributeEntry> get_gasa_secondary_attribute_fields()
 Array<GAS_AttributeEntry> get_gasa_vital_attribute_fields()
 {
 	local_persist
-	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(GlobalAllocator, 64);
+	Array<GAS_AttributeEntry> attribute_fields = Array<GAS_AttributeEntry>::init_reserve(ctx.Allocator_Temp, 64);
 
 	for (local_persist s32 do_once = 0; do_once == 0; ++ do_once)
 	{
-		StringCached str_Health    = get_cached_string(txt("Health"));
-		StringCached str_MaxHealth = get_cached_string(txt("MaxHealth"));
-		StringCached str_Mana      = get_cached_string(txt("Mana"));
-		StringCached str_MaxMana   = get_cached_string(txt("MaxMana"));
+		StrCached str_Health    = cache_str(txt("Health"));
+		StrCached str_MaxHealth = cache_str(txt("MaxHealth"));
+		StrCached str_Mana      = cache_str(txt("Mana"));
+		StrCached str_MaxMana   = cache_str(txt("MaxMana"));
 
 		GAS_AttributeEntry Health    = { str_Health,    {nullptr}, str_MaxHealth, 0, 100.f   };
 		GAS_AttributeEntry MaxHealth = { str_MaxHealth, {nullptr}, {nullptr},     0, 99999.f };
@@ -99,8 +99,8 @@ Array<GAS_AttributeEntry> get_gasa_vital_attribute_fields()
 
 void gen_UGasaAttributeSet()
 {
-	CodeType   type_UAttributeSet = def_type( txt("UAttributeSet") );
-	CodeComment generation_notice = def_comment(txt("Generated by GasaGen/GasaGen_UGasaAttributeSet.cpp"));
+	CodeTypename type_UAttributeSet = def_type( txt("UAttributeSet") );
+	CodeComment  generation_notice  = def_comment(txt("Generated by GasaGen/GasaGen_UGasaAttributeSet.cpp"));
 
 	Array<GAS_AttributeEntry> primary_attribute_fields   = get_gasa_primary_attribute_fields();
 	Array<GAS_AttributeEntry> secondary_attribute_fields = get_gasa_secondary_attribute_fields();
@@ -109,12 +109,12 @@ void gen_UGasaAttributeSet()
 	s32 all_attrib_count = primary_attribute_fields.num() + secondary_attribute_fields.num() + vital_attribute_fields.num();
 
 	Array< GAS_AttributeEntry>
-	all_attribute_fields = Array<GAS_AttributeEntry>::init_reserve(GlobalAllocator, all_attrib_count);
+	all_attribute_fields = Array<GAS_AttributeEntry>::init_reserve(ctx.Allocator_Temp, all_attrib_count);
 	all_attribute_fields.append( primary_attribute_fields);
 	all_attribute_fields.append( secondary_attribute_fields);
 	all_attribute_fields.append( vital_attribute_fields);
 
-	StrC class_name = txt("UGasaAttributeSet");
+	Str class_name = txt("UGasaAttributeSet");
 
 	Builder header = Builder::open( path_gasa_ability_system "GasaAttributeSet.h");
 	{
@@ -132,7 +132,7 @@ void gen_UGasaAttributeSet()
 
 			CodeClass GasaAttributeSet = {};
 			{
-				CodeBody body = def_body( CodeT::Class_Body );
+				CodeBody body = def_body( CT_Class_Body );
 				{
 					body.append( UHT_GENERATED_BODY);
 					body.append( access_public );
@@ -201,9 +201,9 @@ void gen_UGasaAttributeSet()
 					body.append( GetLifetimeOfReplicatedProps );
 					body.append( def_pragma( txt("endregion UObject")));
 				}
-				GasaAttributeSet = def_class( class_name, body
-					, type_UAttributeSet, AccessSpec::Public
-					, api_attribute
+				GasaAttributeSet = def_class( class_name, { body
+					, type_UAttributeSet, AccessSpec_Public
+					, api_attribute }
 				);
 			}
 
@@ -223,7 +223,7 @@ void gen_UGasaAttributeSet()
 		inlines.print( def_include(txt("AbilitySystemComponent.h")));
 		inlines.print(fmt_newline);
 
-		CodeBody body = def_body(CodeT::Global_Body);
+		CodeBody body = def_body(CT_Global_Body);
 		{
 			def_attribute_field_property_setter_inlines( body, class_name, all_attribute_fields );
 		}
@@ -259,7 +259,7 @@ void gen_UGasaAttributeSet()
 		source.print( def_include( txt("Networking/GasaNetLibrary.h")));
 		source.print( def_include( txt("GameplayEffectExtension.h")));
 		{
-			CodeBody body = def_body( CodeT::Global_Body );
+			CodeBody body = def_body( CT_Global_Body );
 			body.append(fmt_newline);
 
 			CodeConstructor constructor_for_UGasaAttributeSet = parse_constructor( code(
@@ -278,32 +278,32 @@ void gen_UGasaAttributeSet()
 			CodeFn PostGameplayEffectExecute;
 			CodeFn PreAttributeChange;
 			{
-				CodeBody pre_attribute_clamps = def_body( CodeT::Function_Body );
+				CodeBody pre_attribute_clamps = def_body( CT_Function_Body );
 				pre_attribute_clamps.append(fmt_newline);
 				pre_attribute_clamps.append(fmt_newline);
 
-				CodeBody post_attribute_clamps = def_body( CodeT::Function_Body );
+				CodeBody post_attribute_clamps = def_body( CT_Function_Body );
 				post_attribute_clamps.append(fmt_newline);
 				post_attribute_clamps.append(fmt_newline);
 
 				for (GAS_AttributeEntry field : all_attribute_fields)
 				{
-					String clamp_min;
-					if (field.MinName.Data)
-						clamp_min = get_cached_string(token_fmt( "MinName", (StrC)field.MinName, "Get<MinName>()"));
+					Str clamp_min;
+					if (field.MinName)
+						clamp_min = cache_str(token_fmt( "MinName", field.MinName, "Get<MinName>()"));
 					else
-						clamp_min = String::fmt_buf(GlobalAllocator, "%f", field.Min);
+						clamp_min = StrBuilder::fmt_buf(ctx.Allocator_Temp, "%f", field.Min).to_str();
 
-					String clamp_max;
-					if (field.MaxName.Data)
-						clamp_max = get_cached_string(token_fmt( "MaxName", (StrC)field.MaxName, "Get<MaxName>()"));
+					Str clamp_max;
+					if (field.MaxName)
+						clamp_max = cache_str(token_fmt( "MaxName", field.MaxName, "Get<MaxName>()"));
 					else
-						clamp_max = String::fmt_buf(GlobalAllocator, "%f", field.Max);
+						clamp_max = StrBuilder::fmt_buf(ctx.Allocator_Temp, "%f", field.Max).to_str();
 
 					pre_attribute_clamps.append( code_fmt(
-						"field",     (StrC)field.Name,
-						"clamp_min", (StrC)clamp_min,
-						"clamp_max", (StrC)clamp_max,
+						"field",     field.Name,
+						"clamp_min", clamp_min,
+						"clamp_max", clamp_max,
 						stringize(
 							if (Attribute == Get<field>Attribute())
 							{
@@ -312,9 +312,9 @@ void gen_UGasaAttributeSet()
 					)));
 
 					post_attribute_clamps.append( code_fmt(
-						"field",     (StrC)field.Name,
-						"clamp_min", (StrC)clamp_min,
-						"clamp_max", (StrC)clamp_max,
+						"field",     field.Name,
+						"clamp_min", clamp_min,
+						"clamp_max", clamp_max,
 						stringize(
 							if ( Data.EvaluatedData.Attribute == Get<field>Attribute() )
 							{
@@ -328,7 +328,7 @@ void gen_UGasaAttributeSet()
 				post_attribute_clamps.append(fmt_newline);
 				post_attribute_clamps.append(fmt_newline);
 				
-				PreAttributeChange = parse_function( token_fmt( "attribute_clamps", (StrC)pre_attribute_clamps.to_string(), stringize(
+				PreAttributeChange = parse_function( token_fmt( "attribute_clamps", (Str)pre_attribute_clamps.to_strbuilder(), stringize(
 					void UGasaAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 					{
 						Super::PreAttributeChange(Attribute, NewValue);
@@ -337,7 +337,7 @@ void gen_UGasaAttributeSet()
 					}
 				)));
 
-				PostGameplayEffectExecute = parse_function( token_fmt( "attribute_clamps", (StrC)post_attribute_clamps.to_string(), stringize(
+				PostGameplayEffectExecute = parse_function( token_fmt( "attribute_clamps", (Str)post_attribute_clamps.to_strbuilder(), stringize(
 					void UGasaAttributeSet::PostGameplayEffectExecute(FGameplayEffectModCallbackData const& Data)
 					{
 						Super::PostGameplayEffectExecute(Data);
@@ -356,17 +356,17 @@ void gen_UGasaAttributeSet()
 
 			CodeFn GetLifetimeOfReplicatedProps;
 			{
-				CodeBody field_lifetimes = def_body( CodeT::Function_Body);
+				CodeBody field_lifetimes = def_body( CT_Function_Body);
 				field_lifetimes.append(fmt_newline);
 				field_lifetimes.append(fmt_newline);
 				for (GAS_AttributeEntry field : all_attribute_fields)
 				{
-					field_lifetimes.append( code_fmt( "field", (StrC)field.Name, stringize(
+					field_lifetimes.append( code_fmt( "field", field.Name, stringize(
 						DOREPLIFETIME_DEFAULT_GAS(UGasaAttributeSet, <field>);
 					)));
 				}
 
-				GetLifetimeOfReplicatedProps = parse_function( token_fmt( "field_lifetimes", (StrC)(field_lifetimes.to_string()), stringize(
+				GetLifetimeOfReplicatedProps = parse_function( token_fmt( "field_lifetimes", (Str)(field_lifetimes.to_strbuilder()), stringize(
 					void UGasaAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 					{
 						Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -387,7 +387,7 @@ void def_attribute_properties( CodeBody body, Array<GAS_AttributeEntry> properti
 {
 	for ( GAS_AttributeEntry property : properties )
 	{
-		Code field_uproperty = code_fmt( "property", (StrC)property.Name, stringize(
+		Code field_uproperty = code_fmt( "property", property.Name, stringize(
 			UPROPERTY(ReplicatedUsing=Client_OnRep_<property>, EditAnywhere, BlueprintReadWrite, Category="Attributes")
 			FGameplayAttributeData <property>;
 		));
@@ -404,18 +404,18 @@ void def_attribute_field_on_reps( CodeBody body, Array<GAS_AttributeEntry> prope
 		body.append(fmt_newline);
 		body.append( umeta_UFUNCTION );
 		body.append(fmt_newline);
-		body.append( code_fmt( "property", (StrC)property.Name, stringize(
+		body.append( code_fmt( "property", property.Name, stringize(
 			void Client_OnRep_<property>(FGameplayAttributeData& Prev<property>);
 		)));
 	}
 }
 
-void def_attribute_field_property_getters( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties )
+void def_attribute_field_property_getters( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties )
 {
 	for ( GAS_AttributeEntry property : properties )
 	{
 		CodeFn generated_get_attribute = parse_function(
-			token_fmt( "class_name", class_name, "property", (StrC)property.Name,
+			token_fmt( "class_name", class_name, "property", property.Name,
 			stringize(
 				static FGameplayAttribute Get<property>Attribute()
 				{
@@ -433,7 +433,7 @@ void def_attribute_field_value_getters( CodeBody body, Array<GAS_AttributeEntry>
 {
 	for ( GAS_AttributeEntry property : properties )
 	{
-		body.append( code_fmt( "property", (StrC)property.Name,
+		body.append( code_fmt( "property", property.Name,
 		stringize(
 			FORCEINLINE float Get<property>() const
 			{
@@ -447,20 +447,20 @@ void def_attribute_field_value_setters( CodeBody body, Array<GAS_AttributeEntry>
 {
 	for ( GAS_AttributeEntry property : properties )
 	{
-		body.append( code_fmt( "property", (StrC)property.Name,
+		body.append( code_fmt( "property", property.Name,
 		stringize(
 			FORCEINLINE void Set<property>(float NewVal);
 		)));
 	}
 }
 
-void def_attribute_field_property_setter_inlines( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties )
+void def_attribute_field_property_setter_inlines( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties )
 {
 	body.append(def_pragma( txt("region Attribute Setters")));
 	for ( GAS_AttributeEntry property : properties )
 	{
 		CodeFn generated_get_attribute = parse_function(
-			token_fmt( "class_name", class_name, "property", (StrC)property.Name,
+			token_fmt( "class_name", class_name, "property", property.Name,
 			stringize(
 				FORCEINLINE void <class_name>::Set<property>(float NewVal)
 				{
@@ -480,7 +480,7 @@ void def_attribute_field_initers ( CodeBody body, Array<GAS_AttributeEntry> prop
 {
 	for ( GAS_AttributeEntry property : properties )
 	{
-		body.append( code_fmt( "property", (StrC)property.Name,
+		body.append( code_fmt( "property", property.Name,
 		stringize(
 			FORCEINLINE void Init<property>(float NewVal)
 			{
@@ -491,14 +491,14 @@ void def_attribute_field_initers ( CodeBody body, Array<GAS_AttributeEntry> prop
 	}
 }
 
-void impl_attribute_fields( CodeBody body, StrC class_name, Array<GAS_AttributeEntry> properties )
+void impl_attribute_fields( CodeBody body, Str class_name, Array<GAS_AttributeEntry> properties )
 {
 	body.append(fmt_newline);
 	body.append(def_pragma( txt("region Rep Notifies")));
 	for ( GAS_AttributeEntry property : properties )
 	{
 		CodeFn field_impl = parse_function( token_fmt(
-			"class_name", class_name, "property", (StrC)property.Name, "from_notice", txt("\n// From GAMEPLAYATTRIBUTE_REPNOTIFY\n"),
+			"class_name", class_name, "property", property.Name, "from_notice", txt("\n// From GAMEPLAYATTRIBUTE_REPNOTIFY\n"),
 		stringize(
 			void <class_name>::Client_OnRep_<property>(FGameplayAttributeData& Prev<property>)
 			{
@@ -515,7 +515,7 @@ void impl_attribute_fields( CodeBody body, StrC class_name, Array<GAS_AttributeE
 }
 
 inline
-Code gen_GAMEPLAYATTRIBUTE_REPNOTIFY(StrC class_name, StrC property_name, StrC old_value)
+Code gen_GAMEPLAYATTRIBUTE_REPNOTIFY(Str class_name, Str property_name, Str old_value)
 {
 	Code rep_notify = code_fmt(
 		  "class_name",    class_name

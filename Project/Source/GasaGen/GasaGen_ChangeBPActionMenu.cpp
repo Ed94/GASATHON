@@ -7,7 +7,7 @@
 #include "GasaGenCommon.cpp"
 #endif
 
-constexpr StrC SBlueprintActionMenu_Construct_Replacement = txt(R"(
+constexpr Str SBlueprintActionMenu_Construct_Replacement = txt(R"(
 void SBlueprintActionMenu::Construct( const FArguments& InArgs, TSharedPtr<FBlueprintEditor> InEditor )
 {
 	bActionExecuted = false;
@@ -249,23 +249,22 @@ void swap_SBlueprintActionMenu_Construct()
 #define path_SBlueprintActionMenuCpp \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Editor\Kismet\Private\SBlueprintActionMenu.cpp)"
 
-	FileContents content = file_read_contents( GlobalAllocator, true, path_SBlueprintActionMenuCpp );
-	CodeBody parsed_SBlueprintActionMenu = parse_global_body( StrC { content.size, (char const*)content.data });
+	FileContents content = file_read_contents( ctx.Allocator_Temp, true, path_SBlueprintActionMenuCpp );
+	CodeBody parsed_SBlueprintActionMenu = parse_global_body( Str { (char const*)content.data, content.size });
 
 	CodeFn signature_to_change = parse_function( code(
 		void SBlueprintActionMenu::Construct( const FArguments& InArgs, TSharedPtr<FBlueprintEditor> InEditor ) {}
 	));
 
-	CodeBody changed_SBlueprintActionMenu = def_body(ECode::Global_Body);
+	CodeBody changed_SBlueprintActionMenu = def_body(CT_Global_Body);
 	for ( Code code : parsed_SBlueprintActionMenu )
 	{
 		switch ( code->Type )
 		{
-			using namespace ECode;
-			case Function:
-				CodeFn function_def = code.cast<CodeFn>();
+			case CT_Function:
+				CodeFn function_def = cast(CodeFn, code);
 
-				if ( String::are_equal(function_def->Name, signature_to_change->Name)
+				if ( str_are_equal(function_def->Name, signature_to_change->Name)
 				&&  function_def->Params.is_equal(signature_to_change->Params))
 				{
 					code = parse_function( SBlueprintActionMenu_Construct_Replacement );
