@@ -215,8 +215,8 @@ GEN_NS_BEGIN
 #endif
 
 #ifndef bit
-#define bit( Value )                           ( 1 << Value )
-#define bitfield_is_equal( Type, Field, Mask ) ( ( scast( Type, Mask ) & scast( Type, Field ) ) == scast( Type, Mask ) )
+#define bit( Value )                         ( 1 << Value )
+#define bitfield_is_set( Type, Field, Mask ) ( ( scast( Type, Mask ) & scast( Type, Field ) ) == scast( Type, Mask ) )
 #endif
 
 // Mainly intended for forcing the base library to utilize only C-valid constructs or type coercion
@@ -567,11 +567,15 @@ GEN_NS_BEGIN
 #define neverinline __attribute__( ( __noinline__ ) )
 #else
 #define FORCEINLINE
+
 #define neverinline
+
 #endif
 #else
 #define FORCEINLINE
+
 #define neverinline
+
 #endif
 #endif
 
@@ -587,9 +591,11 @@ GEN_NS_BEGIN
 #define neverinline __attribute__( ( __noinline__ ) )
 #else
 #define neverinline
+
 #endif
 #else
 #define neverinline
+
 #endif
 #endif
 
@@ -624,10 +630,10 @@ GEN_NS_BEGIN
 #define typeof decltype
 #elif defined( _MSC_VER )
 
-#define typeof( x ) __typeof__( x )
+#define typeof __typeof__
 #elif defined( __GNUC__ ) || defined( __clang__ )
 
-#define typeof( x ) __typeof__( x )
+#define typeof __typeof__
 #else
 #error "Compiler not supported"
 #endif
@@ -636,7 +642,9 @@ GEN_NS_BEGIN
 #ifndef GEN_API_C_BEGIN
 #if GEN_COMPILER_C
 #define GEN_API_C_BEGIN
+
 #define GEN_API_C_END
+
 #else
 #define GEN_API_C_BEGIN \
 	extern "C"          \
@@ -650,6 +658,7 @@ GEN_NS_BEGIN
 #define enum_underlying( type ) : type
 #else
 #define enum_underlying( type )
+
 #endif
 #else
 #define enum_underlying( type ) : type
@@ -669,6 +678,7 @@ GEN_NS_BEGIN
 #define GEN_PARAM_DEFAULT = {}
 #else
 #define GEN_PARAM_DEFAULT
+
 #endif
 
 #if GEN_COMPILER_CPP
@@ -690,7 +700,9 @@ GEN_NS_BEGIN
 #endif
 #else
 #define GEN_OPTIMIZE_MAPPINGS_BEGIN
+
 #define GEN_OPITMIZE_MAPPINGS_END
+
 #endif
 
 #pragma endregion Macros
@@ -1122,7 +1134,7 @@ FORCEINLINE ssize         size_remaining(Arena& arena, ssize alignment) { return
 // This id is defined by Unreal for asserts
 #pragma push_macro("check")
 #undef check
-FORCEINLINE void check(Arena& arena) { return arena_check(& arena); };
+FORCEINLINE void check(Arena& arena) { return arena_check(& arena); }
 #pragma pop_macro("check")
 #endif
 
@@ -2036,7 +2048,7 @@ usize array_grow_formula(ssize value) {
 
 template<class Type> inline
 bool array_append_array(Array<Type>* array, Array<Type> other) {
-	return array_append_items(array, (Type*)other, num(other));
+	return array_append_items(array, (Type*)other, array_num(other));
 }
 
 template<class Type> inline
@@ -2066,13 +2078,13 @@ bool array_append_items(Array<Type>* array, Type* items, usize item_num)
 	GEN_ASSERT(* array != nullptr);
 	GEN_ASSERT(items != nullptr);
 	GEN_ASSERT(item_num > 0);
-	ArrayHeader* header = array_get_header(array);
+	ArrayHeader* header = array_get_header(* array);
 
 	if (header->Num + item_num > header->Capacity)
 	{
-		if ( ! grow(array, header->Capacity + item_num))
+		if ( ! array_grow(array, header->Capacity + item_num))
 			return false;
-		header = array_get_header(array);
+		header = array_get_header(* array);
 	}
 
 	mem_copy((Type*)array + header->Num, items, item_num * sizeof(Type));
@@ -2725,9 +2737,9 @@ struct Str
 
 #ifndef txt
 #	if GEN_COMPILER_CPP
-#		define txt( text )          Str { ( text ), sizeof( text ) - 1 }
+#		define txt( text )          GEN_NS Str { ( text ), sizeof( text ) - 1 }
 #	else
-#		define txt( text )         (Str){ ( text ), sizeof( text ) - 1 }
+#		define txt( text )         (GEN_NS Str){ ( text ), sizeof( text ) - 1 }
 #	endif
 #endif
 

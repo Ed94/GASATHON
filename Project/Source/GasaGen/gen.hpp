@@ -249,6 +249,7 @@ enum CodeType : u32
 	CT_Operator_Cast,
 	CT_Operator_Cast_Fwd,
 	CT_Parameters,
+	CT_Parameters_Define,
 	CT_Preprocess_Define,
 	CT_Preprocess_Include,
 	CT_Preprocess_If,
@@ -277,7 +278,7 @@ enum CodeType : u32
 
 inline Str codetype_to_str( CodeType type )
 {
-	local_persist Str lookup[61] = {
+	local_persist Str lookup[] = {
 		{ "Invalid",             sizeof( "Invalid" ) - 1             },
 		{ "Untyped",             sizeof( "Untyped" ) - 1             },
 		{ "NewLine",             sizeof( "NewLine" ) - 1             },
@@ -317,6 +318,7 @@ inline Str codetype_to_str( CodeType type )
 		{ "Operator_Cast",       sizeof( "Operator_Cast" ) - 1       },
 		{ "Operator_Cast_Fwd",   sizeof( "Operator_Cast_Fwd" ) - 1   },
 		{ "Parameters",          sizeof( "Parameters" ) - 1          },
+		{ "Parameters_Define",   sizeof( "Parameters_Define" ) - 1   },
 		{ "Preprocess_Define",   sizeof( "Preprocess_Define" ) - 1   },
 		{ "Preprocess_Include",  sizeof( "Preprocess_Include" ) - 1  },
 		{ "Preprocess_If",       sizeof( "Preprocess_If" ) - 1       },
@@ -345,7 +347,7 @@ inline Str codetype_to_str( CodeType type )
 
 inline Str codetype_to_keyword_str( CodeType type )
 {
-	local_persist Str lookup[61] = {
+	local_persist Str lookup[] = {
 		{ "__NA__",          sizeof( "__NA__" ) - 1          },
 		{ "__NA__",          sizeof( "__NA__" ) - 1          },
 		{ "__NA__",          sizeof( "__NA__" ) - 1          },
@@ -384,6 +386,7 @@ inline Str codetype_to_keyword_str( CodeType type )
 		{ "operator",        sizeof( "operator" ) - 1        },
 		{ "operator",        sizeof( "operator" ) - 1        },
 		{ "operator",        sizeof( "operator" ) - 1        },
+		{ "__NA__",          sizeof( "__NA__" ) - 1          },
 		{ "__NA__",          sizeof( "__NA__" ) - 1          },
 		{ "define",          sizeof( "define" ) - 1          },
 		{ "include",         sizeof( "include" ) - 1         },
@@ -476,7 +479,7 @@ enum Operator : u32
 
 inline Str operator_to_str( Operator op )
 {
-	local_persist Str lookup[47] = {
+	local_persist Str lookup[] = {
 		{ "INVALID",  sizeof( "INVALID" ) - 1  },
 		{ "=",        sizeof( "=" ) - 1        },
 		{ "+=",       sizeof( "+=" ) - 1       },
@@ -542,6 +545,7 @@ enum Specifier : u32
 	Spec_Explicit,
 	Spec_External_Linkage,
 	Spec_ForceInline,
+	Spec_ForceInline_Debuggable,
 	Spec_Global,
 	Spec_Inline,
 	Spec_Internal_Linkage,
@@ -567,33 +571,34 @@ enum Specifier : u32
 
 inline Str spec_to_str( Specifier type )
 {
-	local_persist Str lookup[26] = {
-		{ "INVALID",       sizeof( "INVALID" ) - 1       },
-		{ "consteval",     sizeof( "consteval" ) - 1     },
-		{ "constexpr",     sizeof( "constexpr" ) - 1     },
-		{ "constinit",     sizeof( "constinit" ) - 1     },
-		{ "explicit",      sizeof( "explicit" ) - 1      },
-		{ "extern",        sizeof( "extern" ) - 1        },
-		{ "FORCEINLINE",   sizeof( "FORCEINLINE" ) - 1   },
-		{ "global",        sizeof( "global" ) - 1        },
-		{ "inline",        sizeof( "inline" ) - 1        },
-		{ "internal",      sizeof( "internal" ) - 1      },
-		{ "local_persist", sizeof( "local_persist" ) - 1 },
-		{ "mutable",       sizeof( "mutable" ) - 1       },
-		{ "neverinline",   sizeof( "neverinline" ) - 1   },
-		{ "*",             sizeof( "*" ) - 1             },
-		{ "&",             sizeof( "&" ) - 1             },
-		{ "register",      sizeof( "register" ) - 1      },
-		{ "&&",            sizeof( "&&" ) - 1            },
-		{ "static",        sizeof( "static" ) - 1        },
-		{ "thread_local",  sizeof( "thread_local" ) - 1  },
-		{ "virtual",       sizeof( "virtual" ) - 1       },
-		{ "const",         sizeof( "const" ) - 1         },
-		{ "final",         sizeof( "final" ) - 1         },
-		{ "noexcept",      sizeof( "noexcept" ) - 1      },
-		{ "override",      sizeof( "override" ) - 1      },
-		{ "= 0",           sizeof( "= 0" ) - 1           },
-		{ "volatile",      sizeof( "volatile" ) - 1      },
+	local_persist Str lookup[] = {
+		{ "INVALID",                sizeof( "INVALID" ) - 1                },
+		{ "consteval",              sizeof( "consteval" ) - 1              },
+		{ "constexpr",              sizeof( "constexpr" ) - 1              },
+		{ "constinit",              sizeof( "constinit" ) - 1              },
+		{ "explicit",               sizeof( "explicit" ) - 1               },
+		{ "extern",                 sizeof( "extern" ) - 1                 },
+		{ "FORCEINLINE",            sizeof( "FORCEINLINE" ) - 1            },
+		{ "FORCEINLINE_DEBUGGABLE", sizeof( "FORCEINLINE_DEBUGGABLE" ) - 1 },
+		{ "global",                 sizeof( "global" ) - 1                 },
+		{ "inline",                 sizeof( "inline" ) - 1                 },
+		{ "internal",               sizeof( "internal" ) - 1               },
+		{ "local_persist",          sizeof( "local_persist" ) - 1          },
+		{ "mutable",                sizeof( "mutable" ) - 1                },
+		{ "neverinline",            sizeof( "neverinline" ) - 1            },
+		{ "*",		              sizeof( "*" ) - 1                      },
+		{ "&",		              sizeof( "&" ) - 1                      },
+		{ "register",               sizeof( "register" ) - 1               },
+		{ "&&",		             sizeof( "&&" ) - 1                     },
+		{ "static",                 sizeof( "static" ) - 1                 },
+		{ "thread_local",           sizeof( "thread_local" ) - 1           },
+		{ "virtual",                sizeof( "virtual" ) - 1                },
+		{ "const",                  sizeof( "const" ) - 1                  },
+		{ "final",                  sizeof( "final" ) - 1                  },
+		{ "noexcept",               sizeof( "noexcept" ) - 1               },
+		{ "override",               sizeof( "override" ) - 1               },
+		{ "= 0",		            sizeof( "= 0" ) - 1                    },
+		{ "volatile",               sizeof( "volatile" ) - 1               },
 	};
 	return lookup[type];
 }
@@ -696,7 +701,9 @@ enum TokType : u32
 	Tok_Preprocess_Include,
 	Tok_Preprocess_Pragma,
 	Tok_Preprocess_Content,
-	Tok_Preprocess_Macro,
+	Tok_Preprocess_Macro_Expr,
+	Tok_Preprocess_Macro_Stmt,
+	Tok_Preprocess_Macro_Typename,
 	Tok_Preprocess_Unsupported,
 	Tok_Spec_Alignas,
 	Tok_Spec_Const,
@@ -707,6 +714,7 @@ enum TokType : u32
 	Tok_Spec_Extern,
 	Tok_Spec_Final,
 	Tok_Spec_ForceInline,
+	Tok_Spec_ForceInline_Debuggable,
 	Tok_Spec_Global,
 	Tok_Spec_Inline,
 	Tok_Spec_Internal_Linkage,
@@ -751,108 +759,111 @@ enum TokType : u32
 inline Str toktype_to_str( TokType type )
 {
 	local_persist Str lookup[] = {
-		{ "__invalid__",           sizeof( "__invalid__" ) - 1           },
-		{ "private",               sizeof( "private" ) - 1               },
-		{ "protected",             sizeof( "protected" ) - 1             },
-		{ "public",                sizeof( "public" ) - 1                },
-		{ ".",		             sizeof( "." ) - 1                     },
-		{ "::",		            sizeof( "::" ) - 1                    },
-		{ "&",		             sizeof( "&" ) - 1                     },
-		{ "&&",		            sizeof( "&&" ) - 1                    },
-		{ ":",		             sizeof( ":" ) - 1                     },
-		{ "[[",		            sizeof( "[[" ) - 1                    },
-		{ "]]",		            sizeof( "]]" ) - 1                    },
-		{ "{",		             sizeof( "{" ) - 1                     },
-		{ "}",		             sizeof( "}" ) - 1                     },
-		{ "[",		             sizeof( "[" ) - 1                     },
-		{ "]",		             sizeof( "]" ) - 1                     },
-		{ "(",		             sizeof( "(" ) - 1                     },
-		{ ")",		             sizeof( ")" ) - 1                     },
-		{ "__comment__",           sizeof( "__comment__" ) - 1           },
-		{ "__comment_end__",       sizeof( "__comment_end__" ) - 1       },
-		{ "__comment_start__",     sizeof( "__comment_start__" ) - 1     },
-		{ "__character__",         sizeof( "__character__" ) - 1         },
-		{ ",",		             sizeof( "," ) - 1                     },
-		{ "class",                 sizeof( "class" ) - 1                 },
-		{ "__attribute__",         sizeof( "__attribute__" ) - 1         },
-		{ "__declspec",            sizeof( "__declspec" ) - 1            },
-		{ "enum",		          sizeof( "enum" ) - 1                  },
-		{ "extern",                sizeof( "extern" ) - 1                },
-		{ "friend",                sizeof( "friend" ) - 1                },
-		{ "module",                sizeof( "module" ) - 1                },
-		{ "namespace",             sizeof( "namespace" ) - 1             },
-		{ "operator",              sizeof( "operator" ) - 1              },
-		{ "struct",                sizeof( "struct" ) - 1                },
-		{ "template",              sizeof( "template" ) - 1              },
-		{ "typedef",               sizeof( "typedef" ) - 1               },
-		{ "using",                 sizeof( "using" ) - 1                 },
-		{ "union",                 sizeof( "union" ) - 1                 },
-		{ "__identifier__",        sizeof( "__identifier__" ) - 1        },
-		{ "import",                sizeof( "import" ) - 1                },
-		{ "export",                sizeof( "export" ) - 1                },
-		{ "__new_line__",          sizeof( "__new_line__" ) - 1          },
-		{ "__number__",            sizeof( "__number__" ) - 1            },
-		{ "__operator__",          sizeof( "__operator__" ) - 1          },
-		{ "#",		             sizeof( "#" ) - 1                     },
-		{ "define",                sizeof( "define" ) - 1                },
-		{ "if",		            sizeof( "if" ) - 1                    },
-		{ "ifdef",                 sizeof( "ifdef" ) - 1                 },
-		{ "ifndef",                sizeof( "ifndef" ) - 1                },
-		{ "elif",		          sizeof( "elif" ) - 1                  },
-		{ "else",		          sizeof( "else" ) - 1                  },
-		{ "endif",                 sizeof( "endif" ) - 1                 },
-		{ "include",               sizeof( "include" ) - 1               },
-		{ "pragma",                sizeof( "pragma" ) - 1                },
-		{ "__macro_content__",     sizeof( "__macro_content__" ) - 1     },
-		{ "__macro__",             sizeof( "__macro__" ) - 1             },
-		{ "__unsupported__",       sizeof( "__unsupported__" ) - 1       },
-		{ "alignas",               sizeof( "alignas" ) - 1               },
-		{ "const",                 sizeof( "const" ) - 1                 },
-		{ "consteval",             sizeof( "consteval" ) - 1             },
-		{ "constexpr",             sizeof( "constexpr" ) - 1             },
-		{ "constinit",             sizeof( "constinit" ) - 1             },
-		{ "explicit",              sizeof( "explicit" ) - 1              },
-		{ "extern",                sizeof( "extern" ) - 1                },
-		{ "final",                 sizeof( "final" ) - 1                 },
-		{ "FORCEINLINE",           sizeof( "FORCEINLINE" ) - 1           },
-		{ "global",                sizeof( "global" ) - 1                },
-		{ "inline",                sizeof( "inline" ) - 1                },
-		{ "internal",              sizeof( "internal" ) - 1              },
-		{ "local_persist",         sizeof( "local_persist" ) - 1         },
-		{ "mutable",               sizeof( "mutable" ) - 1               },
-		{ "neverinline",           sizeof( "neverinline" ) - 1           },
-		{ "override",              sizeof( "override" ) - 1              },
-		{ "static",                sizeof( "static" ) - 1                },
-		{ "thread_local",          sizeof( "thread_local" ) - 1          },
-		{ "volatile",              sizeof( "volatile" ) - 1              },
-		{ "virtual",               sizeof( "virtual" ) - 1               },
-		{ "*",		             sizeof( "*" ) - 1                     },
-		{ ";",		             sizeof( ";" ) - 1                     },
-		{ "static_assert",         sizeof( "static_assert" ) - 1         },
-		{ "__string__",            sizeof( "__string__" ) - 1            },
-		{ "typename",              sizeof( "typename" ) - 1              },
-		{ "unsigned",              sizeof( "unsigned" ) - 1              },
-		{ "signed",                sizeof( "signed" ) - 1                },
-		{ "short",                 sizeof( "short" ) - 1                 },
-		{ "long",		          sizeof( "long" ) - 1                  },
-		{ "bool",		          sizeof( "bool" ) - 1                  },
-		{ "char",		          sizeof( "char" ) - 1                  },
-		{ "int",		           sizeof( "int" ) - 1                   },
-		{ "double",                sizeof( "double" ) - 1                },
-		{ "__int8",                sizeof( "__int8" ) - 1                },
-		{ "__int16",               sizeof( "__int16" ) - 1               },
-		{ "__int32",               sizeof( "__int32" ) - 1               },
-		{ "__int64",               sizeof( "__int64" ) - 1               },
-		{ "_W64",		          sizeof( "_W64" ) - 1                  },
-		{ "...",		           sizeof( "..." ) - 1                   },
-		{ "__attrib_start__",      sizeof( "__attrib_start__" ) - 1      },
-		{ "GEN_API_Export_Code",   sizeof( "GEN_API_Export_Code" ) - 1   },
-		{ "GEN_API_Import_Code",   sizeof( "GEN_API_Import_Code" ) - 1   },
-		{ "COREUOBJECT_API",       sizeof( "COREUOBJECT_API" ) - 1       },
-		{ "ENGINE_API",            sizeof( "ENGINE_API" ) - 1            },
-		{ "GAMEPLAYABILITIES_API", sizeof( "GAMEPLAYABILITIES_API" ) - 1 },
-		{ "UMG_API",               sizeof( "UMG_API" ) - 1               },
-		{ "UE_DEPRECATED",         sizeof( "UE_DEPRECATED" ) - 1         },
+		{ "__invalid__",            sizeof( "__invalid__" ) - 1            },
+		{ "private",                sizeof( "private" ) - 1                },
+		{ "protected",              sizeof( "protected" ) - 1              },
+		{ "public",                 sizeof( "public" ) - 1                 },
+		{ ".",		              sizeof( "." ) - 1                      },
+		{ "::",		             sizeof( "::" ) - 1                     },
+		{ "&",		              sizeof( "&" ) - 1                      },
+		{ "&&",		             sizeof( "&&" ) - 1                     },
+		{ ":",		              sizeof( ":" ) - 1                      },
+		{ "[[",		             sizeof( "[[" ) - 1                     },
+		{ "]]",		             sizeof( "]]" ) - 1                     },
+		{ "{",		              sizeof( "{" ) - 1                      },
+		{ "}",		              sizeof( "}" ) - 1                      },
+		{ "[",		              sizeof( "[" ) - 1                      },
+		{ "]",		              sizeof( "]" ) - 1                      },
+		{ "(",		              sizeof( "(" ) - 1                      },
+		{ ")",		              sizeof( ")" ) - 1                      },
+		{ "__comment__",            sizeof( "__comment__" ) - 1            },
+		{ "__comment_end__",        sizeof( "__comment_end__" ) - 1        },
+		{ "__comment_start__",      sizeof( "__comment_start__" ) - 1      },
+		{ "__character__",          sizeof( "__character__" ) - 1          },
+		{ ",",		              sizeof( "," ) - 1                      },
+		{ "class",                  sizeof( "class" ) - 1                  },
+		{ "__attribute__",          sizeof( "__attribute__" ) - 1          },
+		{ "__declspec",             sizeof( "__declspec" ) - 1             },
+		{ "enum",		           sizeof( "enum" ) - 1                   },
+		{ "extern",                 sizeof( "extern" ) - 1                 },
+		{ "friend",                 sizeof( "friend" ) - 1                 },
+		{ "module",                 sizeof( "module" ) - 1                 },
+		{ "namespace",              sizeof( "namespace" ) - 1              },
+		{ "operator",               sizeof( "operator" ) - 1               },
+		{ "struct",                 sizeof( "struct" ) - 1                 },
+		{ "template",               sizeof( "template" ) - 1               },
+		{ "typedef",                sizeof( "typedef" ) - 1                },
+		{ "using",                  sizeof( "using" ) - 1                  },
+		{ "union",                  sizeof( "union" ) - 1                  },
+		{ "__identifier__",         sizeof( "__identifier__" ) - 1         },
+		{ "import",                 sizeof( "import" ) - 1                 },
+		{ "export",                 sizeof( "export" ) - 1                 },
+		{ "__new_line__",           sizeof( "__new_line__" ) - 1           },
+		{ "__number__",             sizeof( "__number__" ) - 1             },
+		{ "__operator__",           sizeof( "__operator__" ) - 1           },
+		{ "#",		              sizeof( "#" ) - 1                      },
+		{ "define",                 sizeof( "define" ) - 1                 },
+		{ "if",		             sizeof( "if" ) - 1                     },
+		{ "ifdef",                  sizeof( "ifdef" ) - 1                  },
+		{ "ifndef",                 sizeof( "ifndef" ) - 1                 },
+		{ "elif",		           sizeof( "elif" ) - 1                   },
+		{ "else",		           sizeof( "else" ) - 1                   },
+		{ "endif",                  sizeof( "endif" ) - 1                  },
+		{ "include",                sizeof( "include" ) - 1                },
+		{ "pragma",                 sizeof( "pragma" ) - 1                 },
+		{ "__macro_content__",      sizeof( "__macro_content__" ) - 1      },
+		{ "__macro_expression__",   sizeof( "__macro_expression__" ) - 1   },
+		{ "__macro_statment__",     sizeof( "__macro_statment__" ) - 1     },
+		{ "__macro_typename__",     sizeof( "__macro_typename__" ) - 1     },
+		{ "__unsupported__",        sizeof( "__unsupported__" ) - 1        },
+		{ "alignas",                sizeof( "alignas" ) - 1                },
+		{ "const",                  sizeof( "const" ) - 1                  },
+		{ "consteval",              sizeof( "consteval" ) - 1              },
+		{ "constexpr",              sizeof( "constexpr" ) - 1              },
+		{ "constinit",              sizeof( "constinit" ) - 1              },
+		{ "explicit",               sizeof( "explicit" ) - 1               },
+		{ "extern",                 sizeof( "extern" ) - 1                 },
+		{ "final",                  sizeof( "final" ) - 1                  },
+		{ "FORCEINLINE",            sizeof( "FORCEINLINE" ) - 1            },
+		{ "FORCEINLINE_DEBUGGABLE", sizeof( "FORCEINLINE_DEBUGGABLE" ) - 1 },
+		{ "global",                 sizeof( "global" ) - 1                 },
+		{ "inline",                 sizeof( "inline" ) - 1                 },
+		{ "internal",               sizeof( "internal" ) - 1               },
+		{ "local_persist",          sizeof( "local_persist" ) - 1          },
+		{ "mutable",                sizeof( "mutable" ) - 1                },
+		{ "neverinline",            sizeof( "neverinline" ) - 1            },
+		{ "override",               sizeof( "override" ) - 1               },
+		{ "static",                 sizeof( "static" ) - 1                 },
+		{ "thread_local",           sizeof( "thread_local" ) - 1           },
+		{ "volatile",               sizeof( "volatile" ) - 1               },
+		{ "virtual",                sizeof( "virtual" ) - 1                },
+		{ "*",		              sizeof( "*" ) - 1                      },
+		{ ";",		              sizeof( ";" ) - 1                      },
+		{ "static_assert",          sizeof( "static_assert" ) - 1          },
+		{ "__string__",             sizeof( "__string__" ) - 1             },
+		{ "typename",               sizeof( "typename" ) - 1               },
+		{ "unsigned",               sizeof( "unsigned" ) - 1               },
+		{ "signed",                 sizeof( "signed" ) - 1                 },
+		{ "short",                  sizeof( "short" ) - 1                  },
+		{ "long",		           sizeof( "long" ) - 1                   },
+		{ "bool",		           sizeof( "bool" ) - 1                   },
+		{ "char",		           sizeof( "char" ) - 1                   },
+		{ "int",		            sizeof( "int" ) - 1                    },
+		{ "double",                 sizeof( "double" ) - 1                 },
+		{ "__int8",                 sizeof( "__int8" ) - 1                 },
+		{ "__int16",                sizeof( "__int16" ) - 1                },
+		{ "__int32",                sizeof( "__int32" ) - 1                },
+		{ "__int64",                sizeof( "__int64" ) - 1                },
+		{ "_W64",		           sizeof( "_W64" ) - 1                   },
+		{ "...",		            sizeof( "..." ) - 1                    },
+		{ "__attrib_start__",       sizeof( "__attrib_start__" ) - 1       },
+		{ "GEN_API_Export_Code",    sizeof( "GEN_API_Export_Code" ) - 1    },
+		{ "GEN_API_Import_Code",    sizeof( "GEN_API_Import_Code" ) - 1    },
+		{ "COREUOBJECT_API",        sizeof( "COREUOBJECT_API" ) - 1        },
+		{ "ENGINE_API",             sizeof( "ENGINE_API" ) - 1             },
+		{ "GAMEPLAYABILITIES_API",  sizeof( "GAMEPLAYABILITIES_API" ) - 1  },
+		{ "UMG_API",                sizeof( "UMG_API" ) - 1                },
+		{ "UE_DEPRECATED",          sizeof( "UE_DEPRECATED" ) - 1          },
 	};
 	return lookup[type];
 }
@@ -876,17 +887,19 @@ inline TokType str_to_toktype( Str str )
 
 enum TokFlags : u32
 {
-	TF_Operator		   = bit(0),
-	TF_Assign          = bit(1),
-	TF_Preprocess      = bit(2),
-	TF_Preprocess_Cond = bit(3),
-	TF_Attribute       = bit(6),
-	TF_AccessOperator  = bit( 7 ),
-	TF_AccessSpecifier = bit( 8 ),
-	TF_Specifier       = bit( 9 ),
-	TF_EndDefinition   = bit( 10 ),    // Either ; or }
-	TF_Formatting      = bit( 11 ),
-	TF_Literal         = bit( 12 ),
+	TF_Operator		         = bit(0),
+	TF_Assign                = bit(1),
+	TF_Preprocess            = bit(2),
+	TF_Preprocess_Cond       = bit(3),
+	TF_Attribute             = bit(6),
+	TF_AccessOperator        = bit(7),
+	TF_AccessSpecifier       = bit(8),
+	TF_Specifier             = bit(9),
+	TF_EndDefinition         = bit(10),    // Either ; or }
+	TF_Formatting            = bit(11),
+	TF_Literal               = bit(12),
+	TF_Macro_Functional      = bit(13),
+	TF_Macro_Expects_Body    = bit(14),
 
 	TF_Null = 0,
 	TF_UnderlyingType = GEN_U32_MAX,
@@ -920,42 +933,42 @@ bool tok_is_valid( Token tok ) {
 
 FORCEINLINE
 bool tok_is_access_operator(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_AccessOperator );
+	return bitfield_is_set( u32, tok.Flags, TF_AccessOperator );
 }
 
 FORCEINLINE
 bool tok_is_access_specifier(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_AccessSpecifier );
+	return bitfield_is_set( u32, tok.Flags, TF_AccessSpecifier );
 }
 
 FORCEINLINE
 bool tok_is_attribute(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_Attribute );
+	return bitfield_is_set( u32, tok.Flags, TF_Attribute );
 }
 
 FORCEINLINE
 bool tok_is_operator(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_Operator );
+	return bitfield_is_set( u32, tok.Flags, TF_Operator );
 }
 
 FORCEINLINE
 bool tok_is_preprocessor(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_Preprocess );
+	return bitfield_is_set( u32, tok.Flags, TF_Preprocess );
 }
 
 FORCEINLINE
 bool tok_is_preprocess_cond(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_Preprocess_Cond );
+	return bitfield_is_set( u32, tok.Flags, TF_Preprocess_Cond );
 }
 
 FORCEINLINE
 bool tok_is_specifier(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_Specifier );
+	return bitfield_is_set( u32, tok.Flags, TF_Specifier );
 }
 
 FORCEINLINE
 bool tok_is_end_definition(Token tok) {
-	return bitfield_is_equal( u32, tok.Flags, TF_EndDefinition );
+	return bitfield_is_set( u32, tok.Flags, TF_EndDefinition );
 }
 
 StrBuilder tok_to_strbuilder(Token tok);
@@ -973,7 +986,7 @@ struct LexContext
 	char const*     scanner;
 	s32             line;
 	s32             column;
-	StringTable     defines;
+	// StringTable     defines;
 	Token           token;
 };
 
@@ -991,6 +1004,83 @@ struct ParseContext
 	TokArray   Tokens;
 	StackNode* Scope;
 };
+
+enum MacroType : u16
+{
+	MT_Expression,     // A macro is assumed to be a expression if not resolved.
+	MT_Statement,      
+	MT_Typename,
+	MT_Attribute,      // More of a note to the parser than anythign else (attributes should be defined in the user attribues def).
+	MT_Specifier,      // More of a note to the parser than anythign else (specifiers should be defined in the user attribues def).
+	MT_Block_Start,    // Not Supported yet
+	MT_Block_End,      // Not Supported yet
+	MT_Case_Statement, // Not Supported yet
+
+	MT_UnderlyingType = GEN_U16_MAX,
+};
+
+FORCEINLINE
+TokType macrotype_to_toktype( MacroType type ) {
+	switch ( type ) {
+		case MT_Statement  : return Tok_Preprocess_Macro_Stmt;
+		case MT_Expression : return Tok_Preprocess_Macro_Expr;
+		case MT_Typename   : return Tok_Preprocess_Macro_Typename;
+	}
+	// All others unsupported for now.
+	return Tok_Invalid;
+}
+
+Str macrotype_to_str( MacroType type )
+{
+	local_persist
+	Str lookup[] = {
+		{ "Statement",        sizeof("Statement")        - 1 },
+		{ "Expression",       sizeof("Expression")       - 1 },
+		{ "Typename",         sizeof("Typename")         - 1 },
+		{ "Attribute(Macro)", sizeof("Attribute(Macro)") - 1 },
+		{ "Specifier(Macro)", sizeof("Specifier(Macro)") - 1 },
+		{ "Block_Start",      sizeof("Block_Start")      - 1 },
+		{ "Block_End",        sizeof("Block_End")        - 1 },
+		{ "Case_Statement",   sizeof("Case_Statement")   - 1 },
+	};
+	local_persist
+	Str invalid = { "Invalid", sizeof("Invalid") };
+	if ( type > MT_Case_Statement )
+		return invalid;
+
+	return lookup[ type ];
+}
+
+enum EMacroFlags : u16
+{
+	MF_Functional          = bit(0), // Macro has parameters (args expected to be passed)
+	MF_Expects_Body        = bit(1), // Expects to assign a braced scope to its body.
+	MF_Allow_As_Identifier = bit(2), // lex__eat wil treat this macro as an identifier if the parser attempts to consume it as one.
+                                     //  ^^^ This is a sort of kludge because we don't support push/pop macro programs rn. ^^^
+
+	MF_Null           = 0,
+	MF_UnderlyingType = GEN_U16_MAX,
+};
+typedef u16 MacroFlags;
+
+struct Macro
+{
+	StrCached  Name;
+	MacroType  Type;
+	MacroFlags Flags;
+};
+
+FORCEINLINE
+b32 macro_is_functional( Macro macro ) {
+	return bitfield_is_set( b16, macro.Flags, MF_Functional );
+}
+
+FORCEINLINE
+b32 macro_expects_body( Macro macro ) {
+	return bitfield_is_set( b16, macro.Flags, MF_Expects_Body );
+}
+
+typedef HashTable(Macro) MacroTable;
 #pragma endregion Types
 
 #pragma region AST
@@ -1015,6 +1105,7 @@ struct AST_Constructor;
 // struct AST_BaseClass;
 struct AST_Class;
 struct AST_Define;
+struct AST_DefineParams;
 struct AST_Destructor;
 struct AST_Enum;
 struct AST_Exec;
@@ -1087,6 +1178,7 @@ typedef AST_Comment*        CodeComment;
 typedef AST_Class*          CodeClass;
 typedef AST_Constructor*    CodeConstructor;
 typedef AST_Define*         CodeDefine;
+typedef AST_DefineParams*   CodeDefineParams;
 typedef AST_Destructor*     CodeDestructor;
 typedef AST_Enum*           CodeEnum;
 typedef AST_Exec*           CodeExec;
@@ -1109,6 +1201,7 @@ struct CodeComment;
 struct CodeClass;
 struct CodeConstructor;
 struct CodeDefine;
+struct CodeDefineParams;
 struct CodeDestructor;
 struct CodeEnum;
 struct CodeExec;
@@ -1294,6 +1387,7 @@ struct Code
 	operator CodeClass() const;
 	operator CodeConstructor() const;
 	operator CodeDefine() const;
+	operator CodeDefineParams() const;
 	operator CodeDestructor() const;
 	operator CodeExec() const;
 	operator CodeEnum() const;
@@ -1354,6 +1448,7 @@ int AST_ArrSpecs_Cap =
 
 /*
 	Simple AST POD with functionality to seralize into C++ syntax.
+	TODO(Ed): Eventually haven't a transparent AST like this will longer be viable once statements & expressions are in (most likely....)
 */
 struct AST
 {
@@ -1361,7 +1456,7 @@ struct AST
 		struct
 		{
 			Code      InlineCmt;       // Class, Constructor, Destructor, Enum, Friend, Functon, Operator, OpCast, Struct, Typedef, Using, Variable
-			Code      Attributes;      // Class, Enum, Function, Struct, Typedef, Union, Using, Variable
+			Code      Attributes;      // Class, Enum, Function, Struct, Typedef, Union, Using, Variable // TODO(Ed): Parameters can have attributes
 			Code      Specs;           // Destructor, Function, Operator, Typename, Variable
 			union {
 				Code  InitializerList; // Constructor
@@ -1373,12 +1468,12 @@ struct AST
 			union {
 				Code  Macro;               // Parameter
 				Code  BitfieldSize;        // Variable (Class/Struct Data Member)
-				Code  Params;              // Constructor, Function, Operator, Template, Typename
+				Code  Params;              // Constructor, Define, Function, Operator, Template, Typename
 				Code  UnderlyingTypeMacro; // Enum
 			};
 			union {
 				Code  ArrExpr;          // Typename
-				Code  Body;             // Class, Constructor, Destructor, Enum, Friend, Function, Namespace, Struct, Union
+				Code  Body;             // Class, Constructor, Define, Destructor, Enum, Friend, Function, Namespace, Struct, Union
 				Code  Declaration;      // Friend, Template
 				Code  Value;            // Parameter, Variable
 			};
@@ -1469,7 +1564,17 @@ GEN_API StrBuilder class_to_strbuilder    ( CodeClass self );
 GEN_API void       class_to_strbuilder_def( CodeClass self, StrBuilder* result );
 GEN_API void       class_to_strbuilder_fwd( CodeClass self, StrBuilder* result );
 
-GEN_API void       params_append           (CodeParams params, CodeParams param );
+GEN_API void             define_params_append           (CodeDefineParams appendee, CodeDefineParams other );
+GEN_API CodeDefineParams define_params_get              (CodeDefineParams params, s32 idx);
+GEN_API bool             define_params_has_entries      (CodeDefineParams params );
+GEN_API StrBuilder       define_params_to_strbuilder    (CodeDefineParams params );
+GEN_API void             define_params_to_strbuilder_ref(CodeDefineParams params, StrBuilder* result );
+
+GEN_API CodeDefineParams begin_CodeDefineParams(CodeDefineParams params);
+GEN_API CodeDefineParams end_CodeDefineParams  (CodeDefineParams params);
+GEN_API CodeDefineParams next_CodeDefineParams (CodeDefineParams params, CodeDefineParams entry_iter);
+
+GEN_API void       params_append           (CodeParams appendee, CodeParams other );
 GEN_API CodeParams params_get              (CodeParams params, s32 idx);
 GEN_API bool       params_has_entries      (CodeParams params );
 GEN_API StrBuilder params_to_strbuilder    (CodeParams params );
@@ -1629,12 +1734,11 @@ struct CodeParams
 {
 #if ! GEN_C_LIKE_CPP
 	Using_Code( CodeParams );
-	FORCEINLINE void          append( CodeParams other );
-	FORCEINLINE CodeParams    get( s32 idx );
-	FORCEINLINE bool          has_entries();
-	FORCEINLINE StrBuilder    to_strbuilder();
-	FORCEINLINE void          to_strbuilder( StrBuilder& result );
-
+	FORCEINLINE void          append( CodeParams other )          { return params_append(* this, other); }
+	FORCEINLINE CodeParams    get( s32 idx )                      { return params_get( * this, idx); }
+	FORCEINLINE bool          has_entries()                       { return params_has_entries(* this); }
+	FORCEINLINE StrBuilder    to_strbuilder()                     { return params_to_strbuilder(* this); }
+	FORCEINLINE void          to_strbuilder( StrBuilder& result ) { return params_to_strbuilder_ref(*this, & result); }
 #endif
 	Using_CodeOps( CodeParams );
 	FORCEINLINE CodeParams begin() { return begin_CodeParams(* this); }
@@ -1647,6 +1751,29 @@ struct CodeParams
 	}
 	CodeParams& operator++();
 	AST_Params* ast;
+};
+
+struct CodeDefineParams
+{
+#if ! GEN_C_LIKE_CPP
+	Using_Code( CodeDefineParams );
+	FORCEINLINE void             append( CodeDefineParams other )    { return params_append( cast(CodeParams, * this), cast(CodeParams, other)); }
+	FORCEINLINE CodeDefineParams get( s32 idx )                      { return (CodeDefineParams) (Code) params_get( cast(CodeParams, * this), idx); }
+	FORCEINLINE bool             has_entries()                       { return params_has_entries( cast(CodeParams, * this)); }
+	FORCEINLINE StrBuilder       to_strbuilder()                     { return define_params_to_strbuilder(* this); }
+	FORCEINLINE void             to_strbuilder( StrBuilder& result ) { return define_params_to_strbuilder_ref(* this, & result); }
+#endif
+	Using_CodeOps( CodeDefineParams );
+	FORCEINLINE CodeDefineParams begin() { return (CodeDefineParams) (Code) begin_CodeParams( cast(CodeParams, * this)); }
+	FORCEINLINE CodeDefineParams end()   { return (CodeDefineParams) (Code) end_CodeParams( cast(CodeParams, * this)); }
+	FORCEINLINE operator Code() { return { (AST*)ast }; }
+	FORCEINLINE CodeDefineParams  operator *() { return * this; } // Required to support for-range iteration.
+	FORCEINLINE AST_DefineParams* operator->() {
+		GEN_ASSERT(ast);
+		return ast;
+	}
+	FORCEINLINE CodeDefineParams& operator++();
+	AST_DefineParams* ast;
 };
 
 struct CodeSpecifiers
@@ -2378,6 +2505,7 @@ struct InvalidCode_ImplictCaster
     operator CodeClass         () const { return cast(CodeClass,          Code_Invalid); }
     operator CodeConstructor   () const { return cast(CodeConstructor,    Code_Invalid); }
     operator CodeDefine        () const { return cast(CodeDefine,         Code_Invalid); }
+    operator CodeDefineParams  () const { return cast(CodeDefineParams,   Code_Invalid); }
     operator CodeDestructor    () const { return cast(CodeDestructor,     Code_Invalid); }
     operator CodeExec          () const { return cast(CodeExec,           Code_Invalid); }
     operator CodeEnum          () const { return cast(CodeEnum,           Code_Invalid); }
@@ -2411,6 +2539,7 @@ struct NullCode_ImplicitCaster
     operator CodeClass         () const { return {nullptr}; }
     operator CodeConstructor   () const { return {nullptr}; }
     operator CodeDefine        () const { return {nullptr}; }
+    operator CodeDefineParams  () const { return {nullptr}; }
     operator CodeDestructor    () const { return {nullptr}; }
     operator CodeExec          () const { return {nullptr}; }
     operator CodeEnum          () const { return {nullptr}; }
@@ -2461,17 +2590,23 @@ FORCEINLINE StrBuilder to_strbuilder    ( CodeClass self )                      
 FORCEINLINE void       to_strbuilder_def( CodeClass self, StrBuilder& result )     { return class_to_strbuilder_def(self, & result); }
 FORCEINLINE void       to_strbuilder_fwd( CodeClass self, StrBuilder& result )     { return class_to_strbuilder_fwd(self, & result); }
 
-FORCEINLINE void       append       (CodeParams params, CodeParams param )   { return params_append(params, param); }
-FORCEINLINE CodeParams get          (CodeParams params, s32 idx)             { return params_get(params, idx); }
-FORCEINLINE bool       has_entries  (CodeParams params )                     { return params_has_entries(params); }
-FORCEINLINE StrBuilder to_strbuilder(CodeParams params )                     { return params_to_strbuilder(params); }
-FORCEINLINE void       to_strbuilder(CodeParams params, StrBuilder& result ) { return params_to_strbuilder_ref(params, & result); }
+FORCEINLINE void             append       (CodeDefineParams appendee, CodeDefineParams other ) {        params_append(cast(CodeParams, appendee), cast(CodeParams, other)); }
+FORCEINLINE CodeDefineParams get          (CodeDefineParams params, s32 idx)                   { return (CodeDefineParams) (Code) params_get(cast(CodeParams, params), idx); }
+FORCEINLINE bool             has_entries  (CodeDefineParams params )                           { return params_has_entries(cast(CodeParams, params)); }
+FORCEINLINE StrBuilder       to_strbuilder(CodeDefineParams params )                           { return define_params_to_strbuilder(params); }
+FORCEINLINE void             to_strbuilder(CodeDefineParams params, StrBuilder& result )       { return define_params_to_strbuilder_ref(params, & result); }
+
+FORCEINLINE void       append       (CodeParams appendee, CodeParams other )   { return params_append(appendee, other); }
+FORCEINLINE CodeParams get          (CodeParams params, s32 idx)               { return params_get(params, idx); }
+FORCEINLINE bool       has_entries  (CodeParams params )                       { return params_has_entries(params); }
+FORCEINLINE StrBuilder to_strbuilder(CodeParams params )                       { return params_to_strbuilder(params); }
+FORCEINLINE void       to_strbuilder(CodeParams params, StrBuilder& result )   { return params_to_strbuilder_ref(params, & result); }
   
 FORCEINLINE bool       append       (CodeSpecifiers specifiers, Specifier spec)       { return specifiers_append(specifiers, spec); }
 FORCEINLINE s32        has          (CodeSpecifiers specifiers, Specifier spec)       { return specifiers_has(specifiers, spec); }
 FORCEINLINE s32        remove       (CodeSpecifiers specifiers, Specifier to_remove ) { return specifiers_remove(specifiers, to_remove); }
 FORCEINLINE StrBuilder to_strbuilder(CodeSpecifiers specifiers)                       { return specifiers_to_strbuilder(specifiers); }
-FORCEINLINE void       to_strbuilder(CodeSpecifiers specifiers, StrBuilder& result)       { return specifiers_to_strbuilder_ref(specifiers, & result);  }
+FORCEINLINE void       to_strbuilder(CodeSpecifiers specifiers, StrBuilder& result)   { return specifiers_to_strbuilder_ref(specifiers, & result);  }
 
 FORCEINLINE void       add_interface    (CodeStruct self, CodeTypename interface) { return struct_add_interface(self, interface); }
 FORCEINLINE StrBuilder to_strbuilder    (CodeStruct self)                         { return struct_to_strbuilder(self); }
@@ -2710,9 +2845,15 @@ struct AST_Define
 {
 	union {
 		char          _PAD_[ sizeof(Specifier) * AST_ArrSpecs_Cap + sizeof(AST*) ];
-		StrCached  Content;
+		struct
+		{
+			char              _PAD_PROPERTIES_ [ sizeof(AST*) * 4 ];
+			CodeDefineParams  Params;
+			Code              Body; // Should be completely serialized for now to a: StrCached Content.
+			char              _PAD_PROPERTIES_2_ [ sizeof(AST*) * 1 ];
+		};
 	};
-	StrCached      Name;
+	StrCached         Name;
 	Code              Prev;
 	Code              Next;
 	Token*            Tok;
@@ -2721,6 +2862,22 @@ struct AST_Define
 	char 			  _PAD_UNUSED_[ sizeof(ModuleFlag) + sizeof(u32) ];
 };
 static_assert( sizeof(AST_Define) == sizeof(AST), "ERROR: AST_Define is not the same size as AST");
+
+struct AST_DefineParams
+{
+	union {
+		char          _PAD_[ sizeof(Specifier) * AST_ArrSpecs_Cap + sizeof(AST*) ];
+	};
+	StrCached         Name;
+	CodeDefineParams  Last;
+	CodeDefineParams  Next;
+	Token*            Tok;
+	Code              Parent;
+	CodeType          Type;
+	char 			  _PAD_UNUSED_[ sizeof(ModuleFlag) ];
+	s32               NumEntries;
+};
+static_assert( sizeof(AST_DefineParams) == sizeof(AST), "ERROR: AST_DefineParams is not the same size as AST");
 
 struct AST_Destructor
 {
@@ -3224,6 +3381,7 @@ struct AST_Params
 		char          _PAD_[ sizeof(Specifier) * AST_ArrSpecs_Cap + sizeof(AST*) ];
 		struct
 		{
+			// TODO(Ed): Support attributes for parameters (Some prefix macros can be converted to that...)
 			char 	     _PAD_PROPERTIES_2_[ sizeof(AST*) * 3 ];
 			CodeTypename ValueType;
 			Code         Macro;
@@ -3232,7 +3390,7 @@ struct AST_Params
 			// char     _PAD_PROPERTIES_3_[sizeof( AST* )];
 		};
 	};
-	StrCached      Name;
+	StrCached         Name;
 	CodeParams        Last;
 	CodeParams        Next;
 	Token*            Tok;
@@ -3768,7 +3926,7 @@ struct Context
 	u32 CodePool_NumBlocks;
 
 	// TODO(Ed): Review these... (No longer needed if using the proper allocation strategy)
-	u32 InitSize_LexArena;
+	u32 InitSize_LexerTokens;
 	u32 SizePer_StringArena;
 
 // TODO(Ed): Symbol Table
@@ -3779,7 +3937,7 @@ struct Context
 	// Used by the lexer to persistently treat all these identifiers as preprocessor defines.
 	// Populate with strings via gen::cache_str.
 	// Functional defines must have format: id( ;at minimum to indicate that the define is only valid with arguments.
-	Array(StrCached) PreprocessorDefines;
+	MacroTable Macros;
 
 // Backend
 
@@ -3795,9 +3953,6 @@ struct Context
 	StringTable StrCache;
 
 	// TODO(Ed): This needs to be just handled by a parser context
-
-	Arena LexArena;
-	StringTable  Lexer_defines;
 	Array(Token) Lexer_Tokens;
 
 	// TODO(Ed): Active parse context vs a parse result need to be separated conceptually
@@ -3817,9 +3972,17 @@ GEN_API void reset(Context* ctx);
 
 GEN_API void set_context(Context* ctx);
 
+// Mostly intended for the parser
+GEN_API Macro* lookup_macro( Str Name );
+
 // Alternative way to add a preprocess define entry for the lexer & parser to utilize 
 // if the user doesn't want to use def_define
-GEN_API void set_preprocess_define( Str id, b32 is_functional );
+// Macros are tracked by name so if the name already exists the entry will be overwritten.
+GEN_API void register_macro( Macro macro );
+
+// Ease of use batch registration
+GEN_API void register_macros( s32 num, ... );
+GEN_API void register_macros( s32 num,  Macro* macros );
 
 // Used internally to retrive or make string allocations.
 // Strings are stored in a series of string arenas of fixed size (SizePer_StringArena)
@@ -3858,9 +4021,12 @@ struct Opts_def_constructor {
 GEN_API CodeConstructor def_constructor( Opts_def_constructor opts GEN_PARAM_DEFAULT );
 
 struct Opts_def_define {
-	b32 dont_append_preprocess_defines;
+	CodeDefineParams params;
+	Str              content;
+	MacroFlags       flags;
+	b32              dont_register_to_preprocess_macros;
 };
-GEN_API CodeDefine def_define( Str name, Str content, Opts_def_define opts GEN_PARAM_DEFAULT );
+GEN_API CodeDefine def_define( Str name, MacroType type, Opts_def_define opts GEN_PARAM_DEFAULT );
 
 struct Opts_def_destructor {
 	Code           body;
@@ -3971,28 +4137,30 @@ GEN_API CodeBody def_body( CodeType type );
 // There are two options for defining a struct body, either varadically provided with the args macro to auto-deduce the arg num,
 /// or provide as an array of Code objects.
 
-GEN_API CodeBody       def_class_body      ( s32 num, ... );
-GEN_API CodeBody       def_class_body      ( s32 num, Code* codes );
-GEN_API CodeBody       def_enum_body       ( s32 num, ... );
-GEN_API CodeBody       def_enum_body       ( s32 num, Code* codes );
-GEN_API CodeBody       def_export_body     ( s32 num, ... );
-GEN_API CodeBody       def_export_body     ( s32 num, Code* codes);
-GEN_API CodeBody       def_extern_link_body( s32 num, ... );
-GEN_API CodeBody       def_extern_link_body( s32 num, Code* codes );
-GEN_API CodeBody       def_function_body   ( s32 num, ... );
-GEN_API CodeBody       def_function_body   ( s32 num, Code* codes );
-GEN_API CodeBody       def_global_body     ( s32 num, ... );
-GEN_API CodeBody       def_global_body     ( s32 num, Code* codes );
-GEN_API CodeBody       def_namespace_body  ( s32 num, ... );
-GEN_API CodeBody       def_namespace_body  ( s32 num, Code* codes );
-GEN_API CodeParams     def_params          ( s32 num, ... );
-GEN_API CodeParams     def_params          ( s32 num, CodeParams* params );
-GEN_API CodeSpecifiers def_specifiers      ( s32 num, ... );
-GEN_API CodeSpecifiers def_specifiers      ( s32 num, Specifier* specs );
-GEN_API CodeBody       def_struct_body     ( s32 num, ... );
-GEN_API CodeBody       def_struct_body     ( s32 num, Code* codes );
-GEN_API CodeBody       def_union_body      ( s32 num, ... );
-GEN_API CodeBody       def_union_body      ( s32 num, Code* codes );
+GEN_API CodeBody         def_class_body      ( s32 num, ... );
+GEN_API CodeBody         def_class_body      ( s32 num, Code* codes );
+GEN_API CodeDefineParams def_define_params   ( s32 num, ... );
+GEN_API CodeDefineParams def_define_params   ( s32 num, CodeDefineParams* codes );
+GEN_API CodeBody         def_enum_body       ( s32 num, ... );
+GEN_API CodeBody         def_enum_body       ( s32 num, Code* codes );
+GEN_API CodeBody         def_export_body     ( s32 num, ... );
+GEN_API CodeBody         def_export_body     ( s32 num, Code* codes);
+GEN_API CodeBody         def_extern_link_body( s32 num, ... );
+GEN_API CodeBody         def_extern_link_body( s32 num, Code* codes );
+GEN_API CodeBody         def_function_body   ( s32 num, ... );
+GEN_API CodeBody         def_function_body   ( s32 num, Code* codes );
+GEN_API CodeBody         def_global_body     ( s32 num, ... );
+GEN_API CodeBody         def_global_body     ( s32 num, Code* codes );
+GEN_API CodeBody         def_namespace_body  ( s32 num, ... );
+GEN_API CodeBody         def_namespace_body  ( s32 num, Code* codes );
+GEN_API CodeParams       def_params          ( s32 num, ... );
+GEN_API CodeParams       def_params          ( s32 num, CodeParams* params );
+GEN_API CodeSpecifiers   def_specifiers      ( s32 num, ... );
+GEN_API CodeSpecifiers   def_specifiers      ( s32 num, Specifier* specs );
+GEN_API CodeBody         def_struct_body     ( s32 num, ... );
+GEN_API CodeBody         def_struct_body     ( s32 num, Code* codes );
+GEN_API CodeBody         def_union_body      ( s32 num, ... );
+GEN_API CodeBody         def_union_body      ( s32 num, Code* codes );
 
 #pragma endregion Upfront
 
@@ -4034,6 +4202,7 @@ CodeBody parse_file( Str path );
 
 GEN_API CodeClass       parse_class        ( Str class_def       );
 GEN_API CodeConstructor parse_constructor  ( Str constructor_def );
+GEN_API CodeDefine      parse_define       ( Str define_def      );
 GEN_API CodeDestructor  parse_destructor   ( Str destructor_def  );
 GEN_API CodeEnum        parse_enum         ( Str enum_def        );
 GEN_API CodeBody        parse_export_body  ( Str export_def      );
@@ -4388,6 +4557,25 @@ CodeParams next_CodeParams(CodeParams params, CodeParams param_iter)
 }
 #pragma endregion CodeParams
 
+#pragma region CodeDefineParams
+FORCEINLINE void             define_params_append     (CodeDefineParams appendee, CodeDefineParams other ) { params_append( cast(CodeParams, appendee), cast(CodeParams, other) ); }
+FORCEINLINE CodeDefineParams define_params_get        (CodeDefineParams self, s32 idx )                    { return (CodeDefineParams) (Code) params_get( cast(CodeParams, self), idx); }
+FORCEINLINE bool             define_params_has_entries(CodeDefineParams self)                              { return params_has_entries( cast(CodeParams, self)); }
+
+CodeDefineParams begin_CodeDefineParams(CodeDefineParams params)                              { return (CodeDefineParams) (Code) begin_CodeParams( cast(CodeParams, (Code)params)); }
+CodeDefineParams end_CodeDefineParams  (CodeDefineParams params)                              { return (CodeDefineParams) (Code) end_CodeParams  ( cast(CodeParams, (Code)params)); }
+CodeDefineParams next_CodeDefineParams (CodeDefineParams params, CodeDefineParams entry_iter) { return (CodeDefineParams) (Code) next_CodeParams ( cast(CodeParams, (Code)params), cast(CodeParams, (Code)entry_iter)); }
+
+#if GEN_COMPILER_CPP
+FORCEINLINE
+CodeDefineParams& CodeDefineParams::operator ++()
+{
+	* this = ast->Next;
+	return * this;
+}
+#endif
+#pragma endregion CodeDefineParams
+
 #pragma region CodeSpecifiers
 inline
 bool specifiers_append(CodeSpecifiers self, Specifier spec )
@@ -4716,6 +4904,22 @@ inline AST_Define* CodeDefine::operator->()
 		return nullptr;
 	}
 	return ast;
+}
+
+inline CodeDefineParams& CodeDefineParams::operator=( Code other )
+{
+	if ( other.ast != nullptr && other->Parent != nullptr )
+	{
+		ast         = rcast( decltype( ast ), code_duplicate( other ).ast );
+		ast->Parent = { nullptr };
+	}
+	ast = rcast( decltype( ast ), other.ast );
+	return *this;
+}
+
+inline CodeDefineParams::operator bool()
+{
+	return ast != nullptr;
 }
 
 inline CodeDestructor& CodeDestructor::operator=( Code other )
@@ -5390,6 +5594,11 @@ FORCEINLINE Code::operator CodeDefine() const
 	return { (AST_Define*)ast };
 }
 
+FORCEINLINE Code::operator CodeDefineParams() const
+{
+	return { (AST_DefineParams*)ast };
+}
+
 FORCEINLINE Code::operator CodeDestructor() const
 {
 	return { (AST_Destructor*)ast };
@@ -5507,7 +5716,7 @@ GEN_OPITMIZE_MAPPINGS_END
 
 #pragma region Constants
 
-extern Str enum_underlying_sig;
+extern Macro enum_underlying_macro;
 
 extern Code access_public;
 extern Code access_protected;

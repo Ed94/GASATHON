@@ -195,11 +195,11 @@ if ( $vendor -match "clang" )
 			$compiler_args += $flag_no_optimization
 		}
 		if ( $debug ) {
-			$compiler_args += ( $flag_define + 'Build_Debug=1' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=1' )
 			$compiler_args += $flag_debug, $flag_debug_codeview, $flag_profiling_debug
 		}
 		else {
-			$compiler_args += ( $flag_define + 'Build_Debug=0' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=0' )
 		}
 
 		$warning_ignores | ForEach-Object {
@@ -275,11 +275,11 @@ if ( $vendor -match "clang" )
 			$compiler_args += $flag_no_optimization
 		}
 		if ( $debug ) {
-			$compiler_args += ( $flag_define + 'Build_Debug=1' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=1' )
 			$compiler_args += $flag_debug, $flag_debug_codeview, $flag_profiling_debug
 		}
 		else {
-			$compiler_args += ( $flag_define + 'Build_Debug=0' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=0' )
 		}
 
 		$warning_ignores | ForEach-Object {
@@ -399,7 +399,7 @@ if ( $vendor -match "msvc" )
 		if ( $debug )
 		{
 			$compiler_args += $flag_debug
-			$compiler_args += ( $flag_define + 'Build_Debug=1' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=1' )
 			$compiler_args += ( $flag_path_debug + $path_output + '\' )
 			$compiler_args += $flag_link_win_rt_static_debug
 
@@ -408,7 +408,7 @@ if ( $vendor -match "msvc" )
 			}
 		}
 		else {
-			$compiler_args += ( $flag_define + 'Build_Debug=0' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=0' )
 			$compiler_args += $flag_link_win_rt_static
 		}
 		$compiler_args += $includes | ForEach-Object { $flag_include + $_ }
@@ -485,7 +485,7 @@ if ( $vendor -match "msvc" )
 		if ( $debug )
 		{
 			$compiler_args += $flag_debug
-			$compiler_args += ( $flag_define + 'Build_Debug=1' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=1' )
 			$compiler_args += ( $flag_path_debug + $path_output + '\' )
 			$compiler_args += $flag_link_win_rt_static_debug
 
@@ -494,7 +494,7 @@ if ( $vendor -match "msvc" )
 			}
 		}
 		else {
-			$compiler_args += ( $flag_define + 'Build_Debug=0' )
+			$compiler_args += ( $flag_define + 'GEN_BUILD_DEBUG=0' )
 			$compiler_args += $flag_link_win_rt_static
 		}
 		$compiler_args += $includes | ForEach-Object { $flag_include + $_ }
