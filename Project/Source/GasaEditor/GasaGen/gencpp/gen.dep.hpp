@@ -10,6 +10,9 @@
 #   pragma clang diagnostic ignored "-Wunknown-pragmas"
 #	pragma clang diagnostic ignored "-Wvarargs"
 #	pragma clang diagnostic ignored "-Wunused-function"
+#	pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#   pragma clang diagnostic ignored "-W#pragma-messages"
+#	pragma clang diagnostic ignored "-Wstatic-in-inline"
 #endif
 
 #ifdef __GNUC__
@@ -46,12 +49,6 @@
 #	endif
 #	ifndef GEN_SYSTEM_MACOS
 #		define GEN_SYSTEM_MACOS 1
-#	endif
-#	include <TargetConditionals.h>
-#	if TARGET_IPHONE_SIMULATOR == 1 || TARGET_OS_IPHONE == 1
-#		ifndef GEN_SYSTEM_IOS
-#			define GEN_SYSTEM_IOS 1
-#		endif
 #	endif
 #elif defined( __unix__ )
 #	ifndef GEN_SYSTEM_UNIX
@@ -94,13 +91,21 @@
 /* Platform compiler */
 
 #if defined( _MSC_VER )
-#	define GEN_COMPILER_MSVC 1
+#	pragma message("Detected MSVC")
+// #	define GEN_COMPILER_CLANG 0
+#	define GEN_COMPILER_MSVC  1
+// #	define GEN_COMPILER_GCC   0
 #elif defined( __GNUC__ )
-#	define GEN_COMPILER_GCC 1
+#	pragma message("Detected GCC")
+// #	define GEN_COMPILER_CLANG 0
+// #	define GEN_COMPILER_MSVC  0
+#	define GEN_COMPILER_GCC   1
 #elif defined( __clang__ )
+#	pragma message("Detected CLANG")
 #	define GEN_COMPILER_CLANG 1
-#elif defined( __MINGW32__ )
-#	define GEN_COMPILER_MINGW 1
+// #	define GEN_COMPILER_MSVC  0
+// #	define GEN_COMPILER_GCC   0
+#else
 #	error Unknown compiler
 #endif
 
@@ -119,6 +124,26 @@
 #  define GEN_GCC_VERSION_CHECK(major,minor,patch) (0)
 #endif
 
+#if !defined(GEN_COMPILER_C)
+#	ifdef __cplusplus
+#		define GEN_COMPILER_C   0
+#		define GEN_COMPILER_CPP 1
+#	else
+#		if defined(__STDC__)
+#			define GEN_COMPILER_C   1
+#		    define GEN_COMPILER_CPP 0
+#		else
+            // Fallback for very old C compilers
+#			define GEN_COMPILER_C   1
+#		    define GEN_COMPILER_CPP 0
+#		endif
+#   endif
+#endif
+
+#if GEN_COMPILER_C
+#pragma message("GENCPP: Detected C")
+#endif
+
 #pragma endregion Platform Detection
 
 #pragma region Mandatory Includes
@@ -130,21 +155,54 @@
 #		include <intrin.h>
 #	endif
 
+#if GEN_COMPILER_C
+#include <assert.h>
+#include <stdbool.h>
+#endif
+
 #pragma endregion Mandatory Includes
 
-#ifdef GEN_DONT_USE_NAMESPACE
-#	define GEN_NS
-#	define GEN_NS_BEGIN
-#	define GEN_NS_END
+#if GEN_DONT_USE_NAMESPACE || GEN_COMPILER_C
+#	if GEN_COMPILER_C
+#		define GEN_NS
+#		define GEN_NS_BEGIN
+#		define GEN_NS_END
+#	else
+#		define GEN_NS              ::
+#		define GEN_NS_BEGIN
+#		define GEN_NS_END
+#	endif
 #else
-#	define GEN_NS       gen::
-#	define GEN_NS_BEGIN namespace gen {
-#	define GEN_NS_END   }
+#	define GEN_NS              gen::
+#	define GEN_NS_BEGIN        namespace gen {
+#	define GEN_NS_END          }
 #endif
 
 GEN_NS_BEGIN
 
 #pragma region Macros
+
+
+#if GEN_COMPILER_MSVC
+#ifdef GEN_DYN_LINK
+
+#ifdef GEN_DYN_EXPORT
+
+#define GEN_API __declspec( dllexport )
+#else
+#define GEN_API __declspec( dllimport )
+#endif
+#else
+#define GEN_API    // Empty for static builds
+#endif
+#else
+#ifdef GEN_DYN_LINK
+
+#define GEN_API __attribute__( ( visibility( "default" ) ) )
+#else
+#define GEN_API    // Empty for static builds
+#endif
+#endif
 
 #ifndef global
 #define global    // Global variables
@@ -156,15 +214,27 @@ GEN_NS_BEGIN
 #define local_persist static    // Local Persisting variables
 #endif
 
-#ifndef api_c
-#define api_c extern "C"
-#endif
-
 #ifndef bit
-#define bit( Value )                           ( 1 << Value )
-#define bitfield_is_equal( Type, Field, Mask ) ( ( Type( Mask ) & Type( Field ) ) == Type( Mask ) )
+#define bit( Value )                         ( 1 << Value )
+#define bitfield_is_set( Type, Field, Mask ) ( ( scast( Type, Mask ) & scast( Type, Field ) ) == scast( Type, Mask ) )
 #endif
 
+// Mainly intended for forcing the base library to utilize only C-valid constructs or type coercion
+#ifndef GEN_C_LIKE_CPP
+#define GEN_C_LIKE_CPP 0
+#endif
+
+#if GEN_COMPILER_CPP
+#ifndef cast
+#define cast( type, value ) ( tmpl_cast<type>( value ) )
+#endif
+#else
+#ifndef cast
+#define cast( type, value ) ( (type)( value ) )
+#endif
+#endif
+
+#if GEN_COMPILER_CPP
 #ifndef ccast
 #define ccast( type, value ) ( const_cast<type>( ( value ) ) )
 #endif
@@ -177,6 +247,20 @@ GEN_NS_BEGIN
 #ifndef scast
 #define scast( type, value ) static_cast<type>( value )
 #endif
+#else
+#ifndef ccast
+#define ccast( type, value ) ( (type)( value ) )
+#endif
+#ifndef pcast
+#define pcast( type, value ) ( *(type*)( &value ) )
+#endif
+#ifndef rcast
+#define rcast( type, value ) ( (type)( value ) )
+#endif
+#ifndef scast
+#define scast( type, value ) ( (type)( value ) )
+#endif
+#endif
 
 #ifndef stringize
 #define stringize_va( ... ) #__VA_ARGS__
@@ -184,8 +268,12 @@ GEN_NS_BEGIN
 #endif
 
 #ifndef do_once
-#define do_once( statement ) for ( local_persist b32 once = true; once; once = false, ( statement ) )
-
+#define do_once()                                \
+	static int __do_once_counter_##__LINE__ = 0; \
+	for ( ; __do_once_counter_##__LINE__ != 1; __do_once_counter_##__LINE__ = 1 )
+#define do_once_defer( expression )              \
+	static int __do_once_counter_##__LINE__ = 0; \
+	for ( ; __do_once_counter_##__LINE__ != 1; __do_once_counter_##__LINE__ = 1, ( expression ) )
 #define do_once_start                    \
 	do                                   \
 	{                                    \
@@ -209,13 +297,19 @@ GEN_NS_BEGIN
 
 #ifndef compiler_decorated_func_name
 #ifdef COMPILER_CLANG
+
 #define compiler_decorated_func_name __PRETTY_NAME__
 #elif defined( COMPILER_MSVC )
+
 #define compiler_decorated_func_name __FUNCDNAME__
 #endif
 #endif
 
 #ifndef num_args_impl
+
+// This is essentially an arg couneter version of GEN_SELECT_ARG macros
+// See section : _Generic function overloading for that usage (explains this heavier case)
+
 #define num_args_impl( \
     _0,                \
     _1,                \
@@ -452,47 +546,163 @@ GEN_NS_BEGIN
 #define min( a, b ) ( ( a < b ) ? ( a ) : ( b ) )
 #endif
 
-#if defined( _MSC_VER ) || defined( GEN_COMPILER_TINYC )
+#if GEN_COMPILER_MSVC || GEN_COMPILER_TINYC
 #define offset_of( Type, element ) ( ( GEN_NS( ssize ) ) & ( ( (Type*)0 )->element ) )
 #else
 #define offset_of( Type, element ) __builtin_offsetof( Type, element )
 #endif
 
 #ifndef FORCEINLINE
-#ifdef GEN_COMPILER_MSVC
+#if GEN_COMPILER_MSVC
 #define FORCEINLINE __forceinline
 #define neverinline __declspec( noinline )
-#elif defined( GEN_COMPILER_GCC )
+#elif GEN_COMPILER_GCC
+
 #define FORCEINLINE inline __attribute__( ( __always_inline__ ) )
 #define neverinline __attribute__( ( __noinline__ ) )
-#elif defined( GEN_COMPILER_CLANG )
+#elif GEN_COMPILER_CLANG
+
 #if __has_attribute( __always_inline__ )
 #define FORCEINLINE inline __attribute__( ( __always_inline__ ) )
 #define neverinline __attribute__( ( __noinline__ ) )
 #else
 #define FORCEINLINE
+
 #define neverinline
+
 #endif
 #else
 #define FORCEINLINE
+
 #define neverinline
+
 #endif
 #endif
 
 #ifndef neverinline
-#ifdef GEN_COMPILER_MSVC
+#if GEN_COMPILER_MSVC
 #define neverinline __declspec( noinline )
-#elif defined( GEN_COMPILER_GCC )
+#elif GEN_COMPILER_GCC
+
 #define neverinline __attribute__( ( __noinline__ ) )
-#elif defined( GEN_COMPILER_CLANG )
+#elif GEN_COMPILER_CLANG
+
 #if __has_attribute( __always_inline__ )
 #define neverinline __attribute__( ( __noinline__ ) )
 #else
 #define neverinline
+
 #endif
 #else
 #define neverinline
+
 #endif
+#endif
+
+#if GEN_COMPILER_C
+#ifndef static_assert
+#undef static_assert
+#if GEN_COMPILER_C && __STDC_VERSION__ >= 201112L
+#define static_assert( condition, message ) _Static_assert( condition, message )
+#else
+#define static_assert( condition, message ) typedef char static_assertion_##__LINE__[( condition ) ? 1 : -1]
+#endif
+#endif
+#endif
+
+#if GEN_COMPILER_CPP
+// Already Defined
+#elif GEN_COMPILER_C && __STDC_VERSION__ >= 201112L
+
+#define thread_local _Thread_local
+#elif GEN_COMPILER_MSVC
+
+#define thread_local __declspec( thread )
+#elif GEN_COMPILER_CLANG
+
+#define thread_local __thread
+#else
+#error "No thread local support"
+#endif
+
+#if ! defined( typeof ) && ( ! GEN_COMPILER_C || __STDC_VERSION__ < 202311L )
+#if ! GEN_COMPILER_C
+#define typeof decltype
+#elif defined( _MSC_VER )
+
+#define typeof __typeof__
+#elif defined( __GNUC__ ) || defined( __clang__ )
+
+#define typeof __typeof__
+#else
+#error "Compiler not supported"
+#endif
+#endif
+
+#ifndef GEN_API_C_BEGIN
+#if GEN_COMPILER_C
+#define GEN_API_C_BEGIN
+
+#define GEN_API_C_END
+
+#else
+#define GEN_API_C_BEGIN \
+	extern "C"          \
+	{
+#define GEN_API_C_END }
+#endif
+#endif
+
+#if GEN_COMPILER_C
+#if __STDC_VERSION__ >= 202311L
+#define enum_underlying( type ) : type
+#else
+#define enum_underlying( type )
+
+#endif
+#else
+#define enum_underlying( type ) : type
+#endif
+
+#if GEN_COMPILER_C
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
+#ifndef GEN_REMOVE_PTR
+#define GEN_REMOVE_PTR( type ) typeof( *( (type)NULL ) )
+#endif
+#endif
+
+#if ! defined( GEN_PARAM_DEFAULT ) && GEN_COMPILER_CPP
+#define GEN_PARAM_DEFAULT = {}
+#else
+#define GEN_PARAM_DEFAULT
+
+#endif
+
+#if GEN_COMPILER_CPP
+#define struct_init( type, value ) \
+	{                              \
+		value                      \
+	}
+#else
+#define struct_init( type, value ) \
+	{                              \
+		value                      \
+	}
+#endif
+
+#if 0
+#ifndef GEN_OPTIMIZE_MAPPINGS_BEGIN
+#define GEN_OPTIMIZE_MAPPINGS_BEGIN _pragma( optimize( "gt", on ) )
+#define GEN_OPITMIZE_MAPPINGS_END   _pragma( optimize( "", on ) )
+#endif
+#else
+#define GEN_OPTIMIZE_MAPPINGS_BEGIN
+
+#define GEN_OPITMIZE_MAPPINGS_END
+
 #endif
 
 #pragma endregion Macros
@@ -616,41 +826,56 @@ typedef s8  b8;
 typedef s16 b16;
 typedef s32 b32;
 
-using mem_ptr       = void*;
-using mem_ptr_const = void const*;
+typedef void*       mem_ptr;
+typedef void const* mem_ptr_const ;
 
+#if GEN_COMPILER_CPP
 template<typename Type> uptr to_uptr( Type* ptr ) { return (uptr)ptr; }
 template<typename Type> sptr to_sptr( Type* ptr ) { return (sptr)ptr; }
 
 template<typename Type> mem_ptr       to_mem_ptr      ( Type ptr ) { return (mem_ptr)      ptr; }
 template<typename Type> mem_ptr_const to_mem_ptr_const( Type ptr ) { return (mem_ptr_const)ptr; }
+#else
+#define to_uptr( ptr ) ((uptr)(ptr))
+#define to_sptr( ptr ) ((sptr)(ptr))
+
+#define to_mem_ptr( ptr)       ((mem_ptr)ptr)
+#define to_mem_ptr_const( ptr) ((mem_ptr)ptr)
+#endif
 
 #pragma endregion Basic Types
 
 #pragma region Debug
 
-#if defined( _MSC_VER )
-#	if _MSC_VER < 1300
-#		define GEN_DEBUG_TRAP() __asm int 3 /* Trap to debugger! */
+#if GEN_BUILD_DEBUG
+#	if defined( GEN_COMPILER_MSVC )
+#		if _MSC_VER < 1300
+#pragma message("GEN_BUILD_DEBUG: __asm int 3")
+#			define GEN_DEBUG_TRAP() __asm int 3 /* Trap to debugger! */
+#		else
+#pragma message("GEN_BUILD_DEBUG: __debugbreak()")
+#			define GEN_DEBUG_TRAP() __debugbreak()
+#		endif
+#	elif defined( GEN_COMPILER_TINYC )
+#		define GEN_DEBUG_TRAP() process_exit( 1 )
 #	else
-#		define GEN_DEBUG_TRAP() __debugbreak()
+#		define GEN_DEBUG_TRAP() __builtin_trap()
 #	endif
-#elif defined( GEN_COMPILER_TINYC )
-#	define GEN_DEBUG_TRAP() process_exit( 1 )
 #else
-#	define GEN_DEBUG_TRAP() __builtin_trap()
+#pragma message("GEN_BUILD_DEBUG: omitted")
+#	define GEN_DEBUG_TRAP()
 #endif
 
 #define GEN_ASSERT( cond ) GEN_ASSERT_MSG( cond, NULL )
 
-#define GEN_ASSERT_MSG( cond, msg, ... )                                                     \
-	do                                                                                       \
-	{                                                                                        \
-		if ( ! ( cond ) )                                                                    \
-		{                                                                                    \
-			assert_handler( #cond, __FILE__, scast( s64, __LINE__ ), msg, ##__VA_ARGS__ ); \
-			GEN_DEBUG_TRAP();                                                                \
-		}                                                                                    \
+#define GEN_ASSERT_MSG( cond, msg, ... )                                                              \
+	do                                                                                                \
+	{                                                                                                 \
+		if ( ! ( cond ) )                                                                             \
+		{                                                                                             \
+			assert_handler( #cond, __FILE__, __func__, scast( s64, __LINE__ ), msg, ##__VA_ARGS__ );  \
+			GEN_DEBUG_TRAP();                                                                         \
+		}                                                                                             \
 	} while ( 0 )
 
 #define GEN_ASSERT_NOT_NULL( ptr ) GEN_ASSERT_MSG( ( ptr ) != NULL, #ptr " must not be NULL" )
@@ -658,14 +883,14 @@ template<typename Type> mem_ptr_const to_mem_ptr_const( Type ptr ) { return (mem
 // NOTE: Things that shouldn't happen with a message!
 #define GEN_PANIC( msg, ... ) GEN_ASSERT_MSG( 0, msg, ##__VA_ARGS__ )
 
-#if Build_Debug
+#if GEN_BULD_DEBUG
 	#define GEN_FATAL( ... )                               \
 	do                                                     \
 	{                                                      \
 		local_persist thread_local                         \
 		char buf[GEN_PRINTF_MAXLEN] = { 0 };               \
 		                                                   \
-		str_fmt(buf, GEN_PRINTF_MAXLEN, __VA_ARGS__);      \
+		c_str_fmt(buf, GEN_PRINTF_MAXLEN, __VA_ARGS__);    \
 		GEN_PANIC(buf);                                    \
 	}                                                      \
 	while (0)
@@ -674,13 +899,14 @@ template<typename Type> mem_ptr_const to_mem_ptr_const( Type ptr ) { return (mem
 #	define GEN_FATAL( ... )                  \
 	do                                       \
 	{                                        \
-		str_fmt_out_err( __VA_ARGS__ );      \
+		c_str_fmt_out_err( __VA_ARGS__ );    \
+		GEN_DEBUG_TRAP();                    \
 		process_exit(1);                     \
 	}                                        \
 	while (0)
 #endif
 
-void assert_handler( char const* condition, char const* file, s32 line, char const* msg, ... );
+void assert_handler( char const* condition, char const* file, char const* function, s32 line, char const* msg, ... );
 s32  assert_crash( char const* condition );
 void process_exit( u32 code );
 
@@ -688,7 +914,7 @@ void process_exit( u32 code );
 
 #pragma region Memory
 
-#define kilobytes( x ) ( ( x ) * ( s64 )( 1024 ) )
+#define kilobytes( x ) (          ( x ) * ( s64 )( 1024 ) )
 #define megabytes( x ) ( kilobytes( x ) * ( s64 )( 1024 ) )
 #define gigabytes( x ) ( megabytes( x ) * ( s64 )( 1024 ) )
 #define terabytes( x ) ( gigabytes( x ) * ( s64 )( 1024 ) )
@@ -712,7 +938,7 @@ b32 is_power_of_two( ssize x );
 void* align_forward( void* ptr, ssize alignment );
 
 //! Aligns value to a specified alignment.
-s64 align_forward_i64( s64 value, ssize alignment );
+s64 align_forward_by_value( s64 value, ssize alignment );
 
 //! Moves pointer forward by bytes.
 void* pointer_add( void* ptr, ssize bytes );
@@ -753,10 +979,7 @@ enum AllocType : u8
 	EAllocation_RESIZE,
 };
 
-using AllocatorProc = void* ( void* allocator_data, AllocType type
-	, ssize size, ssize alignment
-	, void* old_memory, ssize old_size
-	, u64 flags );
+typedef void*(AllocatorProc)( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
 
 struct AllocatorInfo
 {
@@ -784,7 +1007,7 @@ void* alloc( AllocatorInfo a, ssize size );
 void* alloc_align( AllocatorInfo a, ssize size, ssize alignment );
 
 //! Free allocated memory.
-void free( AllocatorInfo a, void* ptr );
+void allocator_free( AllocatorInfo a, void* ptr );
 
 //! Free all memory allocated by an allocator.
 void free_all( AllocatorInfo a );
@@ -818,7 +1041,7 @@ void* default_resize_align( AllocatorInfo a, void* ptr, ssize old_size, ssize ne
 void* heap_allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
 
 //! The heap allocator backed by operating system's memory manager.
-constexpr AllocatorInfo heap( void ) { return { heap_allocator_proc, nullptr }; }
+constexpr AllocatorInfo heap( void ) { AllocatorInfo allocator = { heap_allocator_proc, nullptr }; return allocator; }
 
 //! Helper to allocate memory using heap allocator.
 #define malloc( sz ) alloc( heap(), sz )
@@ -848,163 +1071,243 @@ b32 vm_free( VirtualMemory vm );
 VirtualMemory vm_trim( VirtualMemory vm, ssize lead_size, ssize size );
 
 //! Purge virtual memory.
-b32 gen_vm_purge( VirtualMemory vm );
+b32 vm_purge( VirtualMemory vm );
 
 //! Retrieve VM's page size and alignment.
-ssize gen_virtual_memory_page_size( ssize* alignment_out );
+ssize virtual_memory_page_size( ssize* alignment_out );
+
+#pragma region Arena
+struct Arena;
+
+AllocatorInfo arena_allocator_info( Arena* arena );
+
+// Remove static keyword and rename allocator_proc
+void* arena_allocator_proc(void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags);
+
+// Add these declarations after the Arena struct
+Arena arena_init_from_allocator(AllocatorInfo backing, ssize size);
+Arena arena_init_from_memory   ( void* start, ssize size );
+
+Arena arena_init_sub      (Arena* parent, ssize size);
+ssize arena_alignment_of  (Arena* arena, ssize alignment);
+void  arena_check         (Arena* arena);
+void  arena_free          (Arena* arena);
+ssize arena_size_remaining(Arena* arena, ssize alignment);
 
 struct Arena
 {
-	static
-	void* allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
+	AllocatorInfo Backing;
+	void*         PhysicalStart;
+	ssize         TotalSize;
+	ssize         TotalUsed;
+	ssize         TempCount;
 
-	static
-	Arena init_from_memory( void* start, ssize size )
-	{
-		return
-		{
-			{ nullptr, nullptr },
-			start,
-			size,
-			0,
-			0
-		};
-	}
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+#pragma region Member Mapping
+	FORCEINLINE operator AllocatorInfo() { return arena_allocator_info(this); }
 
-	static
-	Arena init_from_allocator( AllocatorInfo backing, ssize size )
-	{
-		Arena result =
-		{
-		backing,
-		alloc( backing, size),
-		size,
-		0,
-		0
-		};
-		return result;
-	}
-
-	static
-	Arena init_sub( Arena& parent, ssize size )
-	{
-		return init_from_allocator( parent.Backing, size );
-	}
-
-	ssize alignment_of( ssize alignment )
-	{
-		ssize alignment_offset, result_pointer, mask;
-		GEN_ASSERT( is_power_of_two( alignment ) );
-
-		alignment_offset = 0;
-		result_pointer   = (ssize) PhysicalStart + TotalUsed;
-		mask             = alignment - 1;
-
-		if ( result_pointer & mask )
-			alignment_offset = alignment - ( result_pointer & mask );
-
-		return alignment_offset;
-	}
+	FORCEINLINE static void* allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags ) { return arena_allocator_proc( allocator_data, type, size, alignment, old_memory, old_size, flags ); }
+	FORCEINLINE static Arena init_from_memory( void* start, ssize size )                                                                                      { return arena_init_from_memory( start, size ); }
+	FORCEINLINE static Arena init_from_allocator( AllocatorInfo backing, ssize size )                                                                         { return arena_init_from_allocator( backing, size ); }
+	FORCEINLINE static Arena init_sub( Arena& parent, ssize size )                                                                                            { return arena_init_from_allocator( parent.Backing, size ); }
+	FORCEINLINE        ssize alignment_of( ssize alignment )                                                                                                  { return arena_alignment_of(this, alignment); }
+	FORCEINLINE        void  free()                                                                                                                           { return arena_free(this);  }
+	FORCEINLINE        ssize size_remaining( ssize alignment )                                                                                                { return arena_size_remaining(this, alignment); }
 
 // This id is defined by Unreal for asserts
 #pragma push_macro("check")
 #undef check
-	void check()
-	{
-		GEN_ASSERT( TempCount == 0 );
-	}
+	FORCEINLINE void check() { arena_check(this); }
 #pragma pop_macro("check")
 
-	void free()
-	{
-		if ( Backing.Proc )
-		{
-			gen::free( Backing, PhysicalStart );
-			PhysicalStart = nullptr;
-		}
-	}
-
-	ssize size_remaining( ssize alignment )
-	{
-		ssize result = TotalSize - ( TotalUsed + alignment_of( alignment ) );
-		return result;
-	}
-
-	AllocatorInfo Backing;
-	void*         PhysicalStart;
-	ssize            TotalSize;
-	ssize            TotalUsed;
-	ssize            TempCount;
-
-	operator AllocatorInfo()
-	{
-		return { allocator_proc, this };
-	}
+#pragma endregion Member Mapping
+#endif
 };
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+FORCEINLINE AllocatorInfo allocator_info(Arena& arena )                 { return arena_allocator_info(& arena); }
+FORCEINLINE Arena         init_sub      (Arena& parent, ssize size)     { return arena_init_sub( & parent, size); }
+FORCEINLINE ssize         alignment_of  (Arena& arena, ssize alignment) { return arena_alignment_of( & arena, alignment); }
+FORCEINLINE void          free          (Arena& arena)                  { return arena_free(& arena); }
+FORCEINLINE ssize         size_remaining(Arena& arena, ssize alignment) { return arena_size_remaining(& arena, alignment); }
+
+// This id is defined by Unreal for asserts
+#pragma push_macro("check")
+#undef check
+FORCEINLINE void check(Arena& arena) { return arena_check(& arena); }
+#pragma pop_macro("check")
+#endif
+
+
+inline
+AllocatorInfo arena_allocator_info( Arena* arena ) {
+	GEN_ASSERT(arena != nullptr);
+	AllocatorInfo info = { arena_allocator_proc, arena };
+	return info;
+}
+
+inline
+Arena arena_init_from_memory( void* start, ssize size )
+{
+	Arena arena = {
+		{ nullptr, nullptr },
+		start,
+		size,
+		0,
+		0
+	};
+	return arena;
+}
+
+inline
+Arena arena_init_from_allocator(AllocatorInfo backing, ssize size) {
+	Arena result = {
+		backing,
+		alloc(backing, size),
+		size,
+		0,
+		0
+	};
+	return result;
+}
+
+inline
+Arena arena_init_sub(Arena* parent, ssize size) {
+	GEN_ASSERT(parent != nullptr);
+	return arena_init_from_allocator(parent->Backing, size);
+}
+
+inline
+ssize arena_alignment_of(Arena* arena, ssize alignment)
+{
+	GEN_ASSERT(arena != nullptr);
+	ssize alignment_offset, result_pointer, mask;
+	GEN_ASSERT(is_power_of_two(alignment));
+
+	alignment_offset = 0;
+	result_pointer  = (ssize)arena->PhysicalStart + arena->TotalUsed;
+	mask            = alignment - 1;
+
+	if (result_pointer & mask)
+	alignment_offset = alignment - (result_pointer & mask);
+
+	return alignment_offset;
+}
+
+inline
+void arena_check(Arena* arena)
+{
+    GEN_ASSERT(arena != nullptr );
+    GEN_ASSERT(arena->TempCount == 0);
+}
+
+inline
+void arena_free(Arena* arena)
+{
+	GEN_ASSERT(arena != nullptr);
+	if (arena->Backing.Proc)
+	{
+		allocator_free(arena->Backing, arena->PhysicalStart);
+		arena->PhysicalStart = nullptr;
+	}
+}
+
+inline
+ssize arena_size_remaining(Arena* arena, ssize alignment)
+{
+	GEN_ASSERT(arena != nullptr);
+	ssize result = arena->TotalSize - (arena->TotalUsed + arena_alignment_of(arena, alignment));
+	return result;
+}
+#pragma endregion Arena
+
+#pragma region FixedArena
+template<s32 Size>
+struct FixedArena;
+
+template<s32 Size> FixedArena<Size> fixed_arena_init();
+template<s32 Size> AllocatorInfo    fixed_arena_allocator_info(FixedArena<Size>* fixed_arena );
+template<s32 Size> ssize            fixed_arena_size_remaining(FixedArena<Size>* fixed_arena, ssize alignment);
+template<s32 Size> void             fixed_arena_free(FixedArena<Size>* fixed_arena);
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+template<s32 Size> AllocatorInfo    allocator_info( FixedArena<Size>& fixed_arena )                { return allocator_info(& fixed_arena); }
+template<s32 Size> ssize            size_remaining(FixedArena<Size>& fixed_arena, ssize alignment) { return size_remaining( & fixed_arena, alignment); }
+#endif
 
 // Just a wrapper around using an arena with memory associated with its scope instead of from an allocator.
 // Used for static segment or stack allocations.
 template< s32 Size >
 struct FixedArena
 {
-	static
-	FixedArena init()
-	{
-		FixedArena result = { Arena::init_from_memory( result.memory, Size ), {0} };
-		return result;
-	}
-
-	ssize size_remaining( ssize alignment )
-	{
-		return arena.size_remaining( alignment );
-	}
-
-	operator AllocatorInfo()
-	{
-		return { Arena::allocator_proc, &arena };
-	}
-
+	char  memory[Size];
 	Arena arena;
-	char  memory[ Size ];
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+#pragma region Member Mapping
+	FORCEINLINE operator AllocatorInfo() { return fixed_arena_allocator_info(this); }
+
+	FORCEINLINE static FixedArena init()                          { FixedArena result; fixed_arena_init<Size>(result); return result; }
+	FORCEINLINE ssize             size_remaining(ssize alignment) { fixed_arena_size_remaining(this, alignment); }
+#pragma endregion Member Mapping
+#endif
 };
 
-using Arena_1KB   = FixedArena< kilobytes( 1 ) >;
-using Arena_4KB   = FixedArena< kilobytes( 4 ) >;
-using Arena_8KB   = FixedArena< kilobytes( 8 ) >;
-using Arena_16KB  = FixedArena< kilobytes( 16 ) >;
-using Arena_32KB  = FixedArena< kilobytes( 32 ) >;
-using Arena_64KB  = FixedArena< kilobytes( 64 ) >;
-using Arena_128KB = FixedArena< kilobytes( 128 ) >;
-using Arena_256KB = FixedArena< kilobytes( 256 ) >;
-using Arena_512KB = FixedArena< kilobytes( 512 ) >;
-using Arena_1MB   = FixedArena< megabytes( 1 ) >;
-using Arena_2MB   = FixedArena< megabytes( 2 ) >;
-using Arena_4MB   = FixedArena< megabytes( 4 ) >;
+template<s32 Size> inline
+AllocatorInfo fixed_arena_allocator_info( FixedArena<Size>* fixed_arena ) {
+	GEN_ASSERT(fixed_arena);
+	return { arena_allocator_proc, & fixed_arena->arena };
+}
+
+template<s32 Size> inline
+void fixed_arena_init(FixedArena<Size>* result) {
+    zero_size(& result->memory[0], Size);
+    result->arena = arena_init_from_memory(& result->memory[0], Size);
+}
+
+template<s32 Size> inline
+void fixed_arena_free(FixedArena<Size>* fixed_arena) {
+	arena_free( & fixed_arena->arena);
+}
+
+template<s32 Size> inline
+ssize fixed_arena_size_remaining(FixedArena<Size>* fixed_arena, ssize alignment) {
+    return size_remaining(fixed_arena->arena, alignment);
+}
+
+using FixedArena_1KB   = FixedArena< kilobytes( 1 ) >;
+using FixedArena_4KB   = FixedArena< kilobytes( 4 ) >;
+using FixedArena_8KB   = FixedArena< kilobytes( 8 ) >;
+using FixedArena_16KB  = FixedArena< kilobytes( 16 ) >;
+using FixedArena_32KB  = FixedArena< kilobytes( 32 ) >;
+using FixedArena_64KB  = FixedArena< kilobytes( 64 ) >;
+using FixedArena_128KB = FixedArena< kilobytes( 128 ) >;
+using FixedArena_256KB = FixedArena< kilobytes( 256 ) >;
+using FixedArena_512KB = FixedArena< kilobytes( 512 ) >;
+using FixedArena_1MB   = FixedArena< megabytes( 1 ) >;
+using FixedArena_2MB   = FixedArena< megabytes( 2 ) >;
+using FixedArena_4MB   = FixedArena< megabytes( 4 ) >;
+#pragma endregion FixedArena
+
+#pragma region Pool
+struct Pool;
+
+void* pool_allocator_proc(void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags);
+
+Pool          pool_init(AllocatorInfo backing, ssize num_blocks, ssize block_size);
+Pool          pool_init_align(AllocatorInfo backing, ssize num_blocks, ssize block_size, ssize block_align);
+AllocatorInfo pool_allocator_info(Pool* pool);
+void          pool_clear(Pool* pool);
+void          pool_free(Pool* pool);
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+AllocatorInfo allocator_info(Pool& pool) { return pool_allocator_info(& pool); }
+void          clear(Pool& pool)          { return pool_clear(& pool); }
+void          free(Pool& pool)           { return pool_free(& pool); }
+#endif
 
 struct Pool
 {
-	static
-	void* allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
-
-	static
-	Pool init( AllocatorInfo backing, ssize num_blocks, ssize block_size )
-	{
-		return init_align( backing, num_blocks, block_size, GEN_DEFAULT_MEMORY_ALIGNMENT );
-	}
-
-	static
-	Pool init_align( AllocatorInfo backing, ssize num_blocks, ssize block_size, ssize block_align );
-
-	void clear();
-
-	void free()
-	{
-		if ( Backing.Proc )
-		{
-			gen::free( Backing, PhysicalStart );
-		}
-	}
-
 	AllocatorInfo Backing;
 	void*         PhysicalStart;
 	void*         FreeList;
@@ -1013,12 +1316,37 @@ struct Pool
 	ssize         TotalSize;
 	ssize         NumBlocks;
 
-	operator AllocatorInfo()
-	{
-		return { allocator_proc, this };
-	}
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+#pragma region Member Mapping
+    FORCEINLINE operator AllocatorInfo() { return pool_allocator_info(this); }
+
+    FORCEINLINE static void* allocator_proc(void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags) { return pool_allocator_proc(allocator_data, type, size, alignment, old_memory, old_size, flags); }
+    FORCEINLINE static Pool  init(AllocatorInfo backing, ssize num_blocks, ssize block_size)                                                                { return pool_init(backing, num_blocks, block_size); }
+    FORCEINLINE static Pool  init_align(AllocatorInfo backing, ssize num_blocks, ssize block_size, ssize block_align)                                       { return pool_init_align(backing, num_blocks, block_size, block_align); }
+    FORCEINLINE        void  clear() { pool_clear( this); }
+    FORCEINLINE        void  free()  { pool_free( this); }
+#pragma endregion
+#endif
 };
 
+inline
+AllocatorInfo pool_allocator_info(Pool* pool) {
+	AllocatorInfo info = { pool_allocator_proc, pool };
+	return info;
+}
+
+inline
+Pool pool_init(AllocatorInfo backing, ssize num_blocks, ssize block_size) {
+	return pool_init_align(backing, num_blocks, block_size, GEN_DEFAULT_MEMORY_ALIGNMENT);
+}
+
+inline
+void pool_free(Pool* pool) {
+	if(pool->Backing.Proc) {
+		allocator_free(pool->Backing, pool->PhysicalStart);
+	}
+}
+#pragma endregion Pool
 
 inline
 b32 is_power_of_two( ssize x ) {
@@ -1037,9 +1365,9 @@ mem_ptr align_forward( void* ptr, ssize alignment )
 	return to_mem_ptr(forward);
 }
 
-inline s64 align_forward_i64( s64 value, ssize alignment ) { return value + ( alignment - value % alignment ) % alignment; }
+inline s64 align_forward_s64( s64 value, ssize alignment ) { return value + ( alignment - value % alignment ) % alignment; }
 
-inline void*       pointer_add      ( void*       ptr, ssize bytes ) { return rcast(void*,       rcast( u8*,        ptr) + bytes ); }
+inline void*       pointer_add      ( void*       ptr, ssize bytes ) { return rcast(void*,         rcast( u8*,        ptr) + bytes ); }
 inline void const* pointer_add_const( void const* ptr, ssize bytes ) { return rcast(void const*, rcast( u8 const*,  ptr) + bytes ); }
 
 inline sptr pointer_diff( mem_ptr_const begin, mem_ptr_const end ) {
@@ -1195,7 +1523,7 @@ void* alloc( AllocatorInfo a, ssize size ) {
 }
 
 inline
-void free( AllocatorInfo a, void* ptr ) {
+void allocator_free( AllocatorInfo a, void* ptr ) {
 	if ( ptr != nullptr )
 		a.Proc( a.Data, EAllocation_FREE, 0, 0, ptr, 0, GEN_DEFAULT_ALLOCATOR_FLAGS );
 }
@@ -1223,7 +1551,7 @@ void* default_resize_align( AllocatorInfo a, void* old_memory, ssize old_size, s
 
 	if ( new_size == 0 )
 	{
-		free( a, old_memory );
+		allocator_free( a, old_memory );
 		return nullptr;
 	}
 
@@ -1241,7 +1569,7 @@ void* default_resize_align( AllocatorInfo a, void* old_memory, ssize old_size, s
 			return nullptr;
 
 		mem_move( new_memory, old_memory, min( new_size, old_size ) );
-		free( a, old_memory );
+		allocator_free( a, old_memory );
 		return new_memory;
 	}
 }
@@ -1256,7 +1584,6 @@ void zero_size( void* ptr, ssize size ) {
 #pragma region String Ops
 
 const char* char_first_occurence( const char* str, char c );
-constexpr auto str_find = &char_first_occurence;
 
 b32   char_is_alpha( char c );
 b32   char_is_alphanumeric( char c );
@@ -1269,25 +1596,25 @@ char  char_to_upper( char c );
 s32  digit_to_int( char c );
 s32  hex_digit_to_int( char c );
 
-s32         str_compare( const char* s1, const char* s2 );
-s32         str_compare( const char* s1, const char* s2, ssize len );
-char*       str_copy( char* dest, const char* source, ssize len );
-ssize       str_copy_nulpad( char* dest, const char* source, ssize len );
-ssize       str_len( const char* str );
-ssize       str_len( const char* str, ssize max_len );
-char*       str_reverse( char* str );    // NOTE: ASCII only
-char const* str_skip( char const* str, char c );
-char const* str_skip_any( char const* str, char const* char_list );
-char const* str_trim( char const* str, b32 catch_newline );
+s32         c_str_compare( const char* s1, const char* s2 );
+s32         c_str_compare_len( const char* s1, const char* s2, ssize len );
+char*       c_str_copy( char* dest, const char* source, ssize len );
+ssize       c_str_copy_nulpad( char* dest, const char* source, ssize len );
+ssize       c_str_len( const char* str );
+ssize       c_str_len_capped( const char* str, ssize max_len );
+char*       c_str_reverse( char* str );    // NOTE: ASCII only
+char const* c_str_skip( char const* str, char c );
+char const* c_str_skip_any( char const* str, char const* char_list );
+char const* c_str_trim( char const* str, b32 catch_newline );
 
 // NOTE: ASCII only
-void str_to_lower( char* str );
-void str_to_upper( char* str );
+void c_str_to_lower( char* str );
+void c_str_to_upper( char* str );
 
-s64  str_to_i64( const char* str, char** end_ptr, s32 base );
+s64  c_str_to_i64( const char* str, char** end_ptr, s32 base );
 void i64_to_str( s64 value, char* string, s32 base );
 void u64_to_str( u64 value, char* string, s32 base );
-f64  str_to_f64( const char* str, char** end_ptr );
+f64  c_str_to_f64( const char* str, char** end_ptr );
 
 inline
 const char* char_first_occurence( const char* s, char c )
@@ -1373,7 +1700,7 @@ s32 hex_digit_to_int( char c )
 }
 
 inline
-s32 str_compare( const char* s1, const char* s2 )
+s32 c_str_compare( const char* s1, const char* s2 )
 {
 	while ( *s1 && ( *s1 == *s2 ) )
 	{
@@ -1383,7 +1710,7 @@ s32 str_compare( const char* s1, const char* s2 )
 }
 
 inline
-s32 str_compare( const char* s1, const char* s2, ssize len )
+s32 c_str_compare_len( const char* s1, const char* s2, ssize len )
 {
 	for ( ; len > 0; s1++, s2++, len-- )
 	{
@@ -1396,7 +1723,7 @@ s32 str_compare( const char* s1, const char* s2, ssize len )
 }
 
 inline
-char* str_copy( char* dest, const char* source, ssize len )
+char* c_str_copy( char* dest, const char* source, ssize len )
 {
 	GEN_ASSERT_NOT_NULL( dest );
 	if ( source )
@@ -1417,7 +1744,7 @@ char* str_copy( char* dest, const char* source, ssize len )
 }
 
 inline
-ssize str_copy_nulpad( char* dest, const char* source, ssize len )
+ssize c_str_copy_nulpad( char* dest, const char* source, ssize len )
 {
 	ssize result = 0;
 	GEN_ASSERT_NOT_NULL( dest );
@@ -1442,7 +1769,7 @@ ssize str_copy_nulpad( char* dest, const char* source, ssize len )
 }
 
 inline
-ssize str_len( const char* str )
+ssize c_str_len( const char* str )
 {
 	if ( str == NULL )
 	{
@@ -1455,7 +1782,7 @@ ssize str_len( const char* str )
 }
 
 inline
-ssize str_len( const char* str, ssize max_len )
+ssize c_str_len_capped( const char* str, ssize max_len )
 {
 	const char* end = rcast(const char*, mem_find( str, 0, max_len ));
 	if ( end )
@@ -1464,9 +1791,9 @@ ssize str_len( const char* str, ssize max_len )
 }
 
 inline
-char* str_reverse( char* str )
+char* c_str_reverse( char* str )
 {
-	ssize    len  = str_len( str );
+	ssize    len  = c_str_len( str );
 	char* a    = str + 0;
 	char* b    = str + len - 1;
 	len       /= 2;
@@ -1479,7 +1806,7 @@ char* str_reverse( char* str )
 }
 
 inline
-char const* str_skip( char const* str, char c )
+char const* c_str_skip( char const* str, char c )
 {
 	while ( *str && *str != c )
 	{
@@ -1489,20 +1816,20 @@ char const* str_skip( char const* str, char c )
 }
 
 inline
-char const* str_skip_any( char const* str, char const* char_list )
+char const* c_str_skip_any( char const* str, char const* char_list )
 {
-	char const* closest_ptr     = rcast( char const*, pointer_add_const( rcast(void const*, str), str_len( str ) ));
-	ssize       char_list_count = str_len( char_list );
+	char const* closest_ptr     = rcast( char const*, pointer_add_const( rcast(mem_ptr_const, str), c_str_len( str ) ));
+	ssize       char_list_count = c_str_len( char_list );
 	for ( ssize i = 0; i < char_list_count; i++ )
 	{
-		char const* p = str_skip( str, char_list[ i ] );
+		char const* p = c_str_skip( str, char_list[ i ] );
 		closest_ptr   = min( closest_ptr, p );
 	}
 	return closest_ptr;
 }
 
 inline
-char const* str_trim( char const* str, b32 catch_newline )
+char const* c_str_trim( char const* str, b32 catch_newline )
 {
 	while ( *str && char_is_space( *str ) && ( ! catch_newline || ( catch_newline && *str != '\n' ) ) )
 	{
@@ -1512,7 +1839,7 @@ char const* str_trim( char const* str, b32 catch_newline )
 }
 
 inline
-void str_to_lower( char* str )
+void c_str_to_lower( char* str )
 {
 	if ( ! str )
 		return;
@@ -1524,7 +1851,7 @@ void str_to_lower( char* str )
 }
 
 inline
-void str_to_upper( char* str )
+void c_str_to_upper( char* str )
 {
 	if ( ! str )
 		return;
@@ -1539,22 +1866,23 @@ void str_to_upper( char* str )
 
 #pragma region Printing
 
-struct FileInfo;
+typedef struct FileInfo FileInfo;
 
 #ifndef GEN_PRINTF_MAXLEN
 #	define GEN_PRINTF_MAXLEN kilobytes(128)
 #endif
+typedef char PrintF_Buffer[GEN_PRINTF_MAXLEN];
 
 // NOTE: A locally persisting buffer is used internally
-char*  str_fmt_buf       ( char const* fmt, ... );
-char*  str_fmt_buf_va    ( char const* fmt, va_list va );
-ssize  str_fmt           ( char* str, ssize n, char const* fmt, ... );
-ssize  str_fmt_va        ( char* str, ssize n, char const* fmt, va_list va );
-ssize  str_fmt_out_va    ( char const* fmt, va_list va );
-ssize  str_fmt_out_err   ( char const* fmt, ... );
-ssize  str_fmt_out_err_va( char const* fmt, va_list va );
-ssize  str_fmt_file      ( FileInfo* f, char const* fmt, ... );
-ssize  str_fmt_file_va   ( FileInfo* f, char const* fmt, va_list va );
+char*  c_str_fmt_buf       ( char const* fmt, ... );
+char*  c_str_fmt_buf_va    ( char const* fmt, va_list va );
+ssize  c_str_fmt           ( char* str, ssize n, char const* fmt, ... );
+ssize  c_str_fmt_va        ( char* str, ssize n, char const* fmt, va_list va );
+ssize  c_str_fmt_out_va    ( char const* fmt, va_list va );
+ssize  c_str_fmt_out_err   ( char const* fmt, ... );
+ssize  c_str_fmt_out_err_va( char const* fmt, va_list va );
+ssize  c_str_fmt_file      ( FileInfo* f, char const* fmt, ... );
+ssize  c_str_fmt_file_va   ( FileInfo* f, char const* fmt, va_list va );
 
 constexpr
 char const* Msg_Invalid_Value = "INVALID VALUE PROVIDED";
@@ -1566,7 +1894,7 @@ ssize log_fmt(char const* fmt, ...)
 	va_list va;
 
 	va_start(va, fmt);
-	res = str_fmt_out_va(fmt, va);
+	res = c_str_fmt_out_va(fmt, va);
 	va_end(va);
 
 	return res;
@@ -1581,543 +1909,787 @@ template<class TType>             struct RemoveConst<const TType>       { typede
 template<class TType>             struct RemoveConst<const TType[]>     { typedef TType Type[];     };
 template<class TType, usize Size> struct RemoveConst<const TType[Size]> { typedef TType Type[Size]; };
 
-template<class TType>
-using TRemoveConst = typename RemoveConst<TType>::Type;
+template<class TType> using TRemoveConst = typename RemoveConst<TType>::Type;
 
+template <class TType> struct RemovePtr         { typedef TType Type; };
+template <class TType> struct RemovePtr<TType*> { typedef TType Type; };
+
+template <class TType> using TRemovePtr = typename RemovePtr<TType>::Type;
+
+
+#pragma region Array
+#define Array(Type) Array<Type>
+
+// #define array_init(Type, ...)         array_init        <Type>(__VA_ARGS__)
+// #define array_init_reserve(Type, ...) array_init_reserve<Type>(__VA_ARGS__)
+
+struct ArrayHeader;
+
+#if GEN_COMPILER_CPP
+	template<class Type> struct Array;
+#	define get_array_underlying_type(array) typename TRemovePtr<typeof(array)>:: DataType
+#endif
+
+usize array_grow_formula(ssize value);
+
+template<class Type> Array<Type>  array_init           (AllocatorInfo allocator);
+template<class Type> Array<Type>  array_init_reserve   (AllocatorInfo allocator, ssize capacity);
+template<class Type> bool         array_append_array   (Array<Type>* array, Array<Type> other);
+template<class Type> bool         array_append         (Array<Type>* array, Type value);
+template<class Type> bool         array_append_items   (Array<Type>* array, Type* items, usize item_num);
+template<class Type> bool         array_append_at      (Array<Type>* array, Type item, usize idx);
+template<class Type> bool         array_append_items_at(Array<Type>* array, Type* items, usize item_num, usize idx);
+template<class Type> Type*        array_back           (Array<Type>  array);
+template<class Type> void         array_clear          (Array<Type>  array);
+template<class Type> bool         array_fill           (Array<Type>  array, usize begin, usize end, Type value);
+template<class Type> void         array_free           (Array<Type>* array);
+template<class Type> bool         arary_grow           (Array<Type>* array, usize min_capacity);
+template<class Type> usize        array_num            (Array<Type>  array);
+template<class Type> void         arary_pop            (Array<Type>  array);
+template<class Type> void         arary_remove_at      (Array<Type>  array, usize idx);
+template<class Type> bool         arary_reserve        (Array<Type>* array, usize new_capacity);
+template<class Type> bool         arary_resize         (Array<Type>* array, usize num);
+template<class Type> bool         arary_set_capacity   (Array<Type>* array, usize new_capacity);
+template<class Type> ArrayHeader* arary_get_header     (Array<Type>  array);
+
+struct ArrayHeader {
+	AllocatorInfo Allocator;
+	usize         Capacity;
+	usize         Num;
+};
+
+#if GEN_COMPILER_CPP
 template<class Type>
 struct Array
 {
-	struct Header
-	{
-		AllocatorInfo Allocator;
-		usize            Capacity;
-		usize            Num;
-	};
-
-	static
-	Array init( AllocatorInfo allocator )
-	{
-		return init_reserve( allocator, grow_formula(0) );
-	}
-
-	static
-	Array init_reserve( AllocatorInfo allocator, ssize capacity )
-	{
-		Header* header = rcast( Header*, alloc( allocator, sizeof(Header) + sizeof(Type) * capacity ));
-
-		if ( header == nullptr )
-			return { nullptr };
-
-		header->Allocator = allocator;
-		header->Capacity  = capacity;
-		header->Num       = 0;
-
-		return { rcast( Type*, header + 1) };
-	}
-
-	static
-	usize grow_formula( usize value )
-	{
-		return 2 * value + 8;
-	}
-
-	bool append( Array other )
-	{
-		return append( other, other.num() );
-	}
-
-	bool append( Type value )
-	{
-		Header* header = get_header();
-
-		if ( header->Num == header->Capacity )
-		{
-			if ( ! grow( header->Capacity ))
-				return false;
-
-			header = get_header();
-		}
-
-		Data[ header->Num ] = value;
-		header->Num++;
-
-		return true;
-	}
-
-	bool append( Type* items, usize item_num )
-	{
-		Header* header = get_header();
-
-		if ( header->Num + item_num > header->Capacity )
-		{
-			if ( ! grow( header->Capacity + item_num ))
-				return false;
-
-			header = get_header();
-		}
-
-		mem_copy( Data + header->Num, items, item_num * sizeof(Type) );
-		header->Num += item_num;
-
-		return true;
-	}
-
-	bool append_at( Type item, usize idx )
-	{
-		Header* header = get_header();
-
-		if ( idx >= header->Num )
-			idx = header->Num - 1;
-
-		if ( idx < 0 )
-			idx = 0;
-
-		if ( header->Capacity < header->Num + 1 )
-		{
-			if ( ! grow( header->Capacity + 1 ))
-				return false;
-
-			header = get_header();
-		}
-
-		Type* target = Data + idx;
-
-		mem_move( target + 1, target, (header->Num - idx) * sizeof(Type) );
-		header->Num++;
-
-		return true;
-	}
-
-	bool append_at( Type* items, usize item_num, usize idx )
-	{
-		Header* header = get_header();
-
-		if ( idx >= header->Num )
-		{
-			return append( items, item_num );
-		}
-
-		if ( item_num > header->Capacity )
-		{
-			if ( ! grow( header->Capacity + item_num ) )
-				return false;
-
-			header = get_header();
-		}
-
-		Type* target = Data + idx + item_num;
-		Type* src    = Data + idx;
-
-		mem_move( target, src, (header->Num - idx) * sizeof(Type) );
-		mem_copy( src, items, item_num * sizeof(Type) );
-		header->Num += item_num;
-
-		return true;
-	}
-
-	Type& back( void )
-	{
-		Header& header = * get_header();
-		return Data[ header.Num - 1 ];
-	}
-
-	void clear( void )
-	{
-		Header& header = * get_header();
-		header.Num     = 0;
-	}
-
-	bool fill( usize begin, usize end, Type value )
-	{
-		Header& header = * get_header();
-
-		if ( begin < 0 || end > header.Num )
-			return false;
-
-		for ( ssize idx = ssize(begin); idx < ssize(end); idx++ )
-		{
-			Data[ idx ] = value;
-		}
-
-		return true;
-	}
-
-	void free( void )
-	{
-		Header& header = * get_header();
-		gen::free( header.Allocator, &header );
-		Data = nullptr;
-	}
-
-	Header* get_header( void )
-	{
-		using NonConstType = TRemoveConst< Type >;
-		return rcast( Header*, const_cast<NonConstType*>(Data) ) - 1 ;
-	}
-
-	bool grow( usize min_capacity )
-	{
-		Header& header       = * get_header();
-		usize      new_capacity = grow_formula( header.Capacity );
-
-		if ( new_capacity < min_capacity )
-			new_capacity = min_capacity;
-
-		return set_capacity( new_capacity );
-	}
-
-	usize num( void )
-	{
-		return get_header()->Num;
-	}
-
-	void pop( void )
-	{
-		Header& header = * get_header();
-
-		GEN_ASSERT( header.Num > 0 );
-		header.Num--;
-	}
-
-	void remove_at( usize idx )
-	{
-		Header* header = get_header();
-		GEN_ASSERT( idx < header->Num );
-
-		mem_move( header + idx, header + idx + 1, sizeof( Type ) * ( header->Num - idx - 1 ) );
-		header->Num--;
-	}
-
-	bool reserve( usize new_capacity )
-	{
-		Header& header = * get_header();
-
-		if ( header.Capacity < new_capacity )
-			return set_capacity( new_capacity );
-
-		return true;
-	}
-
-	bool resize( usize num )
-	{
-		Header* header = get_header();
-
-		if ( header->Capacity < num )
-		{
-			if ( ! grow( num ) )
-				return false;
-
-			header = get_header();
-		}
-
-		header->Num = num;
-		return true;
-	}
-
-	bool set_capacity( usize new_capacity )
-	{
-		Header& header = * get_header();
-
-		if ( new_capacity == header.Capacity )
-			return true;
-
-		if ( new_capacity < header.Num )
-		{
-			// Already have the memory, mine as well keep it.
-			header.Num = new_capacity;
-			return true;
-		}
-
-		ssize      size       = sizeof( Header ) + sizeof( Type ) * new_capacity;
-		Header* new_header = rcast( Header*, alloc( header.Allocator, size ) );
-
-		if ( new_header == nullptr )
-			return false;
-
-		mem_move( new_header, &header, sizeof( Header ) + sizeof( Type ) * header.Num );
-
-		new_header->Capacity = new_capacity;
-
-		gen::free( header.Allocator, &header );
-
-		Data = rcast( Type*, new_header + 1);
-		return true;
-	}
-
 	Type* Data;
 
-	operator Type*()
+#pragma region Member Mapping
+	FORCEINLINE static Array  init(AllocatorInfo allocator)                         { return array_init<Type>(allocator); }
+	FORCEINLINE static Array  init_reserve(AllocatorInfo allocator, ssize capacity) { return array_init_reserve<Type>(allocator, capacity); }
+	FORCEINLINE static usize  grow_formula(ssize value)                             { return array_grow_formula<Type>(value); }
+
+	FORCEINLINE bool         append(Array other)                               { return array_append_array<Type>(this, other); }
+	FORCEINLINE bool         append(Type value)                                { return array_append<Type>(this, value); }
+	FORCEINLINE bool         append(Type* items, usize item_num)               { return array_append_items<Type>(this, items, item_num); }
+	FORCEINLINE bool         append_at(Type item, usize idx)                   { return array_append_at<Type>(this, item, idx); }
+	FORCEINLINE bool         append_at(Type* items, usize item_num, usize idx) { return array_append_items_at<Type>(this, items, item_num, idx); }
+	FORCEINLINE Type*        back()                                            { return array_back<Type>(* this); }
+	FORCEINLINE void         clear()                                           {        array_clear<Type>(* this); }
+	FORCEINLINE bool         fill(usize begin, usize end, Type value)          { return array_fill<Type>(* this, begin, end, value); }
+	FORCEINLINE void         free()                                            {        array_free<Type>(this); }
+	FORCEINLINE ArrayHeader* get_header()                                      { return array_get_header<Type>(* this); }
+	FORCEINLINE bool         grow(usize min_capacity)                          { return array_grow<Type>(this, min_capacity); }
+	FORCEINLINE usize        num()                                             { return array_num<Type>(*this); }
+	FORCEINLINE void         pop()                                             {        array_pop<Type>(* this); }
+	FORCEINLINE void         remove_at(usize idx)                              {        array_remove_at<Type>(* this, idx); }
+	FORCEINLINE bool         reserve(usize new_capacity)                       { return array_reserve<Type>(this, new_capacity); }
+	FORCEINLINE bool         resize(usize num)                                 { return array_resize<Type>(this, num); }
+	FORCEINLINE bool         set_capacity(usize new_capacity)                  { return array_set_capacity<Type>(this, new_capacity); }
+#pragma endregion Member Mapping
+
+	FORCEINLINE operator Type*()             { return Data; }
+	FORCEINLINE operator Type const*() const { return Data; }
+	FORCEINLINE Type* begin()                { return Data; }
+	FORCEINLINE Type* end()                  { return Data + get_header()->Num; }
+
+	FORCEINLINE Type&       operator[](ssize index)       { return Data[index]; }
+	FORCEINLINE Type const& operator[](ssize index) const { return Data[index]; }
+
+	using DataType = Type;
+};
+#endif
+
+#if GEN_COMPILER_CPP && 0
+template<class Type> bool append(Array<Type>& array, Array<Type> other)                         { return append( & array, other ); }
+template<class Type> bool append(Array<Type>& array, Type value)                                { return append( & array, value ); }
+template<class Type> bool append(Array<Type>& array, Type* items, usize item_num)               { return append( & array, items, item_num ); }
+template<class Type> bool append_at(Array<Type>& array, Type item, usize idx)                   { return append_at( & array, item, idx ); }
+template<class Type> bool append_at(Array<Type>& array, Type* items, usize item_num, usize idx) { return append_at( & array, items, item_num, idx ); }
+template<class Type> void free(Array<Type>& array)                                              { return free( & array ); }
+template<class Type> bool grow(Array<Type>& array, usize min_capacity)                          { return grow( & array, min_capacity); }
+template<class Type> bool reserve(Array<Type>& array, usize new_capacity)                       { return reserve( & array, new_capacity); }
+template<class Type> bool resize(Array<Type>& array, usize num)                                 { return resize( & array, num); }
+template<class Type> bool set_capacity(Array<Type>& array, usize new_capacity)                  { return set_capacity( & array, new_capacity); }
+
+template<class Type> FORCEINLINE Type* begin(Array<Type>& array)             { return array;      }
+template<class Type> FORCEINLINE Type* end(Array<Type>& array)               { return array + array_get_header(array)->Num; }
+template<class Type> FORCEINLINE Type* next(Array<Type>& array, Type* entry) { return entry + 1; }
+#endif
+
+template<class Type> FORCEINLINE Type* array_begin(Array<Type> array)             { return array;      }
+template<class Type> FORCEINLINE Type* array_end(Array<Type> array)               { return array + array_get_header(array)->Num; }
+template<class Type> FORCEINLINE Type* array_next(Array<Type> array, Type* entry) { return ++ entry; }
+
+template<class Type> inline
+Array<Type> array_init(AllocatorInfo allocator) {
+	return array_init_reserve<Type>(allocator, array_grow_formula(0));
+}
+
+template<class Type> inline
+Array<Type> array_init_reserve(AllocatorInfo allocator, ssize capacity)
+{
+	GEN_ASSERT(capacity > 0);
+	ArrayHeader* header = rcast(ArrayHeader*, alloc(allocator, sizeof(ArrayHeader) + sizeof(Type) * capacity));
+
+	if (header == nullptr)
+		return {nullptr};
+
+	header->Allocator = allocator;
+	header->Capacity  = capacity;
+	header->Num       = 0;
+
+	return {rcast(Type*, header + 1)};
+}
+
+usize array_grow_formula(ssize value) {
+	return 2 * value + 8;
+}
+
+template<class Type> inline
+bool array_append_array(Array<Type>* array, Array<Type> other) {
+	return array_append_items(array, (Type*)other, array_num(other));
+}
+
+template<class Type> inline
+bool array_append(Array<Type>* array, Type value)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = array_get_header(* array);
+
+	if (header->Num == header->Capacity)
 	{
-		return Data;
+		if ( ! array_grow(array, header->Capacity))
+			return false;
+		header = array_get_header(* array);
 	}
 
-	operator Type const*() const
+	(*array)[ header->Num] = value;
+	header->Num++;
+
+	return true;
+}
+
+template<class Type> inline
+bool array_append_items(Array<Type>* array, Type* items, usize item_num)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	GEN_ASSERT(items != nullptr);
+	GEN_ASSERT(item_num > 0);
+	ArrayHeader* header = array_get_header(* array);
+
+	if (header->Num + item_num > header->Capacity)
 	{
-		return Data;
+		if ( ! array_grow(array, header->Capacity + item_num))
+			return false;
+		header = array_get_header(* array);
 	}
 
-	// For-range based support
+	mem_copy((Type*)array + header->Num, items, item_num * sizeof(Type));
+	header->Num += item_num;
 
-	Type* begin()
+	return true;
+}
+
+template<class Type> inline
+bool array_append_at(Array<Type>* array, Type item, usize idx)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = array_get_header(* array);
+
+	ssize slot = idx;
+	if (slot >= header->Num)
+		slot = header->Num - 1;
+
+	if (slot < 0)
+		slot = 0;
+
+	if (header->Capacity < header->Num + 1)
 	{
-		return Data;
+		if ( ! array_grow(array, header->Capacity + 1))
+			return false;
+
+		header = array_get_header(* array);
 	}
 
-	Type* end()
+	Type* target = &(*array)[slot];
+
+	mem_move(target + 1, target, (header->Num - slot) * sizeof(Type));
+	header->Num++;
+
+	return true;
+}
+
+template<class Type> inline
+bool array_append_items_at(Array<Type>* array, Type* items, usize item_num, usize idx)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = get_header(array);
+
+	if (idx >= header->Num)
 	{
-		return Data + get_header()->Num;
+		return array_append_items(array, items, item_num);
 	}
+
+	if (item_num > header->Capacity)
+	{
+		if (! grow(array, header->Capacity + item_num))
+			return false;
+
+		header = get_header(array);
+	}
+
+	Type* target = array.Data + idx + item_num;
+	Type* src    = array.Data + idx;
+
+	mem_move(target, src, (header->Num - idx) * sizeof(Type));
+	mem_copy(src, items, item_num * sizeof(Type));
+	header->Num += item_num;
+
+	return true;
+}
+
+template<class Type> inline
+Type* array_back(Array<Type> array)
+{
+	GEN_ASSERT(array != nullptr);
+
+	ArrayHeader* header = array_get_header(array);
+	if (header->Num <= 0)
+		return nullptr;
+
+	return & (array)[header->Num - 1];
+}
+
+template<class Type> inline
+void array_clear(Array<Type> array) {
+	GEN_ASSERT(array != nullptr);
+	ArrayHeader* header = array_get_header(array);
+	header->Num = 0;
+}
+
+template<class Type> inline
+bool array_fill(Array<Type> array, usize begin, usize end, Type value)
+{
+	GEN_ASSERT(array != nullptr);
+	GEN_ASSERT(begin <= end);
+	ArrayHeader* header = array_get_header(array);
+
+	if (begin < 0 || end > header->Num)
+	return false;
+
+	for (ssize idx = ssize(begin); idx < ssize(end); idx++)
+	{
+		array[idx] = value;
+	}
+
+	return true;
+}
+
+template<class Type> FORCEINLINE
+void array_free(Array<Type>* array) {
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = array_get_header(* array);
+	allocator_free(header->Allocator, header);
+	Type** Data = (Type**)array;
+	*Data = nullptr;
+}
+
+template<class Type> FORCEINLINE
+ArrayHeader* array_get_header(Array<Type> array) {
+	GEN_ASSERT(array != nullptr);
+    Type* Data = array;
+
+	using NonConstType = TRemoveConst<Type>;
+    return rcast(ArrayHeader*, const_cast<NonConstType*>(Data)) - 1;
+}
+template<class Type> FORCEINLINE
+bool array_grow(Array<Type>* array, usize min_capacity)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	GEN_ASSERT( min_capacity > 0 );
+	ArrayHeader* header       = array_get_header(* array);
+	usize        new_capacity = array_grow_formula(header->Capacity);
+
+	if (new_capacity < min_capacity)
+		new_capacity = min_capacity;
+
+	return array_set_capacity(array, new_capacity);
+}
+
+template<class Type> FORCEINLINE
+usize array_num(Array<Type> array) {
+	GEN_ASSERT(array != nullptr);
+	return array_get_header(array)->Num;
+}
+
+template<class Type> FORCEINLINE
+void array_pop(Array<Type> array) {
+	GEN_ASSERT(array != nullptr);
+	ArrayHeader* header = array_get_header(array);
+	GEN_ASSERT(header->Num > 0);
+	header->Num--;
+}
+
+template<class Type> inline
+void array_remove_at(Array<Type> array, usize idx)
+{
+	GEN_ASSERT(array != nullptr);
+	ArrayHeader* header = array_get_header(array);
+	GEN_ASSERT(idx < header->Num);
+
+	mem_move(array + idx, array + idx + 1, sizeof(Type) * (header->Num - idx - 1));
+	header->Num--;
+}
+
+template<class Type> inline
+bool array_reserve(Array<Type>* array, usize new_capacity)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	GEN_ASSERT(num > 0)
+	ArrayHeader* header = array_get_header(array);
+
+	if (header->Capacity < new_capacity)
+		return set_capacity(array, new_capacity);
+
+	return true;
+}
+
+template<class Type> inline
+bool array_resize(Array<Type>* array, usize num)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = array_get_header(* array);
+
+	if (header->Capacity < num) {
+		if (! array_grow( array, num))
+			return false;
+		header = array_get_header(* array);
+	}
+
+	header->Num = num;
+	return true;
+}
+
+template<class Type> inline
+bool array_set_capacity(Array<Type>* array, usize new_capacity)
+{
+	GEN_ASSERT(  array != nullptr);
+	GEN_ASSERT(* array != nullptr);
+	ArrayHeader* header = array_get_header(* array);
+
+	if (new_capacity == header->Capacity)
+		return true;
+
+	if (new_capacity < header->Num)
+	{
+		header->Num = new_capacity;
+		return true;
+	}
+
+	ssize        size       = sizeof(ArrayHeader) + sizeof(Type) * new_capacity;
+	ArrayHeader* new_header = rcast(ArrayHeader*, alloc(header->Allocator, size));
+
+	if (new_header == nullptr)
+		return false;
+
+	mem_move(new_header, header, sizeof(ArrayHeader) + sizeof(Type) * header->Num);
+
+	new_header->Capacity = new_capacity;
+
+	allocator_free(header->Allocator, header);
+
+	Type** Data = (Type**)array;
+	* Data = rcast(Type*, new_header + 1);
+	return true;
+}
+
+// These are intended for use in the base library of gencpp and the C-variant of the library
+// It provides a interoperability between the C++ and C implementation of arrays. (not letting these do any crazy substiution though)
+// They are undefined in gen.hpp and gen.cpp at the end of the files.
+// We cpp library expects the user to use the regular calls as they can resolve the type fine.
+
+#define array_init(type, allocator)                        array_init           <type>                               (allocator )
+#define array_init_reserve(type, allocator, cap)           array_init_reserve   <type>                               (allocator, cap)
+#define array_append_array(array, other)                   array_append_array   < get_array_underlying_type(array) > (& array, other )
+#define array_append(array, value)                         array_append         < get_array_underlying_type(array) > (& array, value )
+#define array_append_items(array, items, item_num)         array_append_items   < get_array_underlying_type(array) > (& array, items, item_num )
+#define array_append_at(array, item, idx )                 array_append_at      < get_array_underlying_type(array) > (& array, item, idx )
+#define array_append_at_items(array, items, item_num, idx) array_append_at_items< get_array_underlying_type(array) > (& items, item_num, idx )
+#define array_back(array)                                  array_back           < get_array_underlying_type(array) > (array )
+#define array_clear(array)                                 array_clear          < get_array_underlying_type(array) > (array )
+#define array_fill(array, begin, end, value)               array_fill           < get_array_underlying_type(array) > (array, begin, end, value )
+#define array_free(array)                                  array_free           < get_array_underlying_type(array) > (& array )
+#define arary_grow(array, min_capacity)                    arary_grow           < get_array_underlying_type(array) > (& array, min_capacity)
+#define array_num(array)                                   array_num            < get_array_underlying_type(array) > (array )
+#define arary_pop(array)                                   arary_pop            < get_array_underlying_type(array) > (array )
+#define arary_remove_at(array, idx)                        arary_remove_at      < get_array_underlying_type(array) > (idx)
+#define arary_reserve(array, new_capacity)                 arary_reserve        < get_array_underlying_type(array) > (& array, new_capacity )
+#define arary_resize(array, num)                           arary_resize         < get_array_underlying_type(array) > (& array, num)
+#define arary_set_capacity(new_capacity)                   arary_set_capacity   < get_array_underlying_type(array) > (& array, new_capacity )
+#define arary_get_header(array)                            arary_get_header     < get_array_underlying_type(array) > (array )
+
+#pragma endregion Array
+
+#pragma region HashTable
+#define HashTable(Type) HashTable<Type>
+
+template<class Type> struct HashTable;
+
+#ifndef get_hashtable_underlying_type
+#define get_hashtable_underlying_type(table) typename TRemovePtr<typeof(table)>:: DataType
+#endif
+
+struct HashTableFindResult {
+	ssize HashIndex;
+	ssize PrevIndex;
+	ssize EntryIndex;
 };
 
-// TODO(Ed) : This thing needs ALOT of work.
+template<class Type>
+struct HashTableEntry {
+	u64   Key;
+	ssize Next;
+	Type  Value;
+};
+
+#define HashTableEntry(Type) HashTableEntry<Type>
+
+template<class Type> HashTable<Type>       hashtable_init        (AllocatorInfo allocator);
+template<class Type> HashTable<Type>       hashtable_init_reserve(AllocatorInfo allocator, usize num);
+template<class Type> void                  hashtable_clear       (HashTable<Type>  table);
+template<class Type> void                  hashtable_destroy     (HashTable<Type>* table);
+template<class Type> Type*                 hashtable_get         (HashTable<Type>  table, u64 key);
+template<class Type> void                  hashtable_grow        (HashTable<Type>* table);
+template<class Type> void                  hashtable_rehash      (HashTable<Type>* table, ssize new_num);
+template<class Type> void                  hashtable_rehash_fast (HashTable<Type>  table);
+template<class Type> void                  hashtable_remove      (HashTable<Type>  table, u64 key);
+template<class Type> void                  hashtable_remove_entry(HashTable<Type>  table, ssize idx);
+template<class Type> void                  hashtable_set         (HashTable<Type>* table, u64 key, Type value);
+template<class Type> ssize                 hashtable_slot        (HashTable<Type>  table, u64 key);
+template<class Type> void                  hashtable_map         (HashTable<Type>  table, void (*map_proc)(u64 key, Type value));
+template<class Type> void                  hashtable_map_mut     (HashTable<Type>  table, void (*map_proc)(u64 key, Type* value));
+
+template<class Type> ssize                 hashtable__add_entry  (HashTable<Type>* table, u64 key);
+template<class Type> HashTableFindResult   hashtable__find       (HashTable<Type>  table, u64 key);
+template<class Type> bool                  hashtable__full       (HashTable<Type>  table);
+
+static constexpr f32 HashTable_CriticalLoadScale = 0.7f;
 
 template<typename Type>
 struct HashTable
 {
-	struct FindResult
-	{
-		ssize HashIndex;
-		ssize PrevIndex;
-		ssize EntryIndex;
-	};
+	Array<ssize>                Hashes;
+	Array<HashTableEntry<Type>> Entries;
 
-	struct Entry
-	{
-		u64  Key;
-		ssize   Next;
-		Type Value;
-	};
+#if ! GEN_C_LIKE_CPP
+#pragma region Member Mapping
+	FORCEINLINE static HashTable init(AllocatorInfo allocator)                    { return	hashtable_init<Type>(allocator); }
+	FORCEINLINE static HashTable init_reserve(AllocatorInfo allocator, usize num) { return	hashtable_init_reserve<Type>(allocator, num); }
 
-	static constexpr f32 CriticalLoadScale = 0.7f;
+	FORCEINLINE void  clear()                           {        clear<Type>(*this); }
+	FORCEINLINE void  destroy()                         {        destroy<Type>(*this); }
+	FORCEINLINE Type* get(u64 key)                      { return get<Type>(*this, key); }
+	FORCEINLINE void  grow()                            {        grow<Type>(*this); }
+	FORCEINLINE void  rehash(ssize new_num)             {        rehash<Type>(*this, new_num); }
+	FORCEINLINE void  rehash_fast()                     {        rehash_fast<Type>(*this); }
+	FORCEINLINE void  remove(u64 key)                   {        remove<Type>(*this, key); }
+	FORCEINLINE void  remove_entry(ssize idx)           {        remove_entry<Type>(*this, idx); }
+	FORCEINLINE void  set(u64 key, Type value)          {        set<Type>(*this, key, value); }
+	FORCEINLINE ssize slot(u64 key)                     { return slot<Type>(*this, key); }
+	FORCEINLINE void  map(void (*proc)(u64, Type))      {        map<Type>(*this, proc); }
+	FORCEINLINE void  map_mut(void (*proc)(u64, Type*)) {        map_mut<Type>(*this, proc); }
+#pragma endregion Member Mapping
+#endif
 
-	static
-	HashTable init( AllocatorInfo allocator )
-	{
-		HashTable<Type> result = init_reserve(allocator, 8);
-		return result;
-	}
-
-	static
-	HashTable init_reserve( AllocatorInfo allocator, usize num )
-	{
-		HashTable<Type> result = { { nullptr }, { nullptr } };
-
-		result.Hashes  = Array<ssize>::init_reserve( allocator, num );
-		result.Hashes.get_header()->Num = num;
-		result.Hashes.resize( num );
-		result.Hashes.fill( 0, num, -1);
-
-		result.Entries = Array<Entry>::init_reserve( allocator, num );
-		return result;
-	}
-
-	void clear( void )
-	{
-		Entries.clear();
-		Hashes.fill( 0, Hashes.num(), -1);
-	}
-
-	void destroy( void )
-	{
-		if ( Hashes && Hashes.get_header()->Capacity )
-		{
-			Hashes.free();
-			Entries.free();
-		}
-	}
-
-	Type* get( u64 key )
-	{
-		ssize idx = find( key ).EntryIndex;
-		if ( idx >= 0 )
-			return & Entries[ idx ].Value;
-
-		return nullptr;
-	}
-
-	using MapProc = void (*)( u64 key, Type  value );
-
-	void map( MapProc map_proc )
-	{
-		GEN_ASSERT_NOT_NULL( map_proc );
-
-		for ( ssize idx = 0; idx < ssize(Entries.num()); ++idx )
-		{
-			map_proc( Entries[ idx ].Key, Entries[ idx ].Value );
-		}
-	}
-
-	using MapMutProc = void (*)( u64 key, Type* value );
-
-	void map_mut( MapMutProc map_proc )
-	{
-		GEN_ASSERT_NOT_NULL( map_proc );
-
-		for ( ssize idx = 0; idx < ssize(Entries.num()); ++idx )
-		{
-			map_proc( Entries[ idx ].Key, & Entries[ idx ].Value );
-		}
-	}
-
-	void grow()
-	{
-		ssize new_num = Array<Entry>::grow_formula( Entries.num() );
-		rehash( new_num );
-	}
-
-	void rehash( ssize new_num )
-	{
-		ssize last_added_index;
-
-		HashTable<Type> new_ht = init_reserve( Hashes.get_header()->Allocator, new_num );
-		for ( ssize idx = 0; idx < ssize(Entries.num()); ++idx )
-		{
-			FindResult find_result;
-
-			Entry& entry     = Entries[ idx ];
-			find_result      = new_ht.find( entry.Key );
-			last_added_index = new_ht.add_entry( entry.Key );
-
-			if ( find_result.PrevIndex < 0 )
-				new_ht.Hashes[ find_result.HashIndex ] = last_added_index;
-			else
-				new_ht.Entries[ find_result.PrevIndex ].Next = last_added_index;
-
-			new_ht.Entries[ last_added_index ].Next  = find_result.EntryIndex;
-			new_ht.Entries[ last_added_index ].Value = entry.Value;
-		}
-
-		destroy();
-		*this = new_ht;
-	}
-
-	void rehash_fast()
-	{
-		ssize idx;
-
-		for ( idx = 0; idx < ssize(Entries.num()); idx++ )
-			Entries[ idx ].Next = -1;
-
-		for ( idx = 0; idx < ssize(Hashes.num()); idx++ )
-			Hashes[ idx ] = -1;
-
-		for ( idx = 0; idx < ssize(Entries.num()); idx++ )
-		{
-			Entry*     entry;
-			FindResult find_result;
-
-			entry       = & Entries[ idx ];
-			find_result = find( entry->Key );
-
-			if ( find_result.PrevIndex < 0 )
-				Hashes[ find_result.HashIndex ] = idx;
-			else
-				Entries[ find_result.PrevIndex ].Next = idx;
-		}
-	}
-
-	void remove( u64 key )
-	{
-		FindResult find_result = find( key);
-
-		if ( find_result.EntryIndex >= 0 )
-		{
-			Entries.remove_at( find_result.EntryIndex );
-			rehash_fast();
-		}
-	}
-
-	void remove_entry( ssize idx )
-	{
-		Entries.remove_at( idx );
-	}
-
-	void set( u64 key, Type value )
-	{
-		ssize idx;
-		FindResult find_result;
-
-		if ( full() )
-			grow();
-
-		find_result = find( key );
-		if ( find_result.EntryIndex >= 0 )
-		{
-			idx = find_result.EntryIndex;
-		}
-		else
-		{
-			idx = add_entry( key );
-
-			if ( find_result.PrevIndex >= 0 )
-			{
-				Entries[ find_result.PrevIndex ].Next = idx;
-			}
-			else
-			{
-				Hashes[ find_result.HashIndex ] = idx;
-			}
-		}
-
-		Entries[ idx ].Value = value;
-
-		if ( full() )
-			grow();
-	}
-
-	ssize slot( u64 key )
-	{
-		for ( ssize idx = 0; idx < ssize(Hashes.num()); ++idx )
-			if ( Hashes[ idx ] == key )
-				return idx;
-
-		return -1;
-	}
-
-	Array< ssize>    Hashes;
-	Array< Entry> Entries;
-
-protected:
-
-	ssize add_entry( u64 key )
-	{
-		ssize idx;
-		Entry entry = { key, -1 };
-
-		idx = Entries.num();
-		Entries.append( entry );
-		return idx;
-	}
-
-	FindResult find( u64 key )
-	{
-		FindResult result = { -1, -1, -1 };
-
-		if ( Hashes.num() > 0 )
-		{
-			result.HashIndex    = key % Hashes.num();
-			result.EntryIndex  = Hashes[ result.HashIndex ];
-
-			while ( result.EntryIndex >= 0 )
-			{
-				if ( Entries[ result.EntryIndex ].Key == key )
-					break;
-
-				result.PrevIndex  = result.EntryIndex;
-				result.EntryIndex = Entries[ result.EntryIndex ].Next;
-			}
-		}
-
-		return result;
-	}
-
-	b32 full()
-	{
-		usize critical_load = usize( CriticalLoadScale * f32(Hashes.num()) );
-		b32 result = Entries.num() > critical_load;
-		return result;
-	}
+	using DataType = Type;
 };
+
+#if GEN_SUPPORT_CPP_REFERENCES
+template<class Type> void  destroy  (HashTable<Type>& table)                      { destroy(& table); }
+template<class Type> void  grow     (HashTable<Type>& table)                      { grow(& table); }
+template<class Type> void  rehash   (HashTable<Type>& table, ssize new_num)       { rehash(& table, new_num); }
+template<class Type> void  set      (HashTable<Type>& table, u64 key, Type value) { set(& table, key, value); }
+template<class Type> ssize add_entry(HashTable<Type>& table, u64 key)             { add_entry(& table, key); }
+#endif
+
+template<typename Type> inline
+HashTable<Type> hashtable_init(AllocatorInfo allocator) {
+	HashTable<Type> result = hashtable_init_reserve<Type>(allocator, 8);
+	return result;
+}
+
+template<typename Type> inline
+HashTable<Type> hashtable_init_reserve(AllocatorInfo allocator, usize num)
+{
+	HashTable<Type> result = { { nullptr }, { nullptr } };
+
+	result.Hashes = array_init_reserve<ssize>(allocator, num);
+	array_get_header(result.Hashes)->Num = num;
+	array_resize(& result.Hashes, num);
+	array_fill(result.Hashes, 0, num, (ssize)-1);
+
+	result.Entries = array_init_reserve<HashTableEntry<Type>>(allocator, num);
+	return result;
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_clear(HashTable<Type> table) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	array_clear(table.Entries);
+	array_fill(table.Hashes, 0, array_num(table.Hashes), (ssize)-1);
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_destroy(HashTable<Type>* table) {
+	GEN_ASSERT_NOT_NULL(table->Hashes);
+	GEN_ASSERT_NOT_NULL(table->Entries);
+	if (table->Hashes && array_get_header(table->Hashes)->Capacity) {
+		array_free(table->Hashes);
+		array_free(table->Entries);
+	}
+}
+
+template<typename Type> FORCEINLINE
+Type* hashtable_get(HashTable<Type> table, u64 key) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	ssize idx = hashtable__find(table, key).EntryIndex;
+	if (idx >= 0)
+		return & table.Entries[idx].Value;
+
+	return nullptr;
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_map(HashTable<Type> table, void (*map_proc)(u64 key, Type value)) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	GEN_ASSERT_NOT_NULL(map_proc);
+
+	for (ssize idx = 0; idx < ssize(num(table.Entries)); ++idx) {
+		map_proc(table.Entries[idx].Key, table.Entries[idx].Value);
+	}
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_map_mut(HashTable<Type> table, void (*map_proc)(u64 key, Type* value)) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	GEN_ASSERT_NOT_NULL(map_proc);
+
+	for (ssize idx = 0; idx < ssize(num(table.Entries)); ++idx) {
+		map_proc(table.Entries[idx].Key, & table.Entries[idx].Value);
+	}
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_grow(HashTable<Type>* table) {
+	GEN_ASSERT_NOT_NULL(table);
+	GEN_ASSERT_NOT_NULL(table->Hashes);
+	GEN_ASSERT_NOT_NULL(table->Entries);
+	ssize new_num = array_grow_formula( array_num(table->Entries));
+	hashtable_rehash(table, new_num);
+}
+
+template<typename Type> inline
+void hashtable_rehash(HashTable<Type>* table, ssize new_num)
+{
+	GEN_ASSERT_NOT_NULL(table);
+	GEN_ASSERT_NOT_NULL(table->Hashes);
+	GEN_ASSERT_NOT_NULL(table->Entries);
+	ssize last_added_index;
+	HashTable<Type> new_ht = hashtable_init_reserve<Type>( array_get_header(table->Hashes)->Allocator, new_num);
+
+	for (ssize idx = 0; idx < ssize( array_num(table->Entries)); ++idx)
+	{
+		HashTableFindResult find_result;
+		HashTableEntry<Type>& entry = table->Entries[idx];
+
+		find_result = hashtable__find(new_ht, entry.Key);
+		last_added_index = hashtable__add_entry(& new_ht, entry.Key);
+
+		if (find_result.PrevIndex < 0)
+			new_ht.Hashes[find_result.HashIndex] = last_added_index;
+		else
+			new_ht.Entries[find_result.PrevIndex].Next = last_added_index;
+
+		new_ht.Entries[last_added_index].Next = find_result.EntryIndex;
+		new_ht.Entries[last_added_index].Value = entry.Value;
+	}
+
+	hashtable_destroy(table);
+	* table = new_ht;
+}
+
+template<typename Type> inline
+void hashtable_rehash_fast(HashTable<Type> table)
+{
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	ssize idx;
+
+	for (idx = 0; idx < ssize(num(table.Entries)); idx++)
+		table.Entries[idx].Next = -1;
+
+	for (idx = 0; idx < ssize(num(table.Hashes)); idx++)
+		table.Hashes[idx] = -1;
+
+	for (idx = 0; idx < ssize(num(table.Entries)); idx++)
+	{
+		HashTableEntry<Type>* entry;
+		HashTableFindResult find_result;
+
+		entry = &table.Entries[idx];
+		find_result = find(table, entry->Key);
+
+		if (find_result.PrevIndex < 0)
+			table.Hashes[find_result.HashIndex] = idx;
+		else
+			table.Entries[find_result.PrevIndex].Next = idx;
+	}
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_remove(HashTable<Type> table, u64 key) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	HashTableFindResult find_result = find(table, key);
+
+	if (find_result.EntryIndex >= 0) {
+		remove_at(table.Entries, find_result.EntryIndex);
+		rehash_fast(table);
+	}
+}
+
+template<typename Type> FORCEINLINE
+void hashtable_remove_entry(HashTable<Type> table, ssize idx) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	remove_at(table.Entries, idx);
+}
+
+template<typename Type> inline
+void hashtable_set(HashTable<Type>* table, u64 key, Type value)
+{
+	GEN_ASSERT_NOT_NULL(table);
+	GEN_ASSERT_NOT_NULL(table->Hashes);
+	GEN_ASSERT_NOT_NULL(table->Entries);
+	ssize idx;
+	HashTableFindResult find_result;
+
+	if (hashtable_full(* table))
+		hashtable_grow(table);
+
+	find_result = hashtable__find(* table, key);
+	if (find_result.EntryIndex >= 0) {
+		idx = find_result.EntryIndex;
+	}
+	else
+	{
+		idx = hashtable__add_entry(table, key);
+
+		if (find_result.PrevIndex >= 0) {
+			table->Entries[find_result.PrevIndex].Next = idx;
+		}
+		else {
+			table->Hashes[find_result.HashIndex] = idx;
+		}
+	}
+
+	table->Entries[idx].Value = value;
+
+	if (hashtable_full(* table))
+		hashtable_grow(table);
+}
+
+template<typename Type> FORCEINLINE
+ssize hashtable_slot(HashTable<Type> table, u64 key) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	for (ssize idx = 0; idx < ssize(num(table.Hashes)); ++idx)
+		if (table.Hashes[idx] == key)
+			return idx;
+
+	return -1;
+}
+
+template<typename Type> FORCEINLINE
+ssize hashtable__add_entry(HashTable<Type>* table, u64 key) {
+	GEN_ASSERT_NOT_NULL(table);
+	GEN_ASSERT_NOT_NULL(table->Hashes);
+	GEN_ASSERT_NOT_NULL(table->Entries);
+	ssize idx;
+	HashTableEntry<Type> entry = { key, -1 };
+
+	idx = array_num(table->Entries);
+	array_append( table->Entries, entry);
+	return idx;
+}
+
+template<typename Type> inline
+HashTableFindResult hashtable__find(HashTable<Type> table, u64 key)
+{
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	HashTableFindResult result = { -1, -1, -1 };
+
+	if (array_num(table.Hashes) > 0)
+	{
+		result.HashIndex = key % array_num(table.Hashes);
+		result.EntryIndex = table.Hashes[result.HashIndex];
+
+		while (result.EntryIndex >= 0)
+		{
+			if (table.Entries[result.EntryIndex].Key == key)
+				break;
+
+			result.PrevIndex = result.EntryIndex;
+			result.EntryIndex = table.Entries[result.EntryIndex].Next;
+		}
+	}
+
+	return result;
+}
+
+template<typename Type> FORCEINLINE
+bool hashtable_full(HashTable<Type> table) {
+	GEN_ASSERT_NOT_NULL(table.Hashes);
+	GEN_ASSERT_NOT_NULL(table.Entries);
+	usize critical_load = usize(HashTable_CriticalLoadScale * f32(array_num(table.Hashes)));
+	b32 result = array_num(table.Entries) > critical_load;
+	return result;
+}
+
+#define hashtable_init(type, allocator)              hashtable_init        <type              >(allocator)
+#define hashtable_init_reserve(type, allocator, num) hashtable_init_reserve<type              >(allocator, num)
+#define hashtable_clear(table)                       hashtable_clear       < get_hashtable_underlying_type(table) >(table)
+#define hashtable_destroy(table)                     hashtable_destroy     < get_hashtable_underlying_type(table) >(& table)
+#define hashtable_get(table, key)                    hashtable_get         < get_hashtable_underlying_type(table) >(table, key)
+#define hashtable_grow(table)                        hashtable_grow        < get_hashtable_underlying_type(table) >(& table)
+#define hashtable_rehash(table, new_num)             hashtable_rehash      < get_hashtable_underlying_type(table) >(& table, new_num)
+#define hashtable_rehash_fast(table)                 hashtable_rehash_fast < get_hashtable_underlying_type(table) >(table)
+#define hashtable_remove(table, key)                 hashtable_remove      < get_hashtable_underlying_type(table) >(table, key)
+#define hashtable_remove_entry(table, idx)           hashtable_remove_entry< get_hashtable_underlying_type(table) >(table, idx)
+#define hashtable_set(table, key, value)             hashtable_set         < get_hashtable_underlying_type(table) >(& table, key, value)
+#define hashtable_slot(table, key)                   hashtable_slot        < get_hashtable_underlying_type(table) >(table, key)
+#define hashtable_map(table, map_proc)               hashtable_map         < get_hashtable_underlying_type(table) >(table, map_proc)
+#define hashtable_map_mut(table, map_proc)           hashtable_map_mut     < get_hashtable_underlying_type(table) >(table, map_proc)
+
+//#define hashtable_add_entry(table, key)              hashtable_add_entry   < get_hashtable_underlying_type(table) >(& table, key)
+//#define hashtable_find(table, key)                   hashtable_find        < get_hashtable_underlying_type(table) >(table, key)
+//#define hashtable_full(table)                        hashtable_full        < get_hashtable_underlying_type(table) >(table)
+
+#pragma endregion HashTable
 
 #pragma endregion Containers
 
@@ -2130,456 +2702,745 @@ u64 crc64( void const* data, ssize len );
 
 #pragma region Strings
 
-// Constant string with length.
-struct StrC
-{
-	ssize          Len;
-	char const* Ptr;
+struct Str;
 
-	operator char const* ()               const { return Ptr; }
-	char const& operator[]( ssize index ) const { return Ptr[index]; }
+Str         to_str_from_c_str       (char const* bad_string);
+bool        str_are_equal           (Str lhs, Str rhs);
+char const* str_back                (Str str);
+bool        str_contains            (Str str, Str substring);
+Str         str_duplicate           (Str str, AllocatorInfo allocator);
+b32         str_starts_with         (Str str, Str substring);
+Str         str_visualize_whitespace(Str str, AllocatorInfo allocator);
+
+// Constant string with length.
+struct Str
+{
+	char const* Ptr;
+	ssize       Len;
+
+#if GEN_COMPILER_CPP
+	FORCEINLINE operator char const* ()               const { return Ptr; }
+	FORCEINLINE char const& operator[]( ssize index ) const { return Ptr[index]; }
+
+#if ! GEN_C_LIKE_CPP
+	FORCEINLINE bool        is_equal            (Str rhs)                 const { return str_are_equal(* this, rhs); }
+	FORCEINLINE char const* back                ()                        const { return str_back(* this); }
+	FORCEINLINE bool        contains            (Str substring)           const { return str_contains(* this, substring); }
+	FORCEINLINE Str         duplicate           (AllocatorInfo allocator) const { return str_duplicate(* this, allocator); }
+	FORCEINLINE b32         starts_with         (Str substring)           const { return str_starts_with(* this, substring); }
+	FORCEINLINE Str         visualize_whitespace(AllocatorInfo allocator) const { return str_visualize_whitespace(* this, allocator); }
+#endif
+#endif
 };
 
-#define cast_to_strc( str ) * rcast( StrC*, (str) - sizeof(ssize) )
-#define txt( text )         StrC { sizeof( text ) - 1, ( text ) }
+#define cast_to_str( str ) * rcast( Str*, (str) - sizeof(ssize) )
+
+#ifndef txt
+#	if GEN_COMPILER_CPP
+#		define txt( text )          GEN_NS Str { ( text ), sizeof( text ) - 1 }
+#	else
+#		define txt( text )         (GEN_NS Str){ ( text ), sizeof( text ) - 1 }
+#	endif
+#endif
+
+GEN_API_C_BEGIN
+FORCEINLINE char const* str_begin(Str str)                   { return str.Ptr; }
+FORCEINLINE char const* str_end  (Str str)                   { return str.Ptr + str.Len; }
+FORCEINLINE char const* str_next (Str str, char const* iter) { return iter + 1; }
+GEN_API_C_END
+
+#if GEN_COMPILER_CPP
+FORCEINLINE char const* begin(Str str)                   { return str.Ptr; }
+FORCEINLINE char const* end  (Str str)                   { return str.Ptr + str.Len; }
+FORCEINLINE char const* next (Str str, char const* iter) { return iter + 1; }
+#endif
 
 inline
-StrC to_str( char const* str )
+bool str_are_equal(Str lhs, Str rhs)
 {
-	return { str_len( str ), str };
+	if (lhs.Len != rhs.Len)
+		return false;
+
+	for (ssize idx = 0; idx < lhs.Len; ++idx)
+		if (lhs.Ptr[idx] != rhs.Ptr[idx])
+			return false;
+
+	return true;
 }
 
-// Dynamic String
+inline
+char const* str_back(Str str) {
+	return & str.Ptr[str.Len - 1];
+}
+
+inline
+bool str_contains(Str str, Str substring)
+{
+	if (substring.Len > str.Len)
+		return false;
+
+	ssize main_len = str.Len;
+	ssize sub_len  = substring.Len;
+	for (ssize idx = 0; idx <= main_len - sub_len; ++idx)
+	{
+		if (c_str_compare_len(str.Ptr + idx, substring.Ptr, sub_len) == 0)
+			return true;
+	}
+	return false;
+}
+
+inline
+b32 str_starts_with(Str str, Str substring) {
+	if (substring.Len > str.Len)
+		return false;
+
+	b32 result = c_str_compare_len(str.Ptr, substring.Ptr, substring.Len) == 0;
+		return result;
+}
+
+inline
+Str to_str_from_c_str( char const* bad_str ) {
+	Str result = { bad_str, c_str_len( bad_str ) };
+	return result;
+}
+
+// Dynamic StrBuilder
 // This is directly based off the ZPL string api.
 // They used a header pattern
 // I kept it for simplicty of porting but its not necessary to keep it that way.
-struct String
+#pragma region StrBuilder
+struct StrBuilderHeader;
+
+#if GEN_COMPILER_C
+typedef char* StrBuilder;
+#else
+struct StrBuilder;
+#endif
+
+FORCEINLINE usize strbuilder_grow_formula(usize value);
+
+StrBuilder        strbuilder_make_c_str          (AllocatorInfo allocator, char const*  str);
+StrBuilder        strbuilder_make_str            (AllocatorInfo allocator, Str         str);
+StrBuilder        strbuilder_make_reserve        (AllocatorInfo allocator, ssize        capacity);
+StrBuilder        strbuilder_make_length         (AllocatorInfo allocator, char const*  str,   ssize length);
+StrBuilder        strbuilder_fmt                 (AllocatorInfo allocator, char*        buf,   ssize buf_size,  char const* fmt, ...);
+StrBuilder        strbuilder_fmt_buf             (AllocatorInfo allocator, char const*  fmt, ...);
+StrBuilder        strbuilder_join                (AllocatorInfo allocator, char const** parts, ssize num_parts, char const* glue);
+bool              strbuilder_are_equal           (StrBuilder const lhs, StrBuilder const rhs);
+bool              strbuilder_are_equal_str       (StrBuilder const lhs, Str rhs);
+bool              strbuilder_make_space_for      (StrBuilder*      str, char const*  to_append, ssize add_len);
+bool              strbuilder_append_char         (StrBuilder*      str, char         c);
+bool              strbuilder_append_c_str        (StrBuilder*      str, char const*  c_str_to_append);
+bool              strbuilder_append_c_str_len    (StrBuilder*      str, char const*  c_str_to_append, ssize length);
+bool              strbuilder_append_str          (StrBuilder*      str, Str         c_str_to_append);
+bool              strbuilder_append_string       (StrBuilder*      str, StrBuilder const other);
+bool              strbuilder_append_fmt          (StrBuilder*      str, char const*  fmt, ...);
+ssize             strbuilder_avail_space         (StrBuilder const str);
+char*             strbuilder_back                (StrBuilder       str);
+bool              strbuilder_contains_str        (StrBuilder const str, Str         substring);
+bool              strbuilder_contains_string     (StrBuilder const str, StrBuilder const substring);
+ssize             strbuilder_capacity            (StrBuilder const str);
+void              strbuilder_clear               (StrBuilder       str);
+StrBuilder        strbuilder_duplicate           (StrBuilder const str, AllocatorInfo allocator);
+void              strbuilder_free                (StrBuilder*      str);
+StrBuilderHeader* strbuilder_get_header          (StrBuilder       str);
+ssize             strbuilder_length              (StrBuilder const str);
+b32               strbuilder_starts_with_str     (StrBuilder const str, Str   substring);
+b32               strbuilder_starts_with_string  (StrBuilder const str, StrBuilder substring);
+void              strbuilder_skip_line           (StrBuilder       str);
+void              strbuilder_strip_space         (StrBuilder       str);
+Str               strbuilder_to_str              (StrBuilder       str);
+void              strbuilder_trim                (StrBuilder       str, char const* cut_set);
+void              strbuilder_trim_space          (StrBuilder       str);
+StrBuilder        strbuilder_visualize_whitespace(StrBuilder const str);
+
+struct StrBuilderHeader {
+	AllocatorInfo Allocator;
+	ssize         Capacity;
+	ssize         Length;
+};
+
+#if GEN_COMPILER_CPP
+struct StrBuilder
 {
-	struct Header
-	{
-		AllocatorInfo Allocator;
-		ssize            Capacity;
-		ssize            Length;
-	};
+	char* Data;
 
-	static
-	usize grow_formula( usize value )
-	{
-		// Using a very aggressive growth formula to reduce time mem_copying with recursive calls to append in this library.
-		return 4 * value + 8;
-	}
+	FORCEINLINE operator char*()             { return Data; }
+	FORCEINLINE operator char const*() const { return Data; }
+	FORCEINLINE operator Str()         const { return { Data, strbuilder_length(* this) }; }
 
-	static
-	String make( AllocatorInfo allocator, char const* str )
-	{
-		ssize length = str ? str_len( str ) : 0;
-		return make_length( allocator, str, length );
-	}
-
-	static
-	String make( AllocatorInfo allocator, StrC str )
-	{
-		return make_length( allocator, str.Ptr, str.Len );
-	}
-
-	static
-	String make_reserve( AllocatorInfo allocator, ssize capacity );
-
-	static
-	String make_length( AllocatorInfo allocator, char const* str, ssize length );
-
-	static
-	String fmt( AllocatorInfo allocator, char* buf, ssize buf_size, char const* fmt, ... );
-
-	static
-	String fmt_buf( AllocatorInfo allocator, char const* fmt, ... );
-
-	static
-	String join( AllocatorInfo allocator, char const** parts, ssize num_parts, char const* glue )
-	{
-		String result = make( allocator, "" );
-
-		for ( ssize idx = 0; idx < num_parts; ++idx )
-		{
-			result.append( parts[ idx ] );
-
-			if ( idx < num_parts - 1 )
-				result.append( glue );
-		}
-
-		return result;
-	}
-
-	static
-	bool are_equal( String lhs, String rhs )
-	{
-		if ( lhs.length() != rhs.length() )
-			return false;
-
-		for ( ssize idx = 0; idx < lhs.length(); ++idx )
-			if ( lhs[ idx ] != rhs[ idx ] )
-				return false;
-
-		return true;
-	}
-
-	static
-	bool are_equal( String lhs, StrC rhs )
-	{
-		if ( lhs.length() != (rhs.Len) )
-			return false;
-
-		for ( ssize idx = 0; idx < lhs.length(); ++idx )
-			if ( lhs[idx] != rhs[idx] )
-				return false;
-
-		return true;
-	}
-
-	bool make_space_for( char const* str, ssize add_len );
-
-	bool append( char c )
-	{
-		return append( & c, 1 );
-	}
-
-	bool append( char const* str )
-	{
-		return append( str, str_len( str ) );
-	}
-
-	bool append( char const* str, ssize length )
-	{
-		if ( sptr(str) > 0 )
-		{
-			ssize curr_len = this->length();
-
-			if ( ! make_space_for( str, length ) )
-				return false;
-
-			Header& header = get_header();
-
-			mem_copy( Data + curr_len, str, length );
-
-			Data[ curr_len + length ] = '\0';
-
-			header.Length = curr_len + length;
-		}
-		return str != nullptr;
-	}
-
-	bool append( StrC str)
-	{
-		return append( str.Ptr, str.Len );
-	}
-
-	bool append( const String other )
-	{
-		return append( other.Data, other.length() );
-	}
-
-	bool append_fmt( char const* fmt, ... );
-
-	ssize avail_space() const
-	{
-		Header const&
-		header = * rcast( Header const*, Data - sizeof( Header ));
-
-		return header.Capacity - header.Length;
-	}
-
-	char& back()
-	{
-		return Data[ length() - 1 ];
-	}
-
-	bool contains(StrC substring) const
-	{
-		Header const& header = * rcast( Header const*, Data - sizeof( Header ));
-
-		if (substring.Len > header.Length)
-			return false;
-
-		ssize main_len = header.Length;
-		ssize sub_len  = substring.Len;
-
-		for (ssize i = 0; i <= main_len - sub_len; ++i)
-		{
-			if (str_compare(Data + i, substring.Ptr, sub_len) == 0)
-				return true;
-		}
-
-		return false;
-	}
-
-	bool contains(String const& substring) const
-	{
-		Header const& header = * rcast( Header const*, Data - sizeof( Header ));
-
-		if (substring.length() > header.Length)
-			return false;
-
-		ssize main_len = header.Length;
-		ssize sub_len  = substring.length();
-
-		for (ssize i = 0; i <= main_len - sub_len; ++i)
-		{
-			if (str_compare(Data + i, substring.Data, sub_len) == 0)
-				return true;
-		}
-
-		return false;
-	}
-
-	ssize capacity() const
-	{
-		Header const&
-		header = * rcast( Header const*, Data - sizeof( Header ));
-
-		return header.Capacity;
-	}
-
-	void clear()
-	{
-		get_header().Length = 0;
-	}
-
-	String duplicate( AllocatorInfo allocator ) const
-	{
-		return make_length( allocator, Data, length() );
-	}
-
-	void free()
-	{
-		if ( ! Data )
-			return;
-
-		Header& header = get_header();
-
-		gen::free( header.Allocator, & header );
-	}
-
-	Header& get_header()
-	{
-		return *(Header*)(Data - sizeof(Header));
-	}
-
-	ssize length() const
-	{
-		Header const&
-		header = * rcast( Header const*, Data - sizeof( Header ));
-
-		return header.Length;
-	}
-
-	b32 starts_with( StrC substring ) const
-	{
-		if (substring.Len > length())
-			return false;
-
-		b32 result = str_compare(Data, substring.Ptr, substring.Len ) == 0;
-		return result;
-	}
-
-	b32 starts_with( String substring ) const
-	{
-		if (substring.length() > length())
-			return false;
-
-		b32 result = str_compare(Data, substring, substring.length() - 1 ) == 0;
-		return result;
-	}
-
-	void skip_line()
-	{
-	#define current (*scanner)
-		char* scanner = Data;
-		while ( current != '\r' && current != '\n' )
-		{
-			++ scanner;
-		}
-
-		s32 new_length = scanner - Data;
-
-		if ( current == '\r' )
-		{
-			new_length += 1;
-		}
-
-		mem_move( Data, scanner, new_length );
-
-		Header* header = & get_header();
-		header->Length = new_length;
-	#undef current
-	}
-
-	void strip_space()
-	{
-		char* write_pos = Data;
-		char* read_pos  = Data;
-
-		while ( * read_pos)
-		{
-			if ( ! char_is_space( *read_pos ))
-			{
-				*write_pos = *read_pos;
-				write_pos++;
-			}
-			read_pos++;
-		}
-
-		write_pos[0] = '\0';  // Null-terminate the modified string
-
-		// Update the length if needed
-		get_header().Length = write_pos - Data;
-	}
-
-	void trim( char const* cut_set )
-	{
-		ssize len = 0;
-
-		char* start_pos = Data;
-		char* end_pos   = Data + length() - 1;
-
-		while ( start_pos <= end_pos && char_first_occurence( cut_set, *start_pos ) )
-			start_pos++;
-
-		while ( end_pos > start_pos && char_first_occurence( cut_set, *end_pos ) )
-			end_pos--;
-
-		len = scast( ssize, ( start_pos > end_pos ) ? 0 : ( ( end_pos - start_pos ) + 1 ) );
-
-		if ( Data != start_pos )
-			mem_move( Data, start_pos, len );
-
-		Data[ len ] = '\0';
-
-		get_header().Length = len;
-	}
-
-	void trim_space()
-	{
-		return trim( " \t\r\n\v\f" );
-	}
-
-	// Debug function that provides a copy of the string with whitespace characters visualized.
-	String visualize_whitespace() const
-	{
-		Header* header = (Header*)(Data - sizeof(Header));
-
-		String result = make_reserve(header->Allocator, length() * 2); // Assume worst case for space requirements.
-
-		for ( char c : *this )
-		{
-			switch ( c )
-			{
-				case ' ':
-					result.append( txt("·") );
-				break;
-				case '\t':
-					result.append( txt("→") );
-				break;
-				case '\n':
-					result.append( txt("↵") );
-				break;
-				case '\r':
-					result.append( txt("⏎") );
-				break;
-				case '\v':
-					result.append( txt("⇕") );
-				break;
-				case '\f':
-					result.append( txt("⌂") );
-				break;
-				default:
-					result.append(c);
-				break;
-			}
-		}
-
-		return result;
-	}
-
-	// For-range support
-
-	char* begin() const
-	{
-		return Data;
-	}
-
-	char* end() const
-	{
-		Header const&
-		header = * rcast( Header const*, Data - sizeof( Header ));
-
-		return Data + header.Length;
-	}
-
-	operator bool()
-	{
-		return Data != nullptr;
-	}
-
-	operator char* ()
-	{
-		return Data;
-	}
-
-	operator char const* () const
-	{
-		return Data;
-	}
-
-	operator StrC() const
-	{
-		return { length(), Data };
-	}
-
-	// Used with cached strings
-	// Essentially makes the string a string view.
-	String const& operator = ( String const& other ) const
-	{
-		if ( this == & other )
+	StrBuilder const& operator=(StrBuilder const& other) const {
+		if (this == &other)
 			return *this;
 
-		String*
-		this_ = ccast(String*, this);
+		StrBuilder* this_ = ccast(StrBuilder*, this);
 		this_->Data = other.Data;
 
 		return *this;
 	}
 
-	char& operator [] ( ssize index )
-	{
-		return Data[ index ];
+	FORCEINLINE char&       operator[](ssize index)       { return Data[index]; }
+	FORCEINLINE char const& operator[](ssize index) const { return Data[index]; }
+
+	       FORCEINLINE bool operator==(std::nullptr_t) const                 { return     Data == nullptr; }
+	       FORCEINLINE bool operator!=(std::nullptr_t) const                 { return     Data != nullptr; }
+	friend FORCEINLINE bool operator==(std::nullptr_t, const StrBuilder str) { return str.Data == nullptr; }
+	friend FORCEINLINE bool operator!=(std::nullptr_t, const StrBuilder str) { return str.Data != nullptr; }
+
+#if ! GEN_C_LIKE_CPP
+	FORCEINLINE char* begin() const { return Data; }
+	FORCEINLINE char* end()   const { return Data + strbuilder_length(* this); }
+
+#pragma region Member Mapping
+	FORCEINLINE static StrBuilder make(AllocatorInfo allocator, char const* str)                { return strbuilder_make_c_str(allocator, str); }
+	FORCEINLINE static StrBuilder make(AllocatorInfo allocator, Str str)                        { return strbuilder_make_str(allocator, str); }
+	FORCEINLINE static StrBuilder make_reserve(AllocatorInfo allocator, ssize cap)              { return strbuilder_make_reserve(allocator, cap); }
+	FORCEINLINE static StrBuilder make_length(AllocatorInfo a, char const* s, ssize l)          { return strbuilder_make_length(a, s, l); }
+	FORCEINLINE static StrBuilder join(AllocatorInfo a, char const** p, ssize n, char const* g) { return strbuilder_join(a, p, n, g); }
+	FORCEINLINE static usize      grow_formula(usize value)                                     { return strbuilder_grow_formula(value); }
+
+	static
+	StrBuilder fmt(AllocatorInfo allocator, char* buf, ssize buf_size, char const* fmt, ...) {
+		va_list va;
+		va_start(va, fmt);
+		ssize res = c_str_fmt_va(buf, buf_size, fmt, va) - 1;
+		va_end(va);
+		return strbuilder_make_length(allocator, buf, res);
 	}
 
-	char const& operator [] ( ssize index ) const
-	{
-		return Data[ index ];
+	static
+	StrBuilder fmt_buf(AllocatorInfo allocator, char const* fmt, ...) {
+		local_persist thread_local
+		char buf[GEN_PRINTF_MAXLEN] = { 0 };
+		va_list va;
+		va_start(va, fmt);
+		ssize res = c_str_fmt_va(buf, GEN_PRINTF_MAXLEN, fmt, va) - 1;
+		va_end(va);
+		return strbuilder_make_length(allocator, buf, res);
 	}
 
-	char* Data;
+	FORCEINLINE bool              make_space_for(char const* str, ssize add_len) { return strbuilder_make_space_for(this, str, add_len); }
+	FORCEINLINE bool              append(char c)                                 { return strbuilder_append_char(this, c); }
+	FORCEINLINE bool              append(char const* str)                        { return strbuilder_append_c_str(this, str); }
+	FORCEINLINE bool              append(char const* str, ssize length)          { return strbuilder_append_c_str_len(this, str, length); }
+	FORCEINLINE bool              append(Str str)                                { return strbuilder_append_str(this, str); }
+	FORCEINLINE bool              append(const StrBuilder other)                 { return strbuilder_append_string(this, other); }
+	FORCEINLINE ssize             avail_space() const                            { return strbuilder_avail_space(* this); }
+	FORCEINLINE char*             back()                                         { return strbuilder_back(* this); }
+	FORCEINLINE bool              contains(Str substring) const                  { return strbuilder_contains_str(* this, substring); }
+	FORCEINLINE bool              contains(StrBuilder const& substring) const    { return strbuilder_contains_string(* this, substring); }
+	FORCEINLINE ssize             capacity() const                               { return strbuilder_capacity(* this); }
+	FORCEINLINE void              clear()                                        {        strbuilder_clear(* this); }
+	FORCEINLINE StrBuilder        duplicate(AllocatorInfo allocator) const       { return strbuilder_duplicate(* this, allocator); }
+	FORCEINLINE void              free()                                         {        strbuilder_free(this); }
+	FORCEINLINE bool              is_equal(StrBuilder const& other) const        { return strbuilder_are_equal(* this, other); }
+	FORCEINLINE bool              is_equal(Str other) const                      { return strbuilder_are_equal_str(* this, other); }
+	FORCEINLINE ssize             length() const                                 { return strbuilder_length(* this); }
+	FORCEINLINE b32               starts_with(Str substring) const               { return strbuilder_starts_with_str(* this, substring); }
+	FORCEINLINE b32               starts_with(StrBuilder substring) const        { return strbuilder_starts_with_string(* this, substring); }
+	FORCEINLINE void              skip_line()                                    {        strbuilder_skip_line(* this); }
+	FORCEINLINE void              strip_space()                                  {        strbuilder_strip_space(* this); }
+	FORCEINLINE Str               to_str()                                       { return { Data, strbuilder_length(*this) }; }
+	FORCEINLINE void              trim(char const* cut_set)                      {        strbuilder_trim(* this, cut_set); }
+	FORCEINLINE void              trim_space()                                   {        strbuilder_trim_space(* this); }
+	FORCEINLINE StrBuilder        visualize_whitespace() const                   { return strbuilder_visualize_whitespace(* this); }
+	FORCEINLINE StrBuilderHeader& get_header()                                   { return * strbuilder_get_header(* this); }
+
+	bool append_fmt(char const* fmt, ...) {
+		ssize res;
+		char buf[GEN_PRINTF_MAXLEN] = { 0 };
+
+		va_list va;
+		va_start(va, fmt);
+		res = c_str_fmt_va(buf, count_of(buf) - 1, fmt, va) - 1;
+		va_end(va);
+
+		return strbuilder_append_c_str_len(this, buf, res);
+	}
+#pragma endregion Member Mapping
+#endif
 };
+#endif
 
-struct String_POD
+FORCEINLINE char* strbuilder_begin(StrBuilder str)                   { return ((char*) str); }
+FORCEINLINE char* strbuilder_end  (StrBuilder str)                   { return ((char*) str + strbuilder_length(str)); }
+FORCEINLINE char* strbuilder_next (StrBuilder str, char const* iter) { return ((char*) iter + 1); }
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+FORCEINLINE char* begin(StrBuilder str)             { return ((char*) str); }
+FORCEINLINE char* end  (StrBuilder str)             { return ((char*) str + strbuilder_length(str)); }
+FORCEINLINE char* next (StrBuilder str, char* iter) { return ((char*) iter + 1); }
+#endif
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+FORCEINLINE bool  make_space_for(StrBuilder& str, char const* to_append, ssize add_len);
+FORCEINLINE bool  append(StrBuilder& str, char c);
+FORCEINLINE bool  append(StrBuilder& str, char const* c_str_to_append);
+FORCEINLINE bool  append(StrBuilder& str, char const* c_str_to_append, ssize length);
+FORCEINLINE bool  append(StrBuilder& str, Str c_str_to_append);
+FORCEINLINE bool  append(StrBuilder& str, const StrBuilder other);
+FORCEINLINE bool  append_fmt(StrBuilder& str, char const* fmt, ...);
+FORCEINLINE char& back(StrBuilder& str);
+FORCEINLINE void  clear(StrBuilder& str);
+FORCEINLINE void  free(StrBuilder& str);
+#endif
+
+FORCEINLINE
+usize strbuilder_grow_formula(usize value) {
+	// Using a very aggressive growth formula to reduce time mem_copying with recursive calls to append in this library.
+	return 4 * value + 8;
+}
+
+FORCEINLINE
+StrBuilder strbuilder_make_c_str(AllocatorInfo allocator, char const* str) {
+	ssize length = str ? c_str_len(str) : 0;
+	return strbuilder_make_length(allocator, str, length);
+}
+
+FORCEINLINE
+StrBuilder strbuilder_make_str(AllocatorInfo allocator, Str str) {
+	return strbuilder_make_length(allocator, str.Ptr, str.Len);
+}
+
+inline
+StrBuilder strbuilder_fmt(AllocatorInfo allocator, char* buf, ssize buf_size, char const* fmt, ...) {
+	va_list va;
+	va_start(va, fmt);
+	ssize res = c_str_fmt_va(buf, buf_size, fmt, va) - 1;
+	va_end(va);
+
+	return strbuilder_make_length(allocator, buf, res);
+}
+
+inline
+StrBuilder strbuilder_fmt_buf(AllocatorInfo allocator, char const* fmt, ...)
 {
+	local_persist thread_local
+	PrintF_Buffer buf = struct_init(PrintF_Buffer, {0});
+
+	va_list va;
+	va_start(va, fmt);
+	ssize res = c_str_fmt_va(buf, GEN_PRINTF_MAXLEN, fmt, va) -1;
+	va_end(va);
+
+	return strbuilder_make_length(allocator, buf, res);
+}
+
+inline
+StrBuilder strbuilder_join(AllocatorInfo allocator, char const** parts, ssize num_parts, char const* glue)
+{
+	StrBuilder result = strbuilder_make_c_str(allocator, "");
+
+	for (ssize idx = 0; idx < num_parts; ++idx)
+	{
+		strbuilder_append_c_str(& result, parts[idx]);
+
+		if (idx < num_parts - 1)
+			strbuilder_append_c_str(& result, glue);
+	}
+
+	return result;
+}
+
+FORCEINLINE
+bool strbuilder_append_char(StrBuilder* str, char c) {
+	GEN_ASSERT(str != nullptr);
+	return strbuilder_append_c_str_len( str, (char const*)& c, (ssize)1);
+}
+
+FORCEINLINE
+bool strbuilder_append_c_str(StrBuilder* str, char const* c_str_to_append) {
+	GEN_ASSERT(str != nullptr);
+	return strbuilder_append_c_str_len(str, c_str_to_append, c_str_len(c_str_to_append));
+}
+
+inline
+bool strbuilder_append_c_str_len(StrBuilder* str, char const* c_str_to_append, ssize append_length)
+{
+	GEN_ASSERT(str != nullptr);
+	if ( rcast(sptr, c_str_to_append) > 0)
+	{
+		ssize curr_len = strbuilder_length(* str);
+
+		if ( ! strbuilder_make_space_for(str, c_str_to_append, append_length))
+			return false;
+
+		StrBuilderHeader* header = strbuilder_get_header(* str);
+
+		char* Data = * str;
+		mem_copy( Data + curr_len, c_str_to_append, append_length);
+
+		Data[curr_len + append_length] = '\0';
+
+		header->Length = curr_len + append_length;
+	}
+	return c_str_to_append != nullptr;
+}
+
+FORCEINLINE
+bool strbuilder_append_str(StrBuilder* str, Str c_str_to_append) {
+	GEN_ASSERT(str != nullptr);
+	return strbuilder_append_c_str_len(str, c_str_to_append.Ptr, c_str_to_append.Len);
+}
+
+FORCEINLINE
+bool strbuilder_append_string(StrBuilder* str, StrBuilder const other) {
+	GEN_ASSERT(str != nullptr);
+	return strbuilder_append_c_str_len(str, (char const*)other, strbuilder_length(other));
+}
+
+bool strbuilder_append_fmt(StrBuilder* str, char const* fmt, ...) {
+	GEN_ASSERT(str != nullptr);
+	ssize res;
+	char buf[GEN_PRINTF_MAXLEN] = { 0 };
+
+	va_list va;
+	va_start(va, fmt);
+	res = c_str_fmt_va(buf, count_of(buf) - 1, fmt, va) - 1;
+	va_end(va);
+
+	return strbuilder_append_c_str_len(str, (char const*)buf, res);
+}
+
+inline
+bool strbuilder_are_equal_string(StrBuilder const lhs, StrBuilder const rhs)
+{
+	if (strbuilder_length(lhs) != strbuilder_length(rhs))
+		return false;
+
+	for (ssize idx = 0; idx < strbuilder_length(lhs); ++idx)
+		if (lhs[idx] != rhs[idx])
+			return false;
+
+	return true;
+}
+
+inline
+bool strbuilder_are_equal_str(StrBuilder const lhs, Str rhs)
+{
+	if (strbuilder_length(lhs) != (rhs.Len))
+		return false;
+
+	for (ssize idx = 0; idx < strbuilder_length(lhs); ++idx)
+		if (lhs[idx] != rhs.Ptr[idx])
+			return false;
+
+	return true;
+}
+
+FORCEINLINE
+ssize strbuilder_avail_space(StrBuilder const str) {
+	StrBuilderHeader const* header = rcast(StrBuilderHeader const*, scast(char const*, str) - sizeof(StrBuilderHeader));
+	return header->Capacity - header->Length;
+}
+
+FORCEINLINE
+char* strbuilder_back(StrBuilder str) {
+	return & (str)[strbuilder_length(str) - 1];
+}
+
+inline
+bool strbuilder_contains_StrC(StrBuilder const str, Str substring)
+{
+	StrBuilderHeader const* header = rcast(StrBuilderHeader const*, scast(char const*, str) - sizeof(StrBuilderHeader));
+
+	if (substring.Len > header->Length)
+		return false;
+
+	ssize main_len = header->Length;
+	ssize sub_len  = substring.Len;
+
+	for (ssize idx = 0; idx <= main_len - sub_len; ++idx)
+	{
+		if (c_str_compare_len(str + idx, substring.Ptr, sub_len) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+inline
+bool strbuilder_contains_string(StrBuilder const str, StrBuilder const substring)
+{
+	StrBuilderHeader const* header = rcast(StrBuilderHeader const*, scast(char const*, str) - sizeof(StrBuilderHeader));
+
+	if (strbuilder_length(substring) > header->Length)
+		return false;
+
+	ssize main_len = header->Length;
+	ssize sub_len  = strbuilder_length(substring);
+
+	for (ssize idx = 0; idx <= main_len - sub_len; ++idx)
+	{
+		if (c_str_compare_len(str + idx, substring, sub_len) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+FORCEINLINE
+ssize strbuilder_capacity(StrBuilder const str) {
+	StrBuilderHeader const* header = rcast(StrBuilderHeader const*, scast(char const*, str) - sizeof(StrBuilderHeader));
+	return header->Capacity;
+}
+
+FORCEINLINE
+void strbuilder_clear(StrBuilder str) {
+	strbuilder_get_header(str)->Length = 0;
+}
+
+FORCEINLINE
+StrBuilder strbuilder_duplicate(StrBuilder const str, AllocatorInfo allocator) {
+	return strbuilder_make_length(allocator, str, strbuilder_length(str));
+}
+
+FORCEINLINE
+void strbuilder_free(StrBuilder* str) {
+	GEN_ASSERT(str != nullptr);
+	if (! (* str))
+		return;
+
+	StrBuilderHeader* header = strbuilder_get_header(* str);
+	allocator_free(header->Allocator, header);
+}
+
+FORCEINLINE
+StrBuilderHeader* strbuilder_get_header(StrBuilder str) {
+	return (StrBuilderHeader*)(scast(char*, str) - sizeof(StrBuilderHeader));
+}
+
+FORCEINLINE
+ssize strbuilder_length(StrBuilder const str)
+{
+	StrBuilderHeader const* header = rcast(StrBuilderHeader const*, scast(char const*, str) - sizeof(StrBuilderHeader));
+	return header->Length;
+}
+
+inline
+bool strbuilder_make_space_for(StrBuilder* str, char const* to_append, ssize add_len)
+{
+	ssize available = strbuilder_avail_space(* str);
+
+	if (available >= add_len) {
+		return true;
+	}
+	else
+	{
+		ssize new_len, old_size, new_size;
+		void* ptr;
+		void* new_ptr;
+
+		AllocatorInfo allocator = strbuilder_get_header(* str)->Allocator;
+		StrBuilderHeader* header    = nullptr;
+
+		new_len  = strbuilder_grow_formula(strbuilder_length(* str) + add_len);
+		ptr      = strbuilder_get_header(* str);
+		old_size = size_of(StrBuilderHeader) + strbuilder_length(* str) + 1;
+		new_size = size_of(StrBuilderHeader) + new_len + 1;
+
+		new_ptr = resize(allocator, ptr, old_size, new_size);
+
+		if (new_ptr == nullptr)
+			return false;
+
+		header = rcast(StrBuilderHeader*, new_ptr);
+		header->Allocator = allocator;
+		header->Capacity  = new_len;
+
+		char** Data = rcast(char**, str);
+		* Data = rcast(char*, header + 1);
+
+		return true;
+	}
+}
+
+FORCEINLINE
+b32 strbuilder_starts_with_str(StrBuilder const str, Str substring) {
+	if (substring.Len > strbuilder_length(str))
+	return false;
+
+	b32 result = c_str_compare_len(str, substring.Ptr, substring.Len) == 0;
+	return result;
+}
+
+FORCEINLINE
+b32 strbuilder_starts_with_string(StrBuilder const str, StrBuilder substring) {
+	if (strbuilder_length(substring) > strbuilder_length(str))
+		return false;
+
+	b32 result = c_str_compare_len(str, substring, strbuilder_length(substring) - 1) == 0;
+	return result;
+}
+
+inline
+void strbuilder_skip_line(StrBuilder str)
+{
+#define current (*scanner)
+	char* scanner = str;
+	while (current != '\r' && current != '\n') {
+		++scanner;
+	}
+
+	s32 new_length = scanner - str;
+
+	if (current == '\r') {
+		new_length += 1;
+	}
+
+	mem_move((char*)str, scanner, new_length);
+
+	StrBuilderHeader* header = strbuilder_get_header(str);
+	header->Length = new_length;
+#undef current
+}
+
+inline
+void strbuilder_strip_space(StrBuilder str)
+{
+	char* write_pos = str;
+	char* read_pos  = str;
+
+	while (* read_pos)
+	{
+		if (! char_is_space(* read_pos))
+		{
+   			* write_pos = * read_pos;
+			write_pos++;
+		}
+		read_pos++;
+	}
+   write_pos[0] = '\0';  // Null-terminate the modified string
+
+	// Update the length if needed
+	strbuilder_get_header(str)->Length = write_pos - str;
+}
+
+FORCEINLINE
+Str strbuilder_to_str(StrBuilder str) {
+	Str result = { (char const*)str, strbuilder_length(str) };
+	return result;
+}
+
+inline
+void strbuilder_trim(StrBuilder str, char const* cut_set)
+{
+	ssize len = 0;
+
+	char* start_pos = str;
+	char* end_pos   = scast(char*, str) + strbuilder_length(str) - 1;
+
+	while (start_pos <= end_pos && char_first_occurence(cut_set, *start_pos))
+	start_pos++;
+
+	while (end_pos > start_pos && char_first_occurence(cut_set, *end_pos))
+	end_pos--;
+
+	len = scast(ssize, (start_pos > end_pos) ? 0 : ((end_pos - start_pos) + 1));
+
+	if (str != start_pos)
+		mem_move(str, start_pos, len);
+
+	str[len] = '\0';
+
+	strbuilder_get_header(str)->Length = len;
+}
+
+FORCEINLINE
+void strbuilder_trim_space(StrBuilder str) {
+	strbuilder_trim(str, " \t\r\n\v\f");
+}
+
+inline
+StrBuilder strbuilder_visualize_whitespace(StrBuilder const str)
+{
+	StrBuilderHeader* header = (StrBuilderHeader*)(scast(char const*, str) - sizeof(StrBuilderHeader));
+	StrBuilder        result = strbuilder_make_reserve(header->Allocator, strbuilder_length(str) * 2); // Assume worst case for space requirements.
+
+	for (char const* c = strbuilder_begin(str); c != strbuilder_end(str); c = strbuilder_next(str, c))
+	switch ( * c )
+	{
+		case ' ':
+			strbuilder_append_str(& result, txt("·"));
+		break;
+		case '\t':
+			strbuilder_append_str(& result, txt("→"));
+		break;
+		case '\n':
+			strbuilder_append_str(& result, txt("↵"));
+		break;
+		case '\r':
+			strbuilder_append_str(& result, txt("⏎"));
+		break;
+		case '\v':
+			strbuilder_append_str(& result, txt("⇕"));
+		break;
+		case '\f':
+			strbuilder_append_str(& result, txt("⌂"));
+		break;
+		default:
+			strbuilder_append_char(& result, * c);
+		break;
+	}
+
+	return result;
+}
+#pragma endregion StrBuilder
+
+#if GEN_COMPILER_CPP
+struct StrBuilder_POD {
 	char* Data;
 };
-static_assert( sizeof( String_POD ) == sizeof( String ), "String is not a POD" );
+static_assert( sizeof( StrBuilder_POD ) == sizeof( StrBuilder ), "StrBuilder is not a POD" );
+#endif
 
-// Implements basic string interning. Data structure is based off the ZPL Hashtable.
-using StringTable = HashTable<String const>;
+FORCEINLINE
+Str str_duplicate(Str str, AllocatorInfo allocator) {
+	Str result = strbuilder_to_str( strbuilder_make_length(allocator, str.Ptr, str.Len));
+	return result;
+}
+
+inline
+Str str_visualize_whitespace(Str str, AllocatorInfo allocator)
+{
+	StrBuilder result = strbuilder_make_reserve(allocator, str.Len * 2); // Assume worst case for space requirements.
+	for (char const* c = str_begin(str); c != str_end(str); c = str_next(str, c))
+	switch ( * c )
+	{
+		case ' ':
+			strbuilder_append_str(& result, txt("·"));
+		break;
+		case '\t':
+			strbuilder_append_str(& result, txt("→"));
+		break;
+		case '\n':
+			strbuilder_append_str(& result, txt("↵"));
+		break;
+		case '\r':
+			strbuilder_append_str(& result, txt("⏎"));
+		break;
+		case '\v':
+			strbuilder_append_str(& result, txt("⇕"));
+		break;
+		case '\f':
+			strbuilder_append_str(& result, txt("⌂"));
+		break;
+		default:
+			strbuilder_append_char(& result, * c);
+		break;
+}
+	return strbuilder_to_str(result);
+}
 
 // Represents strings cached with the string table.
 // Should never be modified, if changed string is desired, cache_string( str ) another.
-using StringCached = String const;
+typedef Str StrCached;
 
+// Implements basic string interning. Data structure is based off the ZPL Hashtable.
+typedef HashTable(StrCached) StringTable;
 #pragma endregion Strings
 
 #pragma region File Handling
-
-typedef u32 FileMode;
 
 enum FileModeFlag
 {
@@ -2619,11 +3480,12 @@ union FileDescriptor
 	uptr  u;
 };
 
+typedef u32                   FileMode;
 typedef struct FileOperations FileOperations;
 
 #define GEN_FILE_OPEN_PROC( name )     FileError name( FileDescriptor* fd, FileOperations* ops, FileMode mode, char const* filename )
 #define GEN_FILE_READ_AT_PROC( name )  b32 name( FileDescriptor fd, void* buffer, ssize size, s64 offset, ssize* bytes_read, b32 stop_at_newline )
-#define GEN_FILE_WRITE_AT_PROC( name ) b32 name( FileDescriptor fd, void const* buffer, ssize size, s64 offset, ssize* bytes_written )
+#define GEN_FILE_WRITE_AT_PROC( name ) b32 name( FileDescriptor fd, mem_ptr_const buffer, ssize size, s64 offset, ssize* bytes_written )
 #define GEN_FILE_SEEK_PROC( name )     b32 name( FileDescriptor fd, s64 offset, SeekWhenceType whence, s64* new_offset )
 #define GEN_FILE_CLOSE_PROC( name )    void name( FileDescriptor fd )
 
@@ -2656,9 +3518,9 @@ struct DirInfo;
 
 struct DirEntry
 {
-	char const*     filename;
-	struct DirInfo* dir_info;
-	u8              type;
+	char const* filename;
+	DirInfo*    dir_info;
+	u8          type;
 };
 
 struct DirInfo
@@ -2668,7 +3530,7 @@ struct DirInfo
 
 	// Internals
 	char** filenames;    // zpl_array
-	String buf;
+	StrBuilder buf;
 };
 
 struct FileInfo
@@ -2757,6 +3619,7 @@ b32 file_read_at( FileInfo* file, void* buffer, ssize size, s64 offset );
 	*/
 b32 file_read_at_check( FileInfo* file, void* buffer, ssize size, s64 offset, ssize* bytes_read );
 
+typedef struct FileContents FileContents;
 struct FileContents
 {
 	AllocatorInfo allocator;
@@ -2764,8 +3627,8 @@ struct FileContents
 	ssize            size;
 };
 
-constexpr b32 zero_terminate    = true;
-constexpr b32 no_zero_terminate = false;
+constexpr b32 file_zero_terminate    = true;
+constexpr b32 file_no_zero_terminate = false;
 
 /**
 	* Reads the whole file contents
@@ -2839,6 +3702,8 @@ enum FileStreamFlags : u32
 	/* Clones the input buffer so you can write (zpl_file_write*) data into it. */
 	/* Since we work with a clone, the buffer size can dynamically grow as well. */
 	EFileStream_CLONE_WRITABLE = bit( 1 ),
+
+	EFileStream_UNDERLYING = GEN_U32_MAX,
 };
 
 /**

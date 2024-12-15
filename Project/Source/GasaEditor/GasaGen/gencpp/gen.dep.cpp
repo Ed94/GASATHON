@@ -11,6 +11,9 @@
 #   pragma clang diagnostic ignored "-Wunknown-pragmas"
 #	pragma clang diagnostic ignored "-Wvarargs"
 #	pragma clang diagnostic ignored "-Wunused-function"
+#	pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#   pragma clang diagnostic ignored "-W#pragma-messages"
+#	pragma clang diagnostic ignored "-Wstatic-in-inline"
 #endif
 
 #ifdef __GNUC__
@@ -31,9 +34,9 @@
 #			define _printf_err( fmt, ... )   fprintf( stderr, fmt, __VA_ARGS__ )
 #			define _printf_err_va( fmt, va ) vfprintf( stderr, fmt, va )
 #		else
-#			define _strlen                   str_len
-#			define _printf_err( fmt, ... )   str_fmt_out_err( fmt, __VA_ARGS__ )
-#			define _printf_err_va( fmt, va ) str_fmt_out_err_va( fmt, va )
+#			define _strlen                   c_str_len
+#			define _printf_err( fmt, ... )   c_str_fmt_out_err( fmt, __VA_ARGS__ )
+#			define _printf_err_va( fmt, va ) c_str_fmt_out_err_va( fmt, va )
 #		endif
 #	endif
 #
@@ -106,9 +109,9 @@ GEN_NS_BEGIN
 
 #pragma region Debug
 
-void assert_handler( char const* condition, char const* file, s32 line, char const* msg, ... )
+void assert_handler( char const* condition, char const* file, char const* function, s32 line, char const* msg, ... )
 {
-	_printf_err( "%s:(%d): Assert Failure: ", file, line );
+	_printf_err( "%s - %s:(%d): Assert Failure: ", file, function, line );
 
 	if ( condition )
 		_printf_err( "`%s` \n", condition );
@@ -161,7 +164,7 @@ ssize _scan_zpl_i64( const char* text, s32 base, s64* value )
 		text++;
 	}
 
-	if ( base == 16 && str_compare( text, "0x", 2 ) == 0 )
+	if ( base == 16 && c_str_compare_len( text, "0x", 2 ) == 0 )
 		text += 2;
 
 	for ( ;; )
@@ -196,14 +199,14 @@ global const char _num_to_char_table[] =
 	"abcdefghijklmnopqrstuvwxyz"
 	"@$";
 
-s64 str_to_i64( const char* str, char** end_ptr, s32 base )
+s64 c_str_to_i64( const char* str, char** end_ptr, s32 base )
 {
 	ssize  len;
 	s64 value;
 
 	if ( ! base )
 	{
-		if ( ( str_len( str ) > 2 ) && ( str_compare( str, "0x", 2 ) == 0 ) )
+		if ( ( c_str_len( str ) > 2 ) && ( c_str_compare_len( str, "0x", 2 ) == 0 ) )
 			base = 16;
 		else
 			base = 10;
@@ -243,7 +246,7 @@ void i64_to_str( s64 value, char* string, s32 base )
 	if ( negative )
 		*buf++ = '-';
 	*buf = '\0';
-	str_reverse( string );
+	c_str_reverse( string );
 }
 
 void u64_to_str( u64 value, char* string, s32 base )
@@ -264,10 +267,10 @@ void u64_to_str( u64 value, char* string, s32 base )
 	}
 	*buf = '\0';
 
-	str_reverse( string );
+	c_str_reverse( string );
 }
 
-f64 str_to_f64( const char* str, char** end_ptr )
+f64 c_str_to_f64( const char* str, char** end_ptr )
 {
 	f64 result, value, sign, scale;
 	s32 frac;
@@ -384,6 +387,7 @@ enum
 	GEN_FMT_INTS = GEN_FMT_CHAR | GEN_FMT_SHORT | GEN_FMT_INT | GEN_FMT_LONG | GEN_FMT_LLONG | GEN_FMT_SIZE | GEN_FMT_INTPTR
 };
 
+typedef struct _format_info _format_info;
 struct _format_info
 {
 	s32 base;
@@ -394,13 +398,13 @@ struct _format_info
 
 internal ssize _print_string( char* text, ssize max_len, _format_info* info, char const* str )
 {
-	ssize    res = 0, len = 0;
-	ssize    remaining = max_len;
+	ssize res = 0, len = 0;
+	ssize remaining = max_len;
 	char* begin     = text;
 
 	if ( str == NULL && max_len >= 6 )
 	{
-		res += str_copy_nulpad( text, "(null)", 6 );
+		res += c_str_copy_nulpad( text, "(null)", 6 );
 		return res;
 	}
 
@@ -408,7 +412,7 @@ internal ssize _print_string( char* text, ssize max_len, _format_info* info, cha
 		// Made the design decision for this library that precision is the length of the string.
 		len = info->precision;
 	else
-		len = str_len( str );
+		len = c_str_len( str );
 
 	if ( info && ( info->width == 0 && info->flags & GEN_FMT_WIDTH ) )
 	{
@@ -421,7 +425,7 @@ internal ssize _print_string( char* text, ssize max_len, _format_info* info, cha
 			len = info->precision < len ? info->precision : len;
 		if ( res + len > max_len )
 			return res;
-		res  += str_copy_nulpad( text, str, len );
+		res  += c_str_copy_nulpad( text, str, len );
 		text += res;
 
 		if ( info->width > res )
@@ -445,15 +449,15 @@ internal ssize _print_string( char* text, ssize max_len, _format_info* info, cha
 
 		if ( res + len > max_len )
 			return res;
-		res += str_copy_nulpad( text, str, len );
+		res += c_str_copy_nulpad( text, str, len );
 	}
 
 	if ( info )
 	{
 		if ( info->flags & GEN_FMT_UPPER )
-			str_to_upper( begin );
+			c_str_to_upper( begin );
 		else if ( info->flags & GEN_FMT_LOWER )
-			str_to_lower( begin );
+			c_str_to_lower( begin );
 	}
 
 	return res;
@@ -590,7 +594,7 @@ internal ssize _print_f64( char* text, ssize max_len, _format_info* info, b32 is
 	return ( text - text_begin );
 }
 
-neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_list va )
+neverinline ssize c_str_fmt_va( char* text, ssize max_len, char const* fmt, va_list va )
 {
 	char const* text_begin = text;
 	ssize          remaining  = max_len, res;
@@ -598,7 +602,7 @@ neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_lis
 	while ( *fmt )
 	{
 		_format_info info = { 0 };
-		ssize           len  = 0;
+		ssize        len  = 0;
 		info.precision    = -1;
 
 		while ( *fmt && *fmt != '%' && remaining )
@@ -662,7 +666,7 @@ neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_lis
 		}
 		else
 		{
-			info.width = scast( s32, str_to_i64( fmt, ccast( char**, & fmt), 10 ));
+			info.width = scast( s32, c_str_to_i64( fmt, ccast( char**, & fmt), 10 ));
 			if ( info.width != 0 )
 			{
 				info.flags |= GEN_FMT_WIDTH;
@@ -680,7 +684,7 @@ neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_lis
 			}
 			else
 			{
-				info.precision = scast( s32, str_to_i64( fmt, ccast( char**, & fmt), 10 ));
+				info.precision = scast( s32, c_str_to_i64( fmt, ccast( char**, & fmt), 10 ));
 			}
 			info.flags &= ~GEN_FMT_ZERO;
 		}
@@ -771,10 +775,20 @@ neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_lis
 
 			case 'S':
 			{
-				String gen_str = String { va_arg( va, char*) };
+				if ( *(fmt + 1) == 'B' )
+				{
 
-				info.precision = gen_str.length();
-				len            = _print_string( text, remaining, &info, gen_str );
+					++ fmt;
+					StrBuilder gen_str = { va_arg( va, char*) };
+
+					info.precision = strbuilder_length(gen_str);
+					len            = _print_string( text, remaining, &info, gen_str );
+					break;
+				}
+
+				Str gen_str    = va_arg( va, Str);
+				info.precision = gen_str.Len;
+				len            = _print_string( text, remaining, &info, gen_str.Ptr );
 			}
 			break;
 
@@ -874,67 +888,67 @@ neverinline ssize str_fmt_va( char* text, ssize max_len, char const* fmt, va_lis
 	return ( res >= max_len || res < 0 ) ? -1 : res;
 }
 
-char* str_fmt_buf_va( char const* fmt, va_list va )
+char* c_str_fmt_buf_va( char const* fmt, va_list va )
 {
 	local_persist thread_local char buffer[ GEN_PRINTF_MAXLEN ];
-	str_fmt_va( buffer, size_of( buffer ), fmt, va );
+	c_str_fmt_va( buffer, size_of( buffer ), fmt, va );
 	return buffer;
 }
 
-char* str_fmt_buf( char const* fmt, ... )
+char* c_str_fmt_buf( char const* fmt, ... )
 {
 	va_list va;
 	char*   str;
 	va_start( va, fmt );
-	str = str_fmt_buf_va( fmt, va );
+	str = c_str_fmt_buf_va( fmt, va );
 	va_end( va );
 	return str;
 }
 
-ssize str_fmt_file_va( struct FileInfo* f, char const* fmt, va_list va )
+ssize c_str_fmt_file_va( FileInfo* f, char const* fmt, va_list va )
 {
 	local_persist thread_local char buf[ GEN_PRINTF_MAXLEN ];
-	ssize                              len = str_fmt_va( buf, size_of( buf ), fmt, va );
+	ssize                              len = c_str_fmt_va( buf, size_of( buf ), fmt, va );
 	b32                             res = file_write( f, buf, len - 1 );    // NOTE: prevent extra whitespace
 	return res ? len : -1;
 }
 
-ssize str_fmt_file( struct FileInfo* f, char const* fmt, ... )
+ssize c_str_fmt_file( FileInfo* f, char const* fmt, ... )
 {
 	ssize      res;
 	va_list va;
 	va_start( va, fmt );
-	res = str_fmt_file_va( f, fmt, va );
+	res = c_str_fmt_file_va( f, fmt, va );
 	va_end( va );
 	return res;
 }
 
-ssize str_fmt( char* str, ssize n, char const* fmt, ... )
+ssize c_str_fmt( char* str, ssize n, char const* fmt, ... )
 {
 	ssize      res;
 	va_list va;
 	va_start( va, fmt );
-	res = str_fmt_va( str, n, fmt, va );
+	res = c_str_fmt_va( str, n, fmt, va );
 	va_end( va );
 	return res;
 }
 
-ssize str_fmt_out_va( char const* fmt, va_list va )
+ssize c_str_fmt_out_va( char const* fmt, va_list va )
 {
-	return str_fmt_file_va( file_get_standard( EFileStandard_OUTPUT ), fmt, va );
+	return c_str_fmt_file_va( file_get_standard( EFileStandard_OUTPUT ), fmt, va );
 }
 
-ssize str_fmt_out_err_va( char const* fmt, va_list va )
+ssize c_str_fmt_out_err_va( char const* fmt, va_list va )
 {
-	return str_fmt_file_va( file_get_standard( EFileStandard_ERROR ), fmt, va );
+	return c_str_fmt_file_va( file_get_standard( EFileStandard_ERROR ), fmt, va );
 }
 
-ssize str_fmt_out_err( char const* fmt, ... )
+ssize c_str_fmt_out_err( char const* fmt, ... )
 {
 	ssize      res;
 	va_list va;
 	va_start( va, fmt );
-	res = str_fmt_out_err_va( fmt, va );
+	res = c_str_fmt_out_err_va( fmt, va );
 	va_end( va );
 	return res;
 }
@@ -1031,9 +1045,9 @@ u64 crc64( void const* data, ssize len )
 
 void* mem_copy( void* dest, void const* source, ssize n )
 {
-	if ( dest == NULL )
+	if ( dest == nullptr )
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	return memcpy( dest, source, n );
@@ -1070,6 +1084,7 @@ void const* mem_find( void const* data, u8 c, ssize n )
 
 #define GEN_HEAP_STATS_MAGIC 0xDEADC0DE
 
+typedef struct _heap_stats _heap_stats;
 struct _heap_stats
 {
 	u32 magic;
@@ -1104,6 +1119,7 @@ void heap_stats_check( void )
 	GEN_ASSERT( _heap_stats_info.alloc_count == 0 );
 }
 
+typedef struct _heap_alloc_info _heap_alloc_info;
 struct _heap_alloc_info
 {
 	ssize    size;
@@ -1358,7 +1374,7 @@ ssize virtual_memory_page_size( ssize* alignment_out )
 
 #pragma endregion VirtualMemory
 
-void* Arena::allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags )
+void* arena_allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags )
 {
 	Arena* arena = rcast(Arena*, allocator_data);
 	void*      ptr   = NULL;
@@ -1370,7 +1386,7 @@ void* Arena::allocator_proc( void* allocator_data, AllocType type, ssize size, s
 		case EAllocation_ALLOC :
 			{
 				void* end        = pointer_add( arena->PhysicalStart, arena->TotalUsed );
-				ssize    total_size = align_forward_i64( size, alignment );
+				ssize total_size = align_forward_s64( size, alignment );
 
 				// NOTE: Out of memory
 				if ( arena->TotalUsed + total_size > (ssize) arena->TotalSize )
@@ -1408,7 +1424,7 @@ void* Arena::allocator_proc( void* allocator_data, AllocType type, ssize size, s
 	return ptr;
 }
 
-void* Pool::allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags )
+void* pool_allocator_proc( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags )
 {
 	Pool* pool = rcast( Pool*, allocator_data);
 	void* ptr  = NULL;
@@ -1481,7 +1497,7 @@ void* Pool::allocator_proc( void* allocator_data, AllocType type, ssize size, ss
 	return ptr;
 }
 
-Pool Pool::init_align( AllocatorInfo backing, ssize num_blocks, ssize block_size, ssize block_align )
+Pool pool_init_align( AllocatorInfo backing, ssize num_blocks, ssize block_size, ssize block_align )
 {
 	Pool pool = {};
 
@@ -1519,16 +1535,16 @@ Pool Pool::init_align( AllocatorInfo backing, ssize num_blocks, ssize block_size
 	return pool;
 }
 
-void Pool::clear()
+void pool_clear(Pool* pool)
 {
-	ssize    actual_block_size, block_index;
+	ssize actual_block_size, block_index;
 	void* curr;
 	uptr* end;
 
-	actual_block_size = BlockSize + BlockAlign;
+	actual_block_size = pool->BlockSize + pool->BlockAlign;
 
-	curr = PhysicalStart;
-	for ( block_index = 0; block_index < NumBlocks - 1; block_index++ )
+	curr = pool->PhysicalStart;
+	for ( block_index = 0; block_index < pool->NumBlocks - 1; block_index++ )
 	{
 		uptr* next = ( uptr* ) curr;
 		*next      = ( uptr  ) curr + actual_block_size;
@@ -1538,38 +1554,32 @@ void Pool::clear()
 	end  =  ( uptr* ) curr;
 	*end =  ( uptr )  NULL;
 
-	FreeList = PhysicalStart;
+	pool->FreeList = pool->PhysicalStart;
 }
 
 #pragma endregion Memory
 
-#pragma region String
+#pragma region StrBuilder
 
-String String::fmt( AllocatorInfo allocator, char* buf, ssize buf_size, char const* fmt, ... )
+StrBuilder strbuilder_make_length( AllocatorInfo allocator, char const* str, ssize length )
 {
-	va_list va;
-	va_start( va, fmt );
-	str_fmt_va( buf, buf_size, fmt, va );
-	va_end( va );
-
-	return make( allocator, buf );
-}
-
-String String::make_length( AllocatorInfo allocator, char const* str, ssize length )
-{
-	constexpr ssize header_size = sizeof( Header );
+	ssize const header_size = sizeof( StrBuilderHeader );
 
 	s32   alloc_size = header_size + length + 1;
 	void* allocation = alloc( allocator, alloc_size );
 
-	if ( allocation == nullptr )
-		return { nullptr };
+	if ( allocation == nullptr ) {
+		StrBuilder null_string = {nullptr};
+		return null_string;
+	}
 
-	Header&
-	header = * rcast(Header*, allocation);
-	header = { allocator, length, length };
+	StrBuilderHeader*
+	header = rcast(StrBuilderHeader*, allocation);
+	header->Allocator = allocator;
+	header->Capacity  = length;
+	header->Length    = length;
 
-	String  result = { rcast( char*, allocation) + header_size };
+	StrBuilder  result = { rcast( char*, allocation) + header_size };
 
 	if ( length && str )
 		mem_copy( result, str, length );
@@ -1581,93 +1591,30 @@ String String::make_length( AllocatorInfo allocator, char const* str, ssize leng
 	return result;
 }
 
-String String::make_reserve( AllocatorInfo allocator, ssize capacity )
+StrBuilder strbuilder_make_reserve( AllocatorInfo allocator, ssize capacity )
 {
-	constexpr ssize header_size = sizeof( Header );
+	ssize const header_size = sizeof( StrBuilderHeader );
 
 	s32   alloc_size = header_size + capacity + 1;
 	void* allocation = alloc( allocator, alloc_size );
 
-	if ( allocation == nullptr )
-		return { nullptr };
-
+	if ( allocation == nullptr ) {
+		StrBuilder null_string = {nullptr};
+		return null_string;
+	}
 	mem_set( allocation, 0, alloc_size );
 
-	Header*
-		header            = rcast(Header*, allocation);
+	StrBuilderHeader*
+	header            = rcast(StrBuilderHeader*, allocation);
 	header->Allocator = allocator;
 	header->Capacity  = capacity;
 	header->Length    = 0;
 
-	String result = { rcast(char*, allocation) + header_size };
+	StrBuilder result = { rcast(char*, allocation) + header_size };
 	return result;
 }
 
-String String::fmt_buf( AllocatorInfo allocator, char const* fmt, ... )
-{
-	local_persist thread_local
-	char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
-
-	va_list va;
-	va_start( va, fmt );
-	str_fmt_va( buf, GEN_PRINTF_MAXLEN, fmt, va );
-	va_end( va );
-
-	return make( allocator, buf );
-}
-
-bool String::append_fmt( char const* fmt, ... )
-{
-	ssize   res;
-	char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
-
-	va_list va;
-	va_start( va, fmt );
-	res = str_fmt_va( buf, count_of( buf ) - 1, fmt, va ) - 1;
-	va_end( va );
-
-	return append( buf, res );
-}
-
-bool String::make_space_for( char const* str, ssize add_len )
-{
-	ssize available = avail_space();
-
-	// NOTE: Return if there is enough space left
-	if ( available >= add_len )
-	{
-		return true;
-	}
-	else
-	{
-		ssize new_len, old_size, new_size;
-
-		void* ptr;
-		void* new_ptr;
-
-		AllocatorInfo allocator = get_header().Allocator;
-		Header*       header	= nullptr;
-
-		new_len  = grow_formula( length() + add_len );
-		ptr      = & get_header();
-		old_size = size_of( Header ) + length() + 1;
-		new_size = size_of( Header ) + new_len + 1;
-
-		new_ptr = resize( allocator, ptr, old_size, new_size );
-
-		if ( new_ptr == nullptr )
-			return false;
-
-		header            = rcast( Header*, new_ptr);
-		header->Allocator = allocator;
-		header->Capacity  = new_len;
-
-		Data = rcast( char*, header + 1 );
-
-		return true;
-	}
-}
-#pragma endregion String
+#pragma endregion StrBuilder
 
 #pragma region File Handling
 
@@ -1684,7 +1631,7 @@ wchar_t* _alloc_utf8_to_ucs2( AllocatorInfo a, char const* text, ssize* w_len_ )
 			*w_len_ = w_len;
 		return NULL;
 	}
-	len = str_len( text );
+	len = c_str_len( text );
 	if ( len == 0 )
 	{
 		if ( w_len_ )
@@ -1702,7 +1649,7 @@ wchar_t* _alloc_utf8_to_ucs2( AllocatorInfo a, char const* text, ssize* w_len_ )
 	w_len1 = MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS, text, scast( int, len), w_text, scast( int, w_len) );
 	if ( w_len1 == 0 )
 	{
-		free( a, w_text );
+		allocator_free( a, w_text );
 		if ( w_len_ )
 			*w_len_ = 0;
 		return NULL;
@@ -1811,7 +1758,7 @@ GEN_FILE_OPEN_PROC( _win32_file_open )
 	w_text = _alloc_utf8_to_ucs2( heap(), filename, NULL );
 	handle = CreateFileW( w_text, desired_access, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, creation_disposition, FILE_ATTRIBUTE_NORMAL, NULL );
 
-	free( heap(), w_text );
+	allocator_free( heap(), w_text );
 
 	if ( handle == INVALID_HANDLE_VALUE )
 	{
@@ -1950,7 +1897,7 @@ GEN_FILE_OPEN_PROC( _posix_file_open )
 
 internal void _dirinfo_free_entry( DirEntry* entry );
 
-// TODO : Is this a bad idea?
+// TODO(zpl) : Is this a bad idea?
 global b32      _std_file_set                     = false;
 global FileInfo _std_files[ EFileStandard_COUNT ] = {
 {
@@ -2006,7 +1953,7 @@ FileError file_close( FileInfo* f )
 		return EFileError_INVALID;
 
 	if ( f->filename )
-		free( heap(), ccast( char*, f->filename ));
+		allocator_free( heap(), ccast( char*, f->filename ));
 
 #if defined( GEN_SYSTEM_WINDOWS )
 	if ( f->fd.p == INVALID_HANDLE_VALUE )
@@ -2041,7 +1988,7 @@ FileError file_close( FileInfo* f )
 FileError file_new( FileInfo* f, FileDescriptor fd, FileOperations ops, char const* filename )
 {
 	FileError err = EFileError_NONE;
-	ssize        len = str_len( filename );
+	ssize        len = c_str_len( filename );
 
 	f->ops             = ops;
 	f->fd              = fd;
@@ -2125,6 +2072,7 @@ FileContents file_read_contents( AllocatorInfo a, b32 zero_terminate, char const
 	return result;
 }
 
+typedef struct _memory_fd _memory_fd;
 struct _memory_fd
 {
 	u8            magic;
@@ -2171,7 +2119,7 @@ b8 file_stream_new( FileInfo* file, AllocatorInfo allocator )
 	d->allocator = allocator;
 	d->flags     = EFileStream_CLONE_WRITABLE;
 	d->cap       = 0;
-	d->buf       = Array<u8>::init( allocator );
+	d->buf       = array_init( u8, allocator );
 
 	if ( ! d->buf )
 		return false;
@@ -2197,7 +2145,7 @@ b8 file_stream_open( FileInfo* file, AllocatorInfo allocator, u8* buffer, ssize 
 	d->flags     = flags;
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array<u8> arr = Array<u8>::init_reserve( allocator, size );
+		Array(u8) arr = array_init_reserve(u8, allocator, size );
 		d->buf = arr;
 
 		if ( ! d->buf )
@@ -2206,7 +2154,7 @@ b8 file_stream_open( FileInfo* file, AllocatorInfo allocator, u8* buffer, ssize 
 		mem_copy( d->buf, buffer, size );
 		d->cap = size;
 
-		arr.get_header()->Num = size;
+		array_get_header(arr)->Num = size;
 	}
 	else
 	{
@@ -2274,11 +2222,11 @@ GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array<u8> arr = { d->buf };
+		Array(u8) arr = { d->buf };
 
-		if ( arr.get_header()->Capacity < usize(new_cap) )
+		if ( array_get_header(arr)->Capacity < scast(usize, new_cap) )
 		{
-			if ( ! arr.grow( ( s64 )( new_cap ) ) )
+			if ( ! array_grow( & arr, ( s64 )( new_cap ) ) )
 				return false;
 			d->buf = arr;
 		}
@@ -2288,11 +2236,11 @@ GEN_FILE_WRITE_AT_PROC( _memory_file_write )
 
 	if ( ( d->flags & EFileStream_CLONE_WRITABLE ) && extralen > 0 )
 	{
-		Array<u8> arr = { d->buf };
+		Array(u8) arr = { d->buf };
 
 		mem_copy( d->buf + offset + rwlen, pointer_add_const( buffer, rwlen ), extralen );
 		d->cap = new_cap;
-		arr.get_header()->Capacity = new_cap;
+		array_get_header(arr)->Capacity = new_cap;
 	}
 	else
 	{
@@ -2312,11 +2260,11 @@ GEN_FILE_CLOSE_PROC( _memory_file_close )
 
 	if ( d->flags & EFileStream_CLONE_WRITABLE )
 	{
-		Array<u8> arr = { d->buf };
-		arr.free();
+		Array(u8) arr = { d->buf };
+		array_free(arr);
 	}
 
-	free( allocator, d );
+	allocator_free( allocator, d );
 }
 
 FileOperations const memory_file_operations = { _memory_file_read, _memory_file_write, _memory_file_seek, _memory_file_close };

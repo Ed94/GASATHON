@@ -9,6 +9,9 @@
 #   pragma clang diagnostic ignored "-Wunknown-pragmas"
 #	pragma clang diagnostic ignored "-Wvarargs"
 #	pragma clang diagnostic ignored "-Wunused-function"
+#	pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#   pragma clang diagnostic ignored "-W#pragma-messages"
+#	pragma clang diagnostic ignored "-Wstatic-in-inline"
 #endif
 
 #ifdef __GNUC__
@@ -23,7 +26,9 @@
 
 GEN_NS_BEGIN
 
-Builder Builder::open( char const* path )
+#pragma region Builder
+
+Builder builder_open( char const* path )
 {
 	Builder result;
 
@@ -34,50 +39,48 @@ Builder Builder::open( char const* path )
 		return result;
 	}
 
-	result.Buffer = String::make_reserve( GlobalAllocator, Builder_StrBufferReserve );
+	result.Buffer = strbuilder_make_reserve( _ctx->Allocator_Temp, _ctx->InitSize_BuilderBuffer );
 
 	// log_fmt("$Builder - Opened file: %s\n", result.File.filename );
 	return result;
 }
 
-void Builder::pad_lines( s32 num )
+void builder_pad_lines( Builder* builder, s32 num )
 {
-	Buffer.append( "\n" );
+	strbuilder_append_str( & builder->Buffer, txt("\n") );
 }
 
-void Builder::print( Code code )
+void builder_print( Builder* builder, Code code )
 {
-	String   str = code->to_string();
+	StrBuilder   str = code_to_strbuilder(code);
 	// const ssize len = str.length();
 	// log_fmt( "%s - print: %.*s\n", File.filename, len > 80 ? 80 : len, str.Data );
-	Buffer.append( str );
+	strbuilder_append_string( & builder->Buffer, str );
 }
 
-void Builder::print_fmt( char const* fmt, ... )
+void builder_print_fmt_va( Builder* builder, char const* fmt, va_list va )
 {
 	ssize   res;
 	char buf[ GEN_PRINTF_MAXLEN ] = { 0 };
 
-	va_list va;
-	va_start( va, fmt );
-	res = str_fmt_va( buf, count_of( buf ) - 1, fmt, va ) - 1;
-	va_end( va );
+	res = c_str_fmt_va( buf, count_of( buf ) - 1, fmt, va ) - 1;
 
-	// log_fmt( "$%s - print_fmt: %.*s\n", File.filename, res > 80 ? 80 : res, buf );
-	Buffer.append( buf, res );
+	strbuilder_append_c_str_len( (StrBuilder*) & (builder->Buffer), (char const*)buf, res);
 }
 
-void Builder::write()
+void builder_write(Builder* builder)
 {
-	b32 result = file_write( & File, Buffer, Buffer.length() );
+	b32 result = file_write( & builder->File, builder->Buffer, strbuilder_length(builder->Buffer) );
 
 	if ( result == false )
-		log_failure("gen::File::write - Failed to write to file: %s\n", file_name( & File ) );
+		log_failure("gen::File::write - Failed to write to file: %s\n", file_name( & builder->File ) );
 
-	log_fmt( "Generated: %s\n", File.filename );
-	file_close( & File );
-	Buffer.free();
+	log_fmt( "Generated: %s\n", builder->File.filename );
+	file_close( & builder->File );
+	strbuilder_free(& builder->Buffer);
 }
+
+#pragma endregion Builder
 
 GEN_NS_END
 

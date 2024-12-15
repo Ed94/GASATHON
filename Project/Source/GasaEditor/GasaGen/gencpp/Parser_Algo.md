@@ -1,3 +1,9 @@
+## Navigation
+
+[Top](../Readme.md)
+
+<- [docs - General](Readme.md)
+
 # Parser's Algorithim
 
 gencpp uses a hand-written recursive descent parser. Both the lexer and parser currently handle a full C/C++ file in a single pass.
@@ -6,8 +12,8 @@ gencpp uses a hand-written recursive descent parser. Both the lexer and parser c
 
 ### Lexer
 
-The lex procedure does the lexical pass of content provided as a `StrC` type.
-The tokens are stored (for now) in `gen::parser::Tokens`.
+The lex procedure does the lexical pass of content provided as a `Str` type.  
+The tokens are stored (for now) in `Lexer_Tokens`.
 
 Fields:
 
@@ -16,7 +22,7 @@ Array<Token> Arr;
 s32          Idx;
 ```
 
-What token types are supported can be found in [ETokType.csv](../project/enums/ETokType.csv) you can also find the token types in [ETokType.h](../project/components/gen/etoktype.cpp) , which is the generated enum from the csv file.
+What token types are supported can be found in [ETokType.csv](../base/enums/ETokType.csv) you can also find the token types in [ETokType.h](../base/components/gen/etoktype.cpp) , which is the generated enum from the csv file.
 
 Tokens are defined with the struct `gen::parser::Token`:
 
@@ -69,7 +75,7 @@ The parser has a limited user interface, only specific types of definitions or s
 Each public user interface procedure has the following format:
 
 ```cpp
-<code type> parse_<definition type>( StrC def )
+<code type> parse_<definition type>( Str def )
 {
     check_parse_args( def );
     using namespace Parser;
@@ -281,7 +287,7 @@ In the future statements and expressions will be parsed.
         1. Attributes ( Standard, GNU, MSVC, Macro ) : `parse_attributes`
         2. Specifiers ( consteval, constexpr, constinit, extern, forceinline, global, inline, internal_linkage, neverinline, static )
         3. Is either ( identifier, const specifier, long, short, signed, unsigned, bool, char, double, int)
-            1. Attempt to parse as constrcutor or destructor : `parse_global_nspace_constructor_destructor`
+            1. Attempt to parse as construtor or destructor : `parse_global_nspace_constructor_destructor`
             2. If its an operator cast (definition outside class) : `parse_operator_cast`
             3. Its an operator, function, or varaible : `parse_operator_function_or_varaible`
 4. If its not a global body, consume the closing curly brace

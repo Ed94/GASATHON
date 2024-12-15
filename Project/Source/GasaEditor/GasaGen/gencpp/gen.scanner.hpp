@@ -11,6 +11,9 @@
 #   pragma clang diagnostic ignored "-Wunknown-pragmas"
 #	pragma clang diagnostic ignored "-Wvarargs"
 #	pragma clang diagnostic ignored "-Wunused-function"
+#	pragma clang diagnostic ignored "-Wbraced-scalar-init"
+#   pragma clang diagnostic ignored "-W#pragma-messages"
+#	pragma clang diagnostic ignored "-Wstatic-in-inline"
 #endif
 
 #ifdef __GNUC__
@@ -106,7 +109,7 @@ struct ADT_Node
 	union
 	{
 		char const*     string;
-		Array<ADT_Node> nodes;    ///< zpl_array
+		Array(ADT_Node) nodes;    ///< zpl_array
 
 		struct
 		{
@@ -372,7 +375,7 @@ char* adt_parse_number_strict( ADT_Node* node, char* base_str );
 	* @param node
 	* @return
 	*/
-ADT_Error adt_str_to_number( ADT_Node* node );
+ADT_Error adt_c_str_to_number( ADT_Node* node );
 
 /**
 	* @brief Parses and converts an existing string node into a number.
@@ -381,7 +384,7 @@ ADT_Error adt_str_to_number( ADT_Node* node );
 	* @param node
 	* @return
 	*/
-ADT_Error adt_str_to_number_strict( ADT_Node* node );
+ADT_Error adt_c_str_to_number_strict( ADT_Node* node );
 
 /**
 	* @brief Prints a number into a file stream.
@@ -428,9 +431,9 @@ u8   csv_parse_delimiter( CSV_Object* root, char* text, AllocatorInfo allocator,
 void csv_free( CSV_Object* obj );
 
 void   csv_write( FileInfo* file, CSV_Object* obj );
-String csv_write_string( AllocatorInfo a, CSV_Object* obj );
+StrBuilder csv_write_string( AllocatorInfo a, CSV_Object* obj );
 void   csv_write_delimiter( FileInfo* file, CSV_Object* obj, char delim );
-String csv_write_string_delimiter( AllocatorInfo a, CSV_Object* obj, char delim );
+StrBuilder csv_write_strbuilder_delimiter( AllocatorInfo a, CSV_Object* obj, char delim );
 
 /* inline */
 
@@ -447,168 +450,43 @@ void csv_write( FileInfo* file, CSV_Object* obj )
 }
 
 inline
-String csv_write_string( AllocatorInfo a, CSV_Object* obj )
+StrBuilder csv_write_string( AllocatorInfo a, CSV_Object* obj )
 {
-	return csv_write_string_delimiter( a, obj, ',' );
+	return csv_write_strbuilder_delimiter( a, obj, ',' );
 }
 
 #pragma endregion CSV
 
+#pragma region Scanner
+
 // This is a simple file reader that reads the entire file into memory.
 // It has an extra option to skip the first few lines for undesired includes.
 // This is done so that includes can be kept in dependency and component files so that intellisense works.
-inline
-Code scan_file( char const* path )
-{
-	FileInfo file;
+Code scan_file( char const* path );
 
-	FileError error = file_open_mode( & file, EFileMode_READ, path );
-	if ( error != EFileError_NONE )
-	{
-		GEN_FATAL( "scan_file: Could not open: %s", path );
-	}
+CodeBody parse_file( const char* path );
 
-	ssize fsize = file_size( & file );
-	if ( fsize <= 0 )
-	{
-		GEN_FATAL("scan_file: %s is empty", path );
-	}
+// The follow is basic support for light csv parsing (use it as an example)
+// Make something robust if its more serious.
 
-	String str = String::make_reserve( GlobalAllocator, fsize );
-		file_read( & file, str, fsize );
-		str.get_header().Length = fsize;
-
-	// Skip GEN_INTELLISENSE_DIRECTIVES preprocessor blocks
-	// Its designed so that the directive should be the first thing in the file.
-	// Anything that comes before it will also be omitted.
-	{
-	#define current (*scanner)
-	#define matched    0
-	#define move_fwd() do { ++ scanner; -- left; } while (0)
-		const StrC directive_start = txt( "ifdef" );
-		const StrC directive_end   = txt( "endif" );
-		const StrC def_intellisense = txt("GEN_INTELLISENSE_DIRECTIVES" );
-
-		bool        found_directive = false;
-		char const* scanner         = str.Data;
-		s32         left            = fsize;
-		while ( left )
-		{
-			// Processing directive.
-			if ( current == '#' )
-			{
-				move_fwd();
-				while ( left && char_is_space( current ) )
-					move_fwd();
-
-				if ( ! found_directive )
-				{
-					if ( left && str_compare( scanner, directive_start.Ptr, directive_start.Len ) == matched )
-					{
-						scanner += directive_start.Len;
-						left    -= directive_start.Len;
-
-						while ( left && char_is_space( current ) )
-							move_fwd();
-
-						if ( left && str_compare( scanner, def_intellisense.Ptr, def_intellisense.Len ) == matched )
-						{
-							scanner += def_intellisense.Len;
-							left    -= def_intellisense.Len;
-
-							found_directive = true;
-						}
-					}
-
-					// Skip to end of line
-					while ( left && current != '\r' && current != '\n' )
-						move_fwd();
-					move_fwd();
-
-					if ( left && current == '\n' )
-						move_fwd();
-
-					continue;
-				}
-
-				if ( left && str_compare( scanner, directive_end.Ptr, directive_end.Len ) == matched )
-				{
-					scanner += directive_end.Len;
-					left    -= directive_end.Len;
-
-					// Skip to end of line
-					while ( left && current != '\r' && current != '\n' )
-						move_fwd();
-					move_fwd();
-
-					if ( left && current == '\n' )
-						move_fwd();
-
-					// sptr skip_size = fsize - left;
-					if ( (scanner + 2) >= ( str.Data + fsize ) )
-					{
-						mem_move( str, scanner, left );
-						str.get_header().Length = left;
-						break;
-					}
-
-					mem_move( str, scanner, left );
-					str.get_header().Length = left;
-
-					break;
-				}
-
-			}
-
-			move_fwd();
-		}
-	#undef move_fwd
-	#undef matched
-	#undef current
-	}
-
-	file_close( & file );
-	return untyped_str( str );
-}
-
-#if 0
-struct CodeFile
-{
-	using namespace Parser;
-
-	String              FilePath;
-	TokArray            Tokens;
-	Array<ParseFailure> ParseFailures;
-	Code                CodeRoot;
+typedef struct CSV_Column CSV_Column;
+struct CSV_Column {
+	CSV_Object      ADT;
+	Array(ADT_Node) Content;
 };
 
-namespace Parser
-{
-	struct ParseFailure
-	{
-		String Reason;
-		Code   Node;
-	};
-}
+typedef struct CSV_Columns2 CSV_Columns2;
+struct CSV_Columns2 {
+	CSV_Object      ADT;
+	Array(ADT_Node) Col_1;
+	Array(ADT_Node) Col_2;
+};
 
-CodeFile scan_file( char const* path )
-{
-	using namespace Parser;
+CSV_Column parse_csv_one_column(AllocatorInfo allocator, char const* path);
+CSV_Columns2 parse_csv_two_columns(AllocatorInfo allocator, char const* path);
 
-	CodeFile
-	result = {};
-	result.FilePath = String::make( GlobalAllocator, path );
+#pragma endregion Scanner
 
-	Code code = scan_file( path );
-	result.CodeRoot = code;
-
-	ParseContext context = parser_get_last_context();
-	result.Tokens        = context.Tokens;
-	result.ParseFailures = context.Failures;
-
-	return result;
-}
-#endif
 GEN_NS_END
 
 #ifdef __clang__
