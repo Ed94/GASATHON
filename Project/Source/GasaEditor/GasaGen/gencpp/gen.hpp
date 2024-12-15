@@ -640,10 +640,11 @@ FORCEINLINE bool is_trailing( Specifier specifier )
 	return spec_is_trailing( specifier );
 }
 
-#define GEN_DEFINE_ATTRIBUTE_TOKENS                                                                                   \
-	Entry( Tok_Attribute_API_Export, "GEN_API_Export_Code" ) Entry( Tok_Attribute_API_Import, "GEN_API_Import_Code" ) \
-	    Entry( Tok_Attribute_COREUOBJECT_API, "COREUOBJECT_API" ) Entry( Tok_Attribute_ENGINE_API, "ENGINE_API" )     \
-	        Entry( Tok_Attribute_GAMEPLAYABILITIES_API, "GAMEPLAYABILITIES_API" ) Entry( Tok_Attribute_UMG_API, "UMG_API" )
+#define GEN_DEFINE_ATTRIBUTE_TOKENS                                                                                         \
+	Entry( Tok_Attribute_API_Export, "GEN_API_Export_Code" ) Entry( Tok_Attribute_API_Import, "GEN_API_Import_Code" )       \
+	    Entry( Tok_Attribute_COREUOBJECT_API, "COREUOBJECT_API" ) Entry( Tok_Attribute_ENGINE_API, "ENGINE_API" )           \
+	        Entry( Tok_Attribute_GAMEPLAYABILITIES_API, "GAMEPLAYABILITIES_API" ) Entry( Tok_Attribute_UMG_API, "UMG_API" ) \
+	            Entry( Tok_Attribute_GASA_API, "GASA_API" )
 
 enum TokType : u32
 {
@@ -752,6 +753,7 @@ enum TokType : u32
 	Tok_Attribute_ENGINE_API,
 	Tok_Attribute_GAMEPLAYABILITIES_API,
 	Tok_Attribute_UMG_API,
+	Tok_Attribute_GASA_API,
 	Tok_NumTokens
 };
 
@@ -863,6 +865,7 @@ inline Str toktype_to_str( TokType type )
 		{ "ENGINE_API",             sizeof( "ENGINE_API" ) - 1             },
 		{ "GAMEPLAYABILITIES_API",  sizeof( "GAMEPLAYABILITIES_API" ) - 1  },
 		{ "UMG_API",                sizeof( "UMG_API" ) - 1                },
+		{ "GASA_API",               sizeof( "GASA_API" ) - 1               },
 	};
 	return lookup[type];
 }
@@ -1029,6 +1032,7 @@ TokType macrotype_to_toktype( MacroType type ) {
 	return Tok_Invalid;
 }
 
+inline
 Str macrotype_to_str( MacroType type )
 {
 	local_persist
@@ -1092,6 +1096,11 @@ FORCEINLINE
 b32 macro_expects_body( Macro macro ) {
 	return bitfield_is_set( b16, macro.Flags, MF_Expects_Body );
 }
+
+#if GEN_COMPILER_CPP && ! GEN_C_LIKE_CPP
+FORCEINLINE b32 is_functional( Macro macro ) { return bitfield_is_set( b16, macro.Flags, MF_Functional ); }
+FORCEINLINE b32 expects_body ( Macro macro ) { return bitfield_is_set( b16, macro.Flags, MF_Expects_Body ); }
+#endif
 
 typedef HashTable(Macro) MacroTable;
 #pragma endregion Types
@@ -3980,6 +3989,9 @@ GEN_API void init(Context* ctx);
 // However on Windows at least, it doesn't need to occur as the OS will clean up after the process.
 GEN_API void deinit(Context* ctx);
 
+// Retrieves the active context (not usually needed, but here in case...)
+GEN_API Context* get_context();
+
 // Clears the allocations, but doesn't free the memoery, then calls init() again.
 // Ease of use.
 GEN_API void reset(Context* ctx);
@@ -4576,9 +4588,9 @@ FORCEINLINE void             define_params_append     (CodeDefineParams appendee
 FORCEINLINE CodeDefineParams define_params_get        (CodeDefineParams self, s32 idx )                    { return (CodeDefineParams) (Code) params_get( cast(CodeParams, self), idx); }
 FORCEINLINE bool             define_params_has_entries(CodeDefineParams self)                              { return params_has_entries( cast(CodeParams, self)); }
 
-CodeDefineParams begin_CodeDefineParams(CodeDefineParams params)                              { return (CodeDefineParams) (Code) begin_CodeParams( cast(CodeParams, (Code)params)); }
-CodeDefineParams end_CodeDefineParams  (CodeDefineParams params)                              { return (CodeDefineParams) (Code) end_CodeParams  ( cast(CodeParams, (Code)params)); }
-CodeDefineParams next_CodeDefineParams (CodeDefineParams params, CodeDefineParams entry_iter) { return (CodeDefineParams) (Code) next_CodeParams ( cast(CodeParams, (Code)params), cast(CodeParams, (Code)entry_iter)); }
+FORCEINLINE CodeDefineParams begin_CodeDefineParams(CodeDefineParams params)                              { return (CodeDefineParams) (Code) begin_CodeParams( cast(CodeParams, (Code)params)); }
+FORCEINLINE CodeDefineParams end_CodeDefineParams  (CodeDefineParams params)                              { return (CodeDefineParams) (Code) end_CodeParams  ( cast(CodeParams, (Code)params)); }
+FORCEINLINE CodeDefineParams next_CodeDefineParams (CodeDefineParams params, CodeDefineParams entry_iter) { return (CodeDefineParams) (Code) next_CodeParams ( cast(CodeParams, (Code)params), cast(CodeParams, (Code)entry_iter)); }
 
 #if GEN_COMPILER_CPP
 FORCEINLINE

@@ -3403,6 +3403,10 @@ void deinit(Context* ctx)
 	-- context_counter;
 }
 
+Context* get_context() { 
+	return _ctx;
+}
+
 void reset(Context* ctx)
 {
 	s32 index = 0;
@@ -4809,7 +4813,7 @@ CodeUsing def_using_namespace( Str name )
 
 CodeVar def_variable( CodeTypename type, Str name, Opts_def_variable p )
 {
-	if ( ! name_check( def_variable, name ) || null_check( def_variable, type ) ) {
+	if ( ! name_check( def_variable, name ) || ! null_check( def_variable, type ) ) {
 		GEN_DEBUG_TRAP();
 		return InvalidCode;
 	}
@@ -5786,7 +5790,7 @@ s32 lex_preprocessor_define( LexContext* ctx )
 		array_append( _ctx->Lexer_Tokens, opening_paren );
 		move_forward();
 
-		Token last_parameter;
+		Token last_parameter = {};
 		// We need to tokenize the define's arguments now:
 		while( ctx->left && * ctx->scanner != ')')
 		{
@@ -9520,7 +9524,40 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 		// Example : <Capture_Start> <Value> <Comma>
 		//                 idx         +1      +2
 		bool detected_comma = _ctx->parser.Tokens.Arr[ _ctx->parser.Tokens.Idx + 2 ].Type == Tok_Comma;
-		if ( detected_capture && ! detected_comma ) 
+
+		b32   detected_non_varadic_unpaired_param = detected_comma && nexttok.Type != Tok_Varadic_Argument;
+		if (! detected_non_varadic_unpaired_param && nexttok.Type ==  Tok_Preprocess_Macro_Expr) for( s32 break_scope = 0; break_scope == 0; ++ break_scope)
+		{
+			Macro* macro = lookup_macro( nexttok.Text );
+			if (macro == nullptr || ! macro_is_functional(* macro))
+				break;
+
+			// (   <Macro_Expr> (  
+			// Idx      +1     +2
+			s32  idx    = _ctx->parser.Tokens.Idx + 1;  
+			s32  level = 0;
+
+			// Find end of the token expression
+			for ( ; idx < array_num(_ctx->parser.Tokens.Arr); idx++ )
+			{
+				Token tok = _ctx->parser.Tokens.Arr[ idx ];
+
+				if ( tok.Type == Tok_Capture_Start )
+					level++;
+				else if ( tok.Type == Tok_Capture_End && level > 0 )
+					level--;
+				if (level == 0 && tok.Type == Tok_Capture_End)
+					break;
+			}
+			++ idx; // Will incremnt to possible comma position
+
+			if ( _ctx->parser.Tokens.Arr[ idx ].Type != Tok_Comma )
+				break;
+
+			detected_non_varadic_unpaired_param = true;
+		}
+
+		if ( detected_capture && ! detected_non_varadic_unpaired_param ) 
 		{
 			// Dealing with a function
 			result = cast(Code, parse_function_after_name( ModuleFlag_None, attributes, specifiers, type, name ));
@@ -9539,7 +9576,7 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 		}
 	}
 
-	parser_pop(& _ctx->parser);
+	parser_pop(& _ctx->parser);	
 	return result;
 }
 
@@ -10032,7 +10069,7 @@ Code parse_simple_preprocess( TokType which )
 			||	str_contains(calling_proc, txt("parse_class_struct_body"))
 		)
 		{
-			if (peektok.Type == Tok_Statement_End)
+			if (left && peektok.Type == Tok_Statement_End)
 			{
 				Token stmt_end = currtok;
 				eat( Tok_Statement_End );
@@ -12045,7 +12082,6 @@ CodeTypedef parser_parse_typedef()
 		// valid_macro |= macro && macro_expects_body(* macro));
 	// }
 
-	Code macro;
 	if ( valid_macro )
 #endif
 	{
@@ -12893,6 +12929,12 @@ CodeVar parse_variable( Str def )
 #undef parser_use_parenthesis
 #undef parser_strip_formatting_dont_preserve_newlines
 
+#pragma endregion Parsing
+
+
+#pragma region Untyped
+
+
 ssize token_fmt_va( char* buf, usize buf_size, s32 num_tokens, va_list va )
 {
 	char const* buf_begin = buf;
@@ -13067,8 +13109,7 @@ Code untyped_token_fmt( s32 num_tokens, char const* fmt, ... )
 
 	return result;
 }
-
-#pragma endregion Parsing
+#pragma endregion 
 
 #pragma endregion Interface
 

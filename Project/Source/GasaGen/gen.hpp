@@ -886,7 +886,7 @@ inline TokType str_to_toktype( Str str )
 
 enum TokFlags : u32
 {
-	TF_Operator		         = bit(0),
+	TF_Operator              = bit(0),
 	TF_Assign                = bit(1),
 	TF_Preprocess            = bit(2),
 	TF_Preprocess_Cond       = bit(3),
@@ -3979,6 +3979,9 @@ GEN_API void init(Context* ctx);
 // Currently manually free's the arenas, code for checking for leaks.
 // However on Windows at least, it doesn't need to occur as the OS will clean up after the process.
 GEN_API void deinit(Context* ctx);
+
+// Retrieves the active context (not usually needed, but here in case...)
+GEN_API Context* get_contex();
 
 // Clears the allocations, but doesn't free the memoery, then calls init() again.
 // Ease of use.

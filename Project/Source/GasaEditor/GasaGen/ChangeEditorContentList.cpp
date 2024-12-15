@@ -3,7 +3,7 @@
 #include "GasaGen_Common.h"
 #include "GasaEditorCommon.h"
 
-constexpr StrC SAssetView_Construct_Replacement = txt(R"(
+constexpr Str SAssetView_Construct_Replacement = txt(R"(
 void SAssetView::Construct( const FArguments& InArgs )
 {
 	ViewCorrelationGuid = FGuid::NewGuid();	
@@ -391,7 +391,7 @@ void SAssetView::Construct( const FArguments& InArgs )
 	}
 })");
 
-constexpr StrC SAssetView_GetThumbnailScale_Replacement = txt(R"(
+constexpr Str SAssetView_GetThumbnailScale_Replacement = txt(R"(
 float SAssetView::GetThumbnailScale() const
 {
 	float BaseScale;
@@ -423,7 +423,7 @@ float SAssetView::GetThumbnailScale() const
 	return BaseScale * GetTickSpaceGeometry().Scale;
 })");
 
-constexpr StrC SPropertyMenuAssetPicker_Construct_Replacement = txt(R"(
+constexpr Str SPropertyMenuAssetPicker_Construct_Replacement = txt(R"(
 void SPropertyMenuAssetPicker::Construct( const FArguments& InArgs )
 {
 	CurrentObject = InArgs._InitialObject;
@@ -595,27 +595,26 @@ void change_EditorContentList()
 	#define path_PropertyEditorAssetConstantsHeader \
 		R"(C:\Projects\Unreal\Surgo\UE\Engine\Source\Editor\PropertyEditor\Private\UserInterface\PropertyEditor\PropertyEditorAssetConstants.h)"
 		
-		FileContents content = file_read_contents( GlobalAllocator, true, path_PropertyEditorAssetConstantsHeader );
-		CodeBody parsed_PropertyEditorAssetConstantsHeader = parse_global_body( StrC { content.size, (char const*)content.data });
+		FileContents content = file_read_contents( gen_ctx.Allocator_Temp, true, path_PropertyEditorAssetConstantsHeader );
+		CodeBody     parsed_PropertyEditorAssetConstantsHeader = parse_global_body( Str { (char const*)content.data, content.size });
 
-		CodeBody changed_PropertyEditorAssetConstantsHeader = def_body(ECode::Global_Body);
+		CodeBody changed_PropertyEditorAssetConstantsHeader = def_body(CT_Global_Body);
 		for ( Code code : parsed_PropertyEditorAssetConstantsHeader )
 		{
 			switch ( code->Type )
 			{
-				using namespace ECode;
-				case Namespace:
-					CodeNS ns = code.cast<CodeNS>();
+				case CT_Namespace:
+					CodeNS ns = cast(CodeNS, code);
 					for ( Code ns_code : ns->Body )
 					{
 						switch ( ns_code->Type )
 						{
-							case Variable:
-								CodeVar var = ns_code.cast<CodeVar>();
+							case CT_Variable:
+								CodeVar var = cast(CodeVar, ns_code);
 								if ( var->Name.starts_with(txt("ContentBrowserWindowSize")) )
 								{
 									// Swap value with new value
-									var->Value->Content = get_cached_string(txt("300.0f, 600.0f"));
+									var->Value->Content = cache_str(txt("300.0f, 600.0f"));
 									Gasa::LogEditor("Swapped: " + to_fstring(var->Name));
 								}
 								
@@ -639,8 +638,8 @@ void change_EditorContentList()
 	#define path_SAssetView \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Editor\ContentBrowser\Private\SAssetView.cpp)"
 
-		FileContents content = file_read_contents( GlobalAllocator, true, path_SAssetView );
-		CodeBody parsed_SAssetViewCpp = parse_global_body( StrC { content.size, (char const*)content.data });
+		FileContents content = file_read_contents( gen_ctx.Allocator_Temp, true, path_SAssetView );
+		CodeBody     parsed_SAssetViewCpp = parse_global_body( Str { (char const*)content.data, content.size });
 
 		CodeFn signature_Construct = parse_function( code(
 			void SAssetView::Construct( const FArguments& InArgs ) {}
@@ -649,24 +648,23 @@ void change_EditorContentList()
 			float SAssetView::GetThumbnailScale() const {}
 		));
 
-		CodeBody changed_SAssetViewCpp = def_body(ECode::Global_Body);
+		CodeBody changed_SAssetViewCpp = def_body(CT_Global_Body);
 		for ( Code code : parsed_SAssetViewCpp )
 		{
 			switch ( code->Type )
 			{
-				using namespace ECode;
-				case Function:
+				case CT_Function:
 				{
-					CodeFn function_def = code.cast<CodeFn>();
+					CodeFn function_def = cast(CodeFn, code);
 
-					if ( String::are_equal(function_def->Name, signature_Construct->Name)
-					&&  function_def->Params.is_equal(signature_Construct->Params))
+					if ( str_are_equal(function_def->Name, signature_Construct->Name)
+					&&  function_def->Params && function_def->Params.is_equal(signature_Construct->Params))
 					{
 						code = parse_function( SAssetView_Construct_Replacement );
 						Gasa::LogEditor("Swapped: " +  to_fstring(function_def->Name));
 					}
-					else if ( String::are_equal(function_def->Name, signature_GetThumbnailScale->Name)
-					&&  function_def->Params.is_equal(signature_GetThumbnailScale->Params))
+					else if ( str_are_equal(function_def->Name, signature_GetThumbnailScale->Name)
+					&&  function_def->Params &&  function_def->Params.is_equal(signature_GetThumbnailScale->Params))
 					{
 						code = parse_function( SAssetView_GetThumbnailScale_Replacement );
 						Gasa::LogEditor("Swapped: " +  to_fstring(function_def->Name));
@@ -689,24 +687,23 @@ void change_EditorContentList()
 	#define path_SPropertyMenuAssetPicker \
 	R"(C:\projects\Unreal\Surgo\UE\Engine\Source\Editor\PropertyEditor\Private\UserInterface\PropertyEditor\SPropertyMenuAssetPicker.cpp)"
 
-		FileContents content = file_read_contents( GlobalAllocator, true, path_SPropertyMenuAssetPicker );
-		CodeBody parsed = parse_global_body( StrC { content.size, (char const*)content.data });
+		FileContents content = file_read_contents( gen_ctx.Allocator_Temp, true, path_SPropertyMenuAssetPicker );
+		CodeBody parsed = parse_global_body( Str { (char const*)content.data, content.size });
 
 		CodeFn signature = parse_function( code(
 			void SPropertyMenuAssetPicker::Construct( const FArguments& InArgs ) {}
 		));
 
-		CodeBody changed = def_body(ECode::Global_Body);
+		CodeBody changed = def_body(CT_Global_Body);
 		for ( Code code : parsed )
 		{
 			switch ( code->Type )
 			{
-				using namespace ECode;
-				case Function:
+				case CT_Function:
 				{
-					CodeFn function_def = code.cast<CodeFn>();
+					CodeFn function_def = cast(CodeFn, code);
 
-					if ( String::are_equal(function_def->Name, signature->Name)
+					if ( str_are_equal(function_def->Name, signature->Name)
 					&&  function_def->Params.is_equal(signature->Params))
 					{
 						code = parse_function( SPropertyMenuAssetPicker_Construct_Replacement );

@@ -10,14 +10,16 @@
 
 #define LOCTEXT_NAMESPACE "GasaEditor"
 
-global String Project_Path;
-global String Root_Path;
+global Str Project_Path;
+global Str Root_Path;
 
 global Code UHT_GENERATED_BODY;
 global Code UHT_UCLASS;
 global Code UHT_UPROPERTY;
 global Code UHT_USTRUCT;
 global Code UModule_GASA_API;
+
+global Context gen_ctx = {};
 
 void Execute_GasaModule_Codegen()
 {
@@ -28,7 +30,13 @@ void Execute_GasaModule_Codegen()
 	{
 		Gasa::LogEditor("Executing: Gasa Module code generation.");
 
-		gen::init();
+		if (gen_ctx.Allocator_Temp.Proc) {
+			gen::reset(& gen_ctx);
+		}
+		else
+		{
+			gen::init( & gen_ctx);
+		}
 
 		FString     ue_project_path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 		FPaths::NormalizeDirectoryName(ue_project_path);
@@ -38,8 +46,8 @@ void Execute_GasaModule_Codegen()
 		FPaths::NormalizeDirectoryName(ue_root_path);
 		char const* ue_ansi_rooot_path = TCHAR_TO_ANSI(*ue_project_path);
 
-		Project_Path = String::make_length(GlobalAllocator, ue_ansi_project_path, ue_project_path.Len());
-		Root_Path    = String::make_length(GlobalAllocator, ue_ansi_rooot_path, ue_root_path.Len());
+		Project_Path = StrBuilder::make_length(gen_ctx.Allocator_Temp, ue_ansi_project_path, ue_project_path.Len());
+		Root_Path    = StrBuilder::make_length(gen_ctx.Allocator_Temp, ue_ansi_rooot_path, ue_root_path.Len());
 
 		// Initialize Globals
 		{
@@ -66,62 +74,70 @@ void Execute_GasaModule_Codegen()
 		}
 
 		// Populate Defines
-		{
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_CLASS));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DELEGATE_RetVal_OneParam));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DELEGATE_RetVal_ThreeParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DELEGATE_SixParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_EVENT_ThreeParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_EVENT_TwoParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_FUNCTION));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_LOG_CATEGORY_EXTERN));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_MULTICAST_DELEGATE_OneParam));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_MULTICAST_DELEGATE_ThreeParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_MULTICAST_DELEGATE_TwoParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_OneParam));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams));
-			PreprocessorDefines.append(get_cached_string(str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams));
-			PreprocessorDefines.append(get_cached_string(str_DEFINE_ACTORDESC_TYPE));
-			PreprocessorDefines.append(get_cached_string(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
-			PreprocessorDefines.append(get_cached_string(str_ENUM_CLASS_FLAGS));
-			PreprocessorDefines.append(get_cached_string(str_FORCEINLINE_DEBUGGABLE));
-			// PreprocessorDefines.append( get_cached_string(str_FORCEINLINE));
-			PreprocessorDefines.append(get_cached_string(str_GENERATED_BODY));
-			PreprocessorDefines.append(get_cached_string(str_GENERATED_UCLASS_BODY));
-			PreprocessorDefines.append(get_cached_string(str_GENERATED_USTRUCT_BODY));
-			PreprocessorDefines.append(get_cached_string(str_PRAGMA_DISABLE_DEPRECATION_WARNINGS));
-			PreprocessorDefines.append(get_cached_string(str_PRAGMA_ENABLE_DEPRECATION_WARNINGS));
-			PreprocessorDefines.append(get_cached_string(str_PROPERTY_BINDING_IMPLEMENTATION));
-			PreprocessorDefines.append(get_cached_string(str_RESULT_DECL));
-			PreprocessorDefines.append(get_cached_string(str_SLATE_BEGIN_ARGS));
-			PreprocessorDefines.append(get_cached_string(str_SLATE_END_ARGS));
-			PreprocessorDefines.append(get_cached_string(str_TEXT));
-			PreprocessorDefines.append(get_cached_string(str_UCLASS));
-			PreprocessorDefines.append(get_cached_string(str_UENUM));
-			PreprocessorDefines.append(get_cached_string(str_UFUNCTION));
-			PreprocessorDefines.append(get_cached_string(str_UMETA));
-			PreprocessorDefines.append(get_cached_string(str_UPARAM));
-			PreprocessorDefines.append(get_cached_string(str_UPROPERTY));
-			PreprocessorDefines.append(get_cached_string(str_USTRUCT));
-			PreprocessorDefines.append(get_cached_string(str_UE_REQUIRES));
-		}
+		register_macros( args(
+			(Macro { str_DECLARE_CLASS,                                         MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DELEGATE_RetVal_OneParam,                      MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DELEGATE_RetVal_ThreeParams,                   MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DELEGATE_SixParams,                            MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam,           MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams,  MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams,  MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams,  MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam,    MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams, MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams,   MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_EVENT_ThreeParams,                             MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_EVENT_TwoParams,                               MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_FUNCTION,                                      MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_LOG_CATEGORY_EXTERN,                           MT_Statement,  MF_Functional | MF_Allow_As_Definition }),
+			(Macro { str_DECLARE_MULTICAST_DELEGATE_OneParam,                   MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_MULTICAST_DELEGATE_ThreeParams,                MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_MULTICAST_DELEGATE_TwoParams,                  MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_OneParam,                MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams,               MT_Statement,  MF_Functional }),
+			(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams,             MT_Statement,  MF_Functional }),
+			(Macro { str_DEFINE_ACTORDESC_TYPE,                                 MT_Statement,  MF_Functional }),
+			(Macro { str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL,    MT_Statement,  MF_Functional }),
+			(Macro { str_ENUM_CLASS_FLAGS,                                      MT_Statement,  MF_Functional }),
+			(Macro { str_GENERATED_BODY,                                        MT_Statement,  MF_Functional }),
+			(Macro { str_GENERATED_UCLASS_BODY,                                 MT_Statement,  MF_Functional }),
+			(Macro { str_GENERATED_USTRUCT_BODY,                                MT_Statement,  MF_Functional }),
+			(Macro { str_PRAGMA_DISABLE_DEPRECATION_WARNINGS,                   MT_Statement,  MF_Null | MF_Allow_As_Attribute }),
+			(Macro { str_PRAGMA_ENABLE_DEPRECATION_WARNINGS,                    MT_Statement,  MF_Null | MF_Allow_As_Attribute }),
+			(Macro { str_PROPERTY_BINDING_IMPLEMENTATION,                       MT_Statement,  MF_Functional }),
+			(Macro { str_RESULT_DECL,                                           MT_Expression, MF_Functional }),
+			(Macro { str_SLATE_BEGIN_ARGS,                                      MT_Statement,  MF_Functional | MF_Expects_Body }),
+			(Macro { str_SLATE_END_ARGS,                                        MT_Statement,  MF_Functional }),
+			(Macro { str_TEXT,                                                  MT_Expression, MF_Functional }),
+			(Macro { str_UCLASS,                                                MT_Statement,  MF_Functional }),
+			(Macro { str_UENUM,                                                 MT_Statement,  MF_Functional }),
+			(Macro { str_UFUNCTION,                                             MT_Statement,  MF_Functional }),
+			(Macro { str_UMETA,                                                 MT_Expression, MF_Functional }),
+			(Macro { str_UPARAM,                                                MT_Expression, MF_Functional }),
+			(Macro { str_UPROPERTY,                                             MT_Statement,  MF_Functional }),
+			(Macro { str_USTRUCT,                                               MT_Statement,  MF_Functional }),
+			(Macro { str_UE_REQUIRES,                                           MT_Expression, MF_Functional }),
+			(Macro { str_UE_DEPRECATED,                                         MT_Statement,  MF_Functional | MF_Allow_As_Attribute }),
+			(Macro { str_ACTOR_HAS_LABELS,                                      MT_Expression, MF_Null       }),
+			(Macro { str_HIDE_ACTOR_TRANSFORM_FUNCTIONS,                        MT_Statement,  MF_Functional }),
+			(Macro { str_SCENECOMPONENT_QUAT_TOLERANCE,                         MT_Expression, MF_Null       }),
+			(Macro { str_SCENECOMPONENT_ROTATOR_TOLERANCE,                      MT_Expression, MF_Null       }),
+			(Macro { str_GAMEPLAYATTRIBUTE_REPNOTIFY,                           MT_Statement,  MF_Functional }),
+			(Macro { str_GAMEPLAYATTRIBUTE_PROPERTY_GETTER,                     MT_Statement,  MF_Functional }),
+			(Macro { str_GAMEPLAYATTRIBUTE_VALUE_GETTER,                        MT_Statement,  MF_Functional }),
+			(Macro { str_GAMEPLAYATTRIBUTE_VALUE_SETTER,                        MT_Statement,  MF_Functional }),
+			(Macro { str_GAMEPLAYATTRIBUTE_VALUE_INITTER,                       MT_Statement,  MF_Functional }),
+			(Macro { str_LOCTEXT_NAMESPACE,                                     MT_Statement,  MF_Null       })
+		));
 
-		// generate_AttributeSets();
-		//generate_DevOptionsCache();
-		//generate_HostWidgetController();
+		// register_macros()
+
+		generate_AttributeSets();
+		generate_DevOptionsCache();
+		// generate_HostWidgetController();
 		change_SBlueprintActionMenu_Construct();
 		change_EditorContentList();
-
-		gen::deinit();
 	});
 }
 
 #undef LOCTEXT_NAMESPACE
-
