@@ -70,7 +70,7 @@ void AGasaCharacter::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GE, float Le
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ensure(ASC);
 	ensure(GE);
-	FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+	FGameplayEffectContextHandle Context = ASC->MakeEffectContext(); Context.AddSourceObject(this);
 	FGameplayEffectSpecHandle    Spec    = ASC->MakeOutgoingSpec(GE, Level, Context );
 	ASC->ApplyGameplayEffectSpecToTarget( * Spec.Data, ASC );
 }

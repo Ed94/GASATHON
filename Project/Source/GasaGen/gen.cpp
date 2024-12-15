@@ -3498,6 +3498,7 @@ void register_macro( Macro macro ) {
 	GEN_ASSERT_NOT_NULL(macro.Name.Ptr);
 	GEN_ASSERT(macro.Name.Len > 0);
 	u32 key = crc32( macro.Name.Ptr, macro.Name.Len );
+	macro.Name = cache_str(macro.Name);
 	hashtable_set( _ctx->Macros, key, macro );
 }
 
@@ -3511,6 +3512,7 @@ void register_macros( s32 num, ... )
 		Macro macro = va_arg(va, Macro);
 		GEN_ASSERT_NOT_NULL(macro.Name.Ptr);
 		GEN_ASSERT(macro.Name.Len > 0);
+		macro.Name = cache_str(macro.Name);
 
 		u32 key = crc32( macro.Name.Ptr, macro.Name.Len );
 		hashtable_set( _ctx->Macros, key, macro );
@@ -3527,6 +3529,7 @@ void register_macros( s32 num,  Macro* macros )
 		Macro macro = * macros;
 		GEN_ASSERT_NOT_NULL(macro.Name.Ptr);
 		GEN_ASSERT(macro.Name.Len > 0);
+		macro.Name = cache_str(macro.Name);
 
 		u32 key = crc32( macro.Name.Ptr, macro.Name.Len );
 		hashtable_set( _ctx->Macros, key, macro );
@@ -6160,45 +6163,24 @@ void lex_found_token( LexContext* ctx )
 		ctx->token.Type   = macrotype_to_toktype(macro->Type);
 		b32 is_functional = macro_is_functional(* macro);
 		resolved_to_macro = has_args ? is_functional : ! is_functional;
+		if ( ! resolved_to_macro ) {
+			log_fmt("Info(%d, %d): %S identified as a macro but usage here does not resolve to one (interpreting as identifier)\n"
+				, ctx->token.Line
+				, ctx->token.Line
+				, macro->Name
+			);
+		}
 	}
 	if ( resolved_to_macro )
 	{
 		// TODO(Ed): When we introduce a macro AST (and expression support), we'll properly lex this section.
 		// Want to ignore any arguments the define may have as they can be execution expressions.
-		if ( has_args )
-		{
+		if ( has_args ) {
 			ctx->token.Flags |= TF_Macro_Functional;
-
-			// move_forward();
-			// ctx->token.Text.Len++;
-
-			// s32 level = 0;
-			// while ( ctx->left && ((* ctx->scanner) != ')' || level > 0) )
-			// {
-			// 	if ( (* ctx->scanner) == '(' )
-			// 		level++;
-
-			// 	else if ( (* ctx->scanner) == ')' && level > 0 )
-			// 		level--;
-
-			// 	move_forward();
-			// 	ctx->token.Text.Len++;
-			// }
-
-			// move_forward();
-			// ctx->token.Text.Len++;
 		}
-
-		//if ( (* ctx->scanner) == '\r' && ctx->scanner[1] == '\n' )
-		//{
-		//	move_forward();
-		//	ctx->token..Text.Length++;
-		//}
-		//else if ( (* ctx->scanner) == '\n' )
-		//{
-		//	move_forward();
-		//	ctx->token..Text.Length++;
-		//}
+		if ( bitfield_is_set(MacroFlags, macro->Flags, MF_Allow_As_Attribute) ) {
+			ctx->token.Flags |= TF_Attribute;
+		}
 	}
 	else
 	{
@@ -7252,6 +7234,7 @@ internal CodeBody           parse_global_nspace                ( CodeType which 
 internal Code               parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers );
 internal Token              parse_identifier                   ( bool* possible_member_function );
 internal CodeInclude        parse_include                      ();
+internal Code               parse_macro_as_definiton           ( CodeAttributes attributes, CodeSpecifiers specifiers );
 internal CodeOperator       parse_operator_after_ret_type      ( ModuleFlag mflags, CodeAttributes attributes, CodeSpecifiers specifiers, CodeTypename ret_type );
 internal Code               parse_operator_function_or_variable( bool expects_function, CodeAttributes attributes, CodeSpecifiers specifiers );
 internal CodePragma         parse_pragma                       ();
@@ -7626,7 +7609,7 @@ CodeAttributes parse_attributes()
 	s32   len   = 0;
 
 	// There can be more than one attribute. If there is flatten them to a single string.
-	// TODO(Ed): Support keeping an linked list of attributes similar to parameters
+	// TODO(Ed): Support chaining attributes (Use parameter linkage pattern)
 	while ( left && tok_is_attribute(currtok) )
 	{
 		if ( check( Tok_Attribute_Open ) )
@@ -9482,6 +9465,12 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 
 	Code result = InvalidCode;
 
+	Code macro_stmt = parse_macro_as_definiton(attributes, specifiers);
+	if (macro_stmt) {
+		parser_pop(& _ctx->parser);
+		return macro_stmt;
+	}
+
 	CodeTypename type = parser_parse_type( parser_not_from_template, nullptr );
 	// <Attributes> <Specifiers> <ReturnType/ValueType>
 
@@ -9550,6 +9539,36 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 		}
 	}
 
+	parser_pop(& _ctx->parser);
+	return result;
+}
+
+internal
+Code parse_macro_as_definiton( CodeAttributes attributes, CodeSpecifiers specifiers )
+{
+	push_scope();
+
+	if (currtok.Type != Tok_Preprocess_Macro_Stmt ) {
+		parser_pop(& _ctx->parser);
+		return NullCode;
+	}
+	Macro* macro                     = lookup_macro(currtok.Text);
+	b32    can_resolve_to_definition = macro && bitfield_is_set(MacroFlags, macro->Flags, MF_Allow_As_Definition);
+	if ( ! can_resolve_to_definition) {
+		parser_pop(& _ctx->parser);
+		return NullCode;
+	}
+
+	// TODO(Ed): When AST_Macro is made, have it support attributs and specifiers for when its behaving as a declaration/definition.
+	Code code = parse_simple_preprocess( Tok_Preprocess_Macro_Stmt );
+
+	// Attributes and sepcifiers will be collapsed into the macro's serialization.
+	StrBuilder resolved_definition = strbuilder_fmt_buf(_ctx->Allocator_Temp, "%S %S %S"
+		, attributes ? strbuilder_to_str( attributes_to_strbuilder(attributes)) : txt("")
+		, specifiers ? strbuilder_to_str( specifiers_to_strbuilder(specifiers)) : txt("")
+		, code->Content
+	);
+	Code result = untyped_str( strbuilder_to_str(resolved_definition) );
 	parser_pop(& _ctx->parser);
 	return result;
 }
@@ -10809,8 +10828,11 @@ CodeEnum parser_parse_enum( bool inplace_def )
 
 					// Unreal UMETA macro support
 					if ( currtok.Type == Tok_Preprocess_Macro_Expr ) {
-						eat( Tok_Preprocess_Macro_Expr );
+						Code macro = parse_simple_preprocess( Tok_Preprocess_Macro_Expr );
 						// <Name> = <Expression> <Macro>
+
+						// We're intentially ignoring this code as its going to be serialized as an untyped string with the rest of the enum "entry".
+						// TODO(Ed): We need a CodeEnumEntry, AST_EnumEntry types
 					}
 
 					if ( currtok.Type == Tok_Comma )
@@ -11107,6 +11129,13 @@ CodeFn parser_parse_function()
 		specifiers = def_specifiers( NumSpecifiers, specs_found );
 	}
 	// <export> <Attributes> <Specifiers>
+
+	// Note(Ed): We're enforcing that using this codepath requires non-macro jank.
+	// Code macro_stmt = parse_macro_as_definiton(attributes, specifiers);
+	// if (macro_stmt) {
+	// 	parser_pop(& _ctx->parser);
+	// 	return macro_stmt;
+	// }
 
 	CodeTypename ret_type = parser_parse_type(parser_not_from_template, nullptr);
 	if ( cast(Code, ret_type) == Code_Invalid ) {
@@ -12495,6 +12524,13 @@ CodeVar parser_parse_variable()
 		specifiers = def_specifiers( NumSpecifiers, specs_found );
 	}
 	// <ModuleFlags> <Attributes> <Specifiers>
+
+	// Note(Ed): We're enforcing that using this codepath requires non-macro jank.
+	// Code macro_stmt = parse_macro_as_definiton(attributes, specifiers);
+	// if (macro_stmt) {
+	// 	parser_pop(& _ctx->parser);
+	// 	return macro_stmt;
+	// }
 
 	CodeTypename type = parser_parse_type(parser_not_from_template, nullptr);
 	// <ModuleFlags> <Attributes> <Specifiers> <ValueType>

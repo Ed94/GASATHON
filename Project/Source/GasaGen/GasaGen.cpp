@@ -27,8 +27,6 @@ int gen_main()
 	gen::init(& ctx);
 	log_fmt("Generating code for the Gasa module\n");
 
-	Array(StrCached)& PreprocessorDefines = ctx.PreprocessorDefines;
-
 	// Initialize Globals
 	{
 		UHT_UCLASS         = code_str( UCLASS() );
@@ -39,52 +37,60 @@ int gen_main()
 	}
 
 	// Populate Defines
-	{
-		PreprocessorDefines.append( cache_str(str_DECLARE_CLASS));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_RetVal_OneParam));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_RetVal_ThreeParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DELEGATE_SixParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_EVENT_ThreeParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_EVENT_TwoParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_FUNCTION));
-		PreprocessorDefines.append( cache_str(str_DECLARE_LOG_CATEGORY_EXTERN));
-		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_ThreeParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_MULTICAST_DELEGATE_TwoParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_OneParam));
-		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams));
-		PreprocessorDefines.append( cache_str(str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams));
-		PreprocessorDefines.append( cache_str(str_DEFINE_ACTORDESC_TYPE));
-		PreprocessorDefines.append( cache_str(str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL));
-		PreprocessorDefines.append( cache_str(str_ENUM_CLASS_FLAGS));
-		PreprocessorDefines.append( cache_str(str_FORCEINLINE_DEBUGGABLE));
-		// PreprocessorDefines.append( get_cached_string(str_FORCEINLINE));
-		PreprocessorDefines.append( cache_str(str_GENERATED_BODY));
-		PreprocessorDefines.append( cache_str(str_GENERATED_UCLASS_BODY));
-		PreprocessorDefines.append( cache_str(str_GENERATED_USTRUCT_BODY));
-		PreprocessorDefines.append( cache_str(str_PRAGMA_DISABLE_DEPRECATION_WARNINGS));
-		PreprocessorDefines.append( cache_str(str_PRAGMA_ENABLE_DEPRECATION_WARNINGS));
-		PreprocessorDefines.append( cache_str(str_PROPERTY_BINDING_IMPLEMENTATION));
-		PreprocessorDefines.append( cache_str(str_RESULT_DECL));
-		PreprocessorDefines.append( cache_str(str_SLATE_BEGIN_ARGS));
-		PreprocessorDefines.append( cache_str(str_SLATE_END_ARGS));
-		PreprocessorDefines.append( cache_str(str_TEXT));
-		PreprocessorDefines.append( cache_str(str_UCLASS));
-		PreprocessorDefines.append( cache_str(str_UENUM));
-		PreprocessorDefines.append( cache_str(str_UFUNCTION));
-		PreprocessorDefines.append( cache_str(str_UMETA));
-		PreprocessorDefines.append( cache_str(str_UPARAM));
-		PreprocessorDefines.append( cache_str(str_UPROPERTY));
-		PreprocessorDefines.append( cache_str(str_USTRUCT));
-		PreprocessorDefines.append( cache_str(str_UE_REQUIRES));
-	}
+	register_macros( args(
+		(Macro { str_DECLARE_CLASS,                                         MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DELEGATE_RetVal_OneParam,                      MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DELEGATE_RetVal_ThreeParams,                   MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DELEGATE_SixParams,                            MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam,           MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FiveParams,  MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_FourParams,  MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_NineParams,  MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam,    MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_SevenParams, MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_TwoParams,   MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_EVENT_ThreeParams,                             MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_EVENT_TwoParams,                               MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_FUNCTION,                                      MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_LOG_CATEGORY_EXTERN,                           MT_Statement,  MF_Functional | MF_Allow_As_Definition }),
+		(Macro { str_DECLARE_MULTICAST_DELEGATE_OneParam,                   MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_MULTICAST_DELEGATE_ThreeParams,                MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_MULTICAST_DELEGATE_TwoParams,                  MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_OneParam,                MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_TwoParams,               MT_Statement,  MF_Functional }),
+		(Macro { str_DECLARE_TS_MULTICAST_DELEGATE_ThreeParams,             MT_Statement,  MF_Functional }),
+		(Macro { str_DEFINE_ACTORDESC_TYPE,                                 MT_Statement,  MF_Functional }),
+		(Macro { str_DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL,    MT_Statement,  MF_Functional }),
+		(Macro { str_ENUM_CLASS_FLAGS,                                      MT_Statement,  MF_Functional }),
+		(Macro { str_GENERATED_BODY,                                        MT_Statement,  MF_Functional }),
+		(Macro { str_GENERATED_UCLASS_BODY,                                 MT_Statement,  MF_Functional }),
+		(Macro { str_GENERATED_USTRUCT_BODY,                                MT_Statement,  MF_Functional }),
+		(Macro { str_PRAGMA_DISABLE_DEPRECATION_WARNINGS,                   MT_Statement,  MF_Null | MF_Allow_As_Attribute }),
+		(Macro { str_PRAGMA_ENABLE_DEPRECATION_WARNINGS,                    MT_Statement,  MF_Null | MF_Allow_As_Attribute }),
+		(Macro { str_PROPERTY_BINDING_IMPLEMENTATION,                       MT_Statement,  MF_Functional }),
+		(Macro { str_RESULT_DECL,                                           MT_Expression, MF_Functional }),
+		(Macro { str_SLATE_BEGIN_ARGS,                                      MT_Statement,  MF_Functional }),
+		(Macro { str_SLATE_END_ARGS,                                        MT_Statement,  MF_Functional }),
+		(Macro { str_TEXT,                                                  MT_Expression, MF_Functional }),
+		(Macro { str_UCLASS,                                                MT_Statement,  MF_Functional }),
+		(Macro { str_UENUM,                                                 MT_Statement,  MF_Functional }),
+		(Macro { str_UFUNCTION,                                             MT_Statement,  MF_Functional }),
+		(Macro { str_UMETA,                                                 MT_Expression, MF_Functional }),
+		(Macro { str_UPARAM,                                                MT_Expression, MF_Functional }),
+		(Macro { str_UPROPERTY,                                             MT_Statement,  MF_Functional }),
+		(Macro { str_USTRUCT,                                               MT_Statement,  MF_Functional }),
+		(Macro { str_UE_REQUIRES,                                           MT_Expression, MF_Functional }),
+		(Macro { str_UE_DEPRECATED,                                         MT_Statement,  MF_Functional | MF_Allow_As_Attribute }),
+		(Macro { str_ACTOR_HAS_LABELS,                                      MT_Expression, MF_Null       }),
+		(Macro { str_HIDE_ACTOR_TRANSFORM_FUNCTIONS,                        MT_Statement,  MF_Functional }),
+		(Macro { str_SCENECOMPONENT_QUAT_TOLERANCE,                         MT_Expression, MF_Null       }),
+		(Macro { str_SCENECOMPONENT_ROTATOR_TOLERANCE,                      MT_Expression, MF_Null       }),
+		(Macro { str_GAMEPLAYATTRIBUTE_REPNOTIFY,                           MT_Statement,  MF_Functional }),
+		(Macro { str_GAMEPLAYATTRIBUTE_PROPERTY_GETTER,                     MT_Statement,  MF_Functional }),
+		(Macro { str_GAMEPLAYATTRIBUTE_VALUE_GETTER,                        MT_Statement,  MF_Functional }),
+		(Macro { str_GAMEPLAYATTRIBUTE_VALUE_SETTER,                        MT_Statement,  MF_Functional }),
+		(Macro { str_GAMEPLAYATTRIBUTE_VALUE_INITTER,                       MT_Statement,  MF_Functional })
+	));
 
 	// gen_UGasaAttributeSet();
 	// gen_FGasaDevOptionsCache();

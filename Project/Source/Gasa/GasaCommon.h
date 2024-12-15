@@ -4,9 +4,11 @@
 
 #include "GasaCommon.generated.h"
 
+#ifndef global
 #define global        
 #define internal      static
 #define local_persist static
+#endif
 
 #ifndef ccast
 #define ccast( Type, Value ) ( *const_cast<(Type)*>( &( Value ) ) )
@@ -15,7 +17,9 @@
 #define scast( Type, Value ) static_cast<Type>( Value )
 #endif
 
+#ifndef bit
 #define bit(position) (1 << position)
+#endif
 
 #pragma region Math
 #define m_pow2( value ) (value * value)
@@ -45,8 +49,10 @@ class UCameraComponent;
 class UGameplayEffect;
 class UInputAction;
 class UInputMappingContext;
+class UNamedSlot;
 class USphereComponent;
 class USpringArmComponent;
+class UTextBlock;
 class UTexture2D;
 #pragma endregion Engine Forwards
 
@@ -68,6 +74,9 @@ class AGasaPlayerController;
 class AGasaPlayerState;
 class APlayerCharacter;
 
+class UAttributeMenu;
+class UAttributeMenu_FramedValue;
+class UAttributeMenu_TextValueRow;
 class UGasaAbilitySystemComp;
 class UGasaAttributeSet;
 class UGasaDevOptions;

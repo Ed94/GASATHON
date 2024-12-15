@@ -196,4 +196,3 @@ void UGlobeProgressBar::Serialize(FStructuredArchive::FRecord Record)
 	Super::Serialize(Record);
 }
 #pragma endregion UserWidget
-

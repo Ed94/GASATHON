@@ -36,7 +36,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 							// log_fmt("%s\n", class_code->to_string() );
 						}
 					break;
@@ -74,7 +74,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 							// log_fmt("%s\n", class_code->to_string() );
 						}
 					break;
@@ -109,7 +109,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 						}
 					break;
 				}
@@ -143,7 +143,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 						}
 					break;
 				}
@@ -177,7 +177,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 						}
 					break;
 				}
@@ -211,7 +211,7 @@ void ue_parse_testing()
 					case CT_Function_Fwd:
 						if ( class_code->Name )
 						{
-							log_fmt("%s\n", class_code->Name );
+							log_fmt("%S\n", class_code->Name );
 						}
 					break;
 				}

@@ -640,11 +640,10 @@ FORCEINLINE bool is_trailing( Specifier specifier )
 	return spec_is_trailing( specifier );
 }
 
-#define GEN_DEFINE_ATTRIBUTE_TOKENS                                                                                         \
-	Entry( Tok_Attribute_API_Export, "GEN_API_Export_Code" ) Entry( Tok_Attribute_API_Import, "GEN_API_Import_Code" )       \
-	    Entry( Tok_Attribute_COREUOBJECT_API, "COREUOBJECT_API" ) Entry( Tok_Attribute_ENGINE_API, "ENGINE_API" )           \
-	        Entry( Tok_Attribute_GAMEPLAYABILITIES_API, "GAMEPLAYABILITIES_API" ) Entry( Tok_Attribute_UMG_API, "UMG_API" ) \
-	            Entry( Tok_Attribute_UE_DEPRECATED, "UE_DEPRECATED" )
+#define GEN_DEFINE_ATTRIBUTE_TOKENS                                                                                   \
+	Entry( Tok_Attribute_API_Export, "GEN_API_Export_Code" ) Entry( Tok_Attribute_API_Import, "GEN_API_Import_Code" ) \
+	    Entry( Tok_Attribute_COREUOBJECT_API, "COREUOBJECT_API" ) Entry( Tok_Attribute_ENGINE_API, "ENGINE_API" )     \
+	        Entry( Tok_Attribute_GAMEPLAYABILITIES_API, "GAMEPLAYABILITIES_API" ) Entry( Tok_Attribute_UMG_API, "UMG_API" )
 
 enum TokType : u32
 {
@@ -692,6 +691,7 @@ enum TokType : u32
 	Tok_Operator,
 	Tok_Preprocess_Hash,
 	Tok_Preprocess_Define,
+	Tok_Preprocess_Define_Param,
 	Tok_Preprocess_If,
 	Tok_Preprocess_IfDef,
 	Tok_Preprocess_IfNotDef,
@@ -752,7 +752,6 @@ enum TokType : u32
 	Tok_Attribute_ENGINE_API,
 	Tok_Attribute_GAMEPLAYABILITIES_API,
 	Tok_Attribute_UMG_API,
-	Tok_Attribute_UE_DEPRECATED,
 	Tok_NumTokens
 };
 
@@ -803,6 +802,7 @@ inline Str toktype_to_str( TokType type )
 		{ "__operator__",           sizeof( "__operator__" ) - 1           },
 		{ "#",		              sizeof( "#" ) - 1                      },
 		{ "define",                 sizeof( "define" ) - 1                 },
+		{ "__define_param__",       sizeof( "__define_param__" ) - 1       },
 		{ "if",		             sizeof( "if" ) - 1                     },
 		{ "ifdef",                  sizeof( "ifdef" ) - 1                  },
 		{ "ifndef",                 sizeof( "ifndef" ) - 1                 },
@@ -863,7 +863,6 @@ inline Str toktype_to_str( TokType type )
 		{ "ENGINE_API",             sizeof( "ENGINE_API" ) - 1             },
 		{ "GAMEPLAYABILITIES_API",  sizeof( "GAMEPLAYABILITIES_API" ) - 1  },
 		{ "UMG_API",                sizeof( "UMG_API" ) - 1                },
-		{ "UE_DEPRECATED",          sizeof( "UE_DEPRECATED" ) - 1          },
 	};
 	return lookup[type];
 }
@@ -1055,8 +1054,22 @@ enum EMacroFlags : u16
 {
 	MF_Functional          = bit(0), // Macro has parameters (args expected to be passed)
 	MF_Expects_Body        = bit(1), // Expects to assign a braced scope to its body.
-	MF_Allow_As_Identifier = bit(2), // lex__eat wil treat this macro as an identifier if the parser attempts to consume it as one.
-                                     //  ^^^ This is a sort of kludge because we don't support push/pop macro programs rn. ^^^
+
+	// lex__eat wil treat this macro as an identifier if the parser attempts to consume it as one.
+	//  ^^^ This is a kludge because we don't support push/pop macro pragmas rn.
+	MF_Allow_As_Identifier = bit(2), 
+
+	// lex__eat wil treat this macro as an attribute if the parser attempts to consume it as one.
+	//  ^^^ This a kludge because unreal has a macro that behaves as both a 'statement' and an attribute (UE_DEPRECATED, PRAGMA_ENABLE_DEPRECATION_WARNINGS, etc)
+	// TODO(Ed): We can keep the MF_Allow_As_Attribute flag for macros, however, we need to add the ability of AST_Attributes to chain themselves.
+	// Its thats already a thing in the standard language anyway
+	// & it would allow UE_DEPRECATED, (UE_PROPERTY / UE_FUNCTION) to chain themselves as attributes of a resolved member function/varaible definition
+	MF_Allow_As_Attribute  = bit(3),
+
+	// When a macro is encountered after attributs and specifiers while parsing a function, or variable:
+	// It will consume the macro and treat it as resolving the definition. (Yes this is for Unreal Engine)
+	// (MUST BE OF MT_Statement TYPE)
+	MF_Allow_As_Definition = bit(4),
 
 	MF_Null           = 0,
 	MF_UnderlyingType = GEN_U16_MAX,
@@ -2741,13 +2754,14 @@ struct AST_Body
 };
 static_assert( sizeof(AST_Body) == sizeof(AST), "ERROR: AST_Body is not the same size as AST");
 
+// TODO(Ed): Support chaining attributes (Use parameter linkage pattern)
 struct AST_Attributes
 {
 	union {
 		char          _PAD_[ sizeof(Specifier) * AST_ArrSpecs_Cap + sizeof(AST*) ];
 		StrCached  Content;
 	};
-	StrCached      Name;
+	StrCached         Name;
 	Code              Prev;
 	Code              Next;
 	Token*            Tok;
