@@ -267,13 +267,15 @@ GEN_NS_BEGIN
 #define stringize( ... )    stringize_va( __VA_ARGS__ )
 #endif
 
+#define src_line_str stringize( __LINE__ )
+
 #ifndef do_once
-#define do_once()                                \
-	static int __do_once_counter_##__LINE__ = 0; \
-	for ( ; __do_once_counter_##__LINE__ != 1; __do_once_counter_##__LINE__ = 1 )
-#define do_once_defer( expression )              \
-	static int __do_once_counter_##__LINE__ = 0; \
-	for ( ; __do_once_counter_##__LINE__ != 1; __do_once_counter_##__LINE__ = 1, ( expression ) )
+#define do_once()                                    \
+	static int __do_once_counter_##src_line_str = 0; \
+	for ( ; __do_once_counter_##src_line_str != 1; __do_once_counter_##src_line_str = 1 )
+#define do_once_defer( expression )                  \
+	static int __do_once_counter_##src_line_str = 0; \
+	for ( ; __do_once_counter_##src_line_str != 1; __do_once_counter_##src_line_str = 1, ( expression ) )
 #define do_once_start                    \
 	do                                   \
 	{                                    \

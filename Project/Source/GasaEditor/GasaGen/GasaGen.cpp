@@ -30,14 +30,7 @@ void Execute_GasaModule_Codegen()
 	{
 		Gasa::LogEditor("Executing: Gasa Module code generation.");
 
-		if (gen_ctx.Allocator_Temp.Proc) {
-			gen::reset(& gen_ctx);
-		}
-		else
-		{
-			gen::init( & gen_ctx);
-		}
-
+		gen::init( & gen_ctx);
 		FString     ue_project_path = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 		FPaths::NormalizeDirectoryName(ue_project_path);
 		char const* ue_ansi_project_path = TCHAR_TO_ANSI(*ue_project_path);
@@ -137,6 +130,8 @@ void Execute_GasaModule_Codegen()
 		// generate_HostWidgetController();
 		change_SBlueprintActionMenu_Construct();
 		change_EditorContentList();
+		
+		gen::deinit( & gen_ctx);
 	});
 }
 
