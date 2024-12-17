@@ -26,7 +26,7 @@ This means that the typename entry for the parameter AST would be either:
 ***Concepts and Constraints are not supported***  
 Its a [todo](https://github.com/Ed94/gencpp/issues/21)
 
-### Feature Macros:
+### Feature Macros
 
 * `GEN_DEFINE_ATTRIBUTE_TOKENS` : Allows user to define their own attribute macros for use in parsing.
   * This can be generated using base.cpp.
@@ -36,9 +36,40 @@ Its a [todo](https://github.com/Ed94/gencpp/issues/21)
 * `GEN_EXPOSE_BACKEND` : Will expose symbols meant for internal use only.
 * `GEN_ROLL_OWN_DEPENDENCIES` : Optional override so that user may define the dependencies themselves.
 * `GEN_DONT_ALLOW_INVALID_CODE` (Not implemented yet) : Will fail when an invalid code is constructed, parsed, or serialized.
-* `GEN_C_LIKE_PP` : Setting to `<true or 1>` Will prevent usage of function defnitions using references and structs with member functions. Structs will still have user-defined operator conversions, for-range support, and other operator overloads
+* `GEN_C_LIKE_CPP` : Setting to `<true or 1>` Will prevent usage of function defnitions using references and structs with member functions. Structs will still have user-defined operator conversions, for-range support, and other operator overloads
 
 ### The Data & Interface
+
+The library's persistent state is managed tracked by a context struct: `global Context* _ctx;` defined within [static_data.cpp](../base/components/static_data.cpp)
+
+https://github.com/Ed94/gencpp/blob/967a044637f1615c709cb723dc61118fcc08dcdb/base/components/interface.hpp#L39-L97
+
+The interface for the context:
+
+* `init`: Initializtion
+* `deinit`: De-initialization.
+* `reset`: Clears the allocations, but doesn't free the memoery, then calls `init()` on `_ctx` again.
+* `get_context`: Retreive the currently tracked context.
+* `set_context`: Swap out the current tracked context.
+
+
+#### Allocato usage
+
+* `Allocator_DyanmicContainers`: Growing arrays, hash tables. (Unbounded sized containers)
+* `Allocator_Pool`: Fixed-sized object allocations (ASTs, etc)
+* `Allocator_StrCache`: StrCached allocations
+* `Allocator_Temp`: Temporary alloations mostly intended for StrBuilder usage. Manually cleared by the user by their own discretion.
+
+The allocator definitions used are exposed to the user incase they want to dictate memory usage
+
+* Allocators are defined with the `AllocatorInfo` structure found in [`memory.hpp`](../base/dependencies/memory.hpp)
+* Most of the work is just defining the allocation procedure:
+
+```cpp
+    void* ( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
+```
+
+For any allocator above that the user does not define before `init`, a fallback allocator will be assigned that utiizes the `fallback_allocator_proc` wtihin [interface.cpp](../base/components/interface.cpp).
 
 As mentioned in root readme, the user is provided Code objects by calling the constructor's functions to generate them or find existing matches.
 
@@ -47,14 +78,14 @@ However, the user may specifiy memory configuration.
 
 [Data layout of AST struct (Subject to heavily change with upcoming todos)](../base/components/ast.hpp#L396-461)  
 
-https://github.com/Ed94/gencpp/blob/eea4ebf5c40d5d87baa465abfb1be30845b2377e/base/components/ast.hpp#L396-L461
+https://github.com/Ed94/gencpp/blob/967a044637f1615c709cb723dc61118fcc08dcdb/base/components/ast.hpp#L369-L435
 
 *`StringCahced` is a typedef for `Str` (a string slice), to denote it is an interned string*  
 *`CodeType` is enum taggin the type of code. Has an underlying type of `u32`*  
 *`OperatorT` is a typedef for `EOperator::Type` which has an underlying type of `u32`*  
-*`StrBuilder` is the dynamically allocated string type for the library*  
+*`StrBuilder` is the dynamically allocating string builder type for the library*  
 
-AST widths are setup to be AST_POD_Size.  
+AST widths are setup to be AST_POD_Size (128 bytes by default).
 The width dictates how much the static array can hold before it must give way to using an allocated array:
 
 ```cpp
@@ -73,41 +104,16 @@ int AST_ArrSpecs_Cap =
 )
 / sizeof(Specifier) - 1;
 ```
-
-*Ex: If the AST_POD_Size is 128 the capacity of the static array is 20.*
-
 Data Notes:
-
-* The allocator definitions used are exposed to the user incase they want to dictate memory usage
-  * You'll find the memory handling in `init`, `deinit`, `reset`, `gen_strbuilder_allocator`, `cache_str`, `make_code`.
-  * Allocators are defined with the `AllocatorInfo` structure found in [`memory.hpp`](../base/dependencies/memory.hpp)
-  * Most of the work is just defining the allocation procedure:
-
-```cpp
-    void* ( void* allocator_data, AllocType type, ssize size, ssize alignment, void* old_memory, ssize old_size, u64 flags );
-```
 
 * ASTs are wrapped for the user in a Code struct which is a wrapper for a AST* type.
 * Code types have member symbols but their data layout is enforced to be POD types.
 * This library treats memory failures as fatal.
 * Cached Strings are stored in their own set of arenas. AST constructors use cached strings for names, and content.
-  * `StringArenas`, `StringCache`, `Allocator_StringArena`, and `Allocator_StringTable` are the associated containers or allocators.
 * Strings used for serialization and file buffers are not contained by those used for cached strings.
-  * They are currently using `FallbackAllocator`, which are tracked array of arenas that grows as needed (adds buckets when one runs out).
-  * Memory within the buckets is not reused, so its inherently wasteful.
-  * I will be augmenting the default allocator with virtual memory & a slab allocator in the [future](https://github.com/Ed94/gencpp/issues/12)
-* Intrusive linked lists used children nodes on bodies, and parameters.
+  * `_ctx->Allocator_Temp` is used.
 * Its intended to generate the AST in one go and serialize after. The constructors and serializer are designed to be a "one pass, front to back" setup.
-* Allocations can be tuned by defining the folloiwng macros (will be moved to runtime configuration in the future):
-  * `GEN_GLOBAL_BUCKET_SIZE` : Size of each bucket area for the global allocator
-  * `GEN_CODEPOOL_NUM_BLOCKS` : Number of blocks per code pool in the code allocator
-  * `GEN_SIZE_PER_STRING_ARENA` : Size per arena used with string caching.
-  * `GEN_MAX_COMMENT_LINE_LENGTH` : Longest length a comment can have per line.
-  * `GEN_MAX_NAME_LENGTH` : Max length of any identifier.
-  * `GEN_MAX_UNTYPED_STR_LENGTH` : Max content length for any untyped code.
-  * `TokenMap_FixedArena` : token_fmt_va uses local_persit memory of this arena type for the hashtable.
-  * `GEN_LEX_ALLOCATOR_SIZE`
-  * `GEN_BUILDER_STR_BUFFER_RESERVE`
+  * Any modifcations to an existing AST should be to just construct another with the modifications done on-demand while traversing the AST (non-destructive).
 
 The following CodeTypes are used which the user may optionally use strong typing with if they enable: `GEN_ENFORCE_STRONG_CODE_TYPES`
 
@@ -117,6 +123,7 @@ The following CodeTypes are used which the user may optionally use strong typing
 * CodeClass
 * CodeConstructor
 * CodeDefine
+* CodeDefineParams
 * CodeDestructor
 * CodeEnum
 * CodeExec
@@ -127,7 +134,7 @@ The following CodeTypes are used which the user may optionally use strong typing
 * CodeModule
 * CodeNS
 * CodeOperator
-* CodeOpCast
+* CodeOpCast : User defined member operator conversion
 * CodeParams : Has support for `for : range` iterating across parameters.
 * CodePreprocessCond
 * CodePragma
@@ -140,11 +147,15 @@ The following CodeTypes are used which the user may optionally use strong typing
 * CodeUsing
 * CodeVar
 
-Each Code boy has an associated "filtered AST" with the naming convention: `AST_<CodeName>`
+Each `struct Code<Name>` has an associated "filtered AST" with the naming convention: `AST_<CodeName>`
 Unrelated fields of the AST for that node type are omitted and only necessary padding members are defined otherwise.
-Retrieving a raw version of the ast can be done using the `raw()` function defined in each AST.
 
-## There are three sets of interfaces for Code AST generation the library provides
+For the interface related to these code types see:
+
+* [ast.hpp](../base/components/ast.hpp): Under the region pragma `Code C-Interface`
+* [code_types.hpp](../base/components/code_types.hpp): Under the region pragma `Code C-Interface`. Additional functionlity for c++ will be within the struct definitions or at the end of the file.
+
+## There are three categories of interfaces for Code AST generation & reflection
 
 * Upfront
 * Parsing
@@ -164,6 +175,7 @@ Interface :``
 * def_class
 * def_constructor
 * def_define
+* def_define_params
 * def_destructor
 * def_enum
 * def_execution
@@ -218,6 +230,27 @@ Code <name>
 
 ```
 
+All optional parmeters are defined within `struct Opts_def_<functon name>`. This was done to setup a [macro trick](https://x.com/vkrajacic/status/1749816169736073295) for default optional parameers in the C library:
+
+```cpp
+struct gen_Opts_def_struct
+{
+	gen_CodeBody       body;
+	gen_CodeTypename   parent;
+	gen_AccessSpec     parent_access;
+	gen_CodeAttributes attributes;
+	gen_CodeTypename*  interfaces;
+	gen_s32            num_interfaces;
+	gen_ModuleFlag     mflags;
+};
+typedef struct gen_Opts_def_struct gen_Opts_def_struct;
+
+GEN_API gen_CodeClass gen_def__struct( gen_Str name, gen_Opts_def_struct opts GEN_PARAM_DEFAULT );
+#define gen_def_struct( name, ... ) gen_def__struct( name, ( gen_Opts_def_struct ) { __VA_ARGS__ } )
+```
+
+In the C++ library, the `def_<funtion name>` is not wrapped in a macro.
+
 When using the body functions, its recommended to use the args macro to auto determine the number of arguments for the varadic:
 
 ```cpp
@@ -228,7 +261,7 @@ def_global_body( 3, ht_entry, array_ht_entry, hashtable );
 ```
 
 If a more incremental approach is desired for the body ASTs, `Code def_body( CodeT type )` can be used to create an empty body.
-When the members have been populated use: `AST::validate_body` to verify that the members are valid entires for that type.
+When the members have been populated use: `code_validate_body` to verify that the members are valid entires for that type.
 
 ### Parse construction
 
@@ -238,12 +271,12 @@ Interface :
 
 * parse_class
 * parse_constructor
+* parse_define
 * parse_destructor
 * parse_enum
 * parse_export_body
 * parse_extern_link
 * parse_friend
-  * Purposefully are only support forward declares with this constructor.
 * parse_function
 * parse_global_body
 * parse_namespace
@@ -322,6 +355,7 @@ Code        <name>       = parse_<function name>( gen_code_str );
 
 The following are provided predefined by the library as they are commonly used:
 
+* `enum_underlying_macro`
 * `access_public`
 * `access_protected`
 * `access_private`

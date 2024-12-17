@@ -270,11 +270,11 @@ GEN_NS_BEGIN
 #define src_line_str stringize( __LINE__ )
 
 #ifndef do_once
-#define do_once()                                    \
-	static int __do_once_counter_##src_line_str = 0; \
+#define do_once()                                           \
+	local_persist int __do_once_counter_##src_line_str = 0; \
 	for ( ; __do_once_counter_##src_line_str != 1; __do_once_counter_##src_line_str = 1 )
-#define do_once_defer( expression )                  \
-	static int __do_once_counter_##src_line_str = 0; \
+#define do_once_defer( expression )                         \
+	local_persist int __do_once_counter_##src_line_str = 0; \
 	for ( ; __do_once_counter_##src_line_str != 1; __do_once_counter_##src_line_str = 1, ( expression ) )
 #define do_once_start                    \
 	do                                   \
@@ -852,10 +852,10 @@ template<typename Type> mem_ptr_const to_mem_ptr_const( Type ptr ) { return (mem
 #if GEN_BUILD_DEBUG
 #	if defined( GEN_COMPILER_MSVC )
 #		if _MSC_VER < 1300
-#pragma message("GEN_BUILD_DEBUG: __asm int 3")
+// #pragma message("GEN_BUILD_DEBUG: __asm int 3")
 #			define GEN_DEBUG_TRAP() __asm int 3 /* Trap to debugger! */
 #		else
-#pragma message("GEN_BUILD_DEBUG: __debugbreak()")
+// #pragma message("GEN_BUILD_DEBUG: __debugbreak()")
 #			define GEN_DEBUG_TRAP() __debugbreak()
 #		endif
 #	elif defined( GEN_COMPILER_TINYC )
@@ -864,7 +864,7 @@ template<typename Type> mem_ptr_const to_mem_ptr_const( Type ptr ) { return (mem
 #		define GEN_DEBUG_TRAP() __builtin_trap()
 #	endif
 #else
-#pragma message("GEN_BUILD_DEBUG: omitted")
+// #pragma message("GEN_BUILD_DEBUG: omitted")
 #	define GEN_DEBUG_TRAP()
 #endif
 
@@ -2182,10 +2182,9 @@ bool array_fill(Array<Type> array, usize begin, usize end, Type value)
 	ArrayHeader* header = array_get_header(array);
 
 	if (begin < 0 || end > header->Num)
-	return false;
+		return false;
 
-	for (ssize idx = ssize(begin); idx < ssize(end); idx++)
-	{
+	for (ssize idx = ssize(begin); idx < ssize(end); idx++) {
 		array[idx] = value;
 	}
 
@@ -2654,7 +2653,7 @@ HashTableFindResult hashtable__find(HashTable<Type> table, u64 key)
 			if (table.Entries[result.EntryIndex].Key == key)
 				break;
 
-			result.PrevIndex = result.EntryIndex;
+			result.PrevIndex  = result.EntryIndex;
 			result.EntryIndex = table.Entries[result.EntryIndex].Next;
 		}
 	}

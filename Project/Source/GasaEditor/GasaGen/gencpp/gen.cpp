@@ -32,10 +32,9 @@ GEN_NS_BEGIN
 
 #pragma region StaticData
 global Context* _ctx;
+global u32      context_counter;
 
 #pragma region Constants
-global u32 context_counter;
-
 global Macro enum_underlying_macro;
 
 global Code Code_Global;
@@ -2534,12 +2533,24 @@ void specifiers_to_strbuilder_ref( CodeSpecifiers self, StrBuilder* result )
 	GEN_ASSERT(result);
 	s32 idx  = 0;
 	s32 left = self->NumEntries;
-	while ( left-- )
+	while ( left -- )
 	{
-		Str spec = spec_to_str( self->ArrSpecs[idx] );
-		strbuilder_append_fmt( result, "%.*s ", spec.Len, spec.Ptr );
+		Specifier spec     = self->ArrSpecs[idx];
+		Str       spec_str = spec_to_str( spec );
+		if ( idx > 0 ) switch (spec) {
+			case Spec_Ptr:
+			case Spec_Ref:
+			case Spec_RValue:
+			break;
+
+			default:
+				strbuilder_append_str(result, txt(" "));
+			break;
+		}
+		strbuilder_append_fmt( result, "%S", spec_str );
 		idx++;
 	}
+	strbuilder_append_str(result, txt(" "));
 }
 
 StrBuilder struct_to_strbuilder(CodeStruct self)
@@ -2943,7 +2954,7 @@ void var_to_strbuilder_ref(CodeVar self, StrBuilder* result )
 			strbuilder_append_fmt( result, "%SB ", attributes_to_strbuilder(self->Attributes) );
 
 		if ( self->Specs )
-			strbuilder_append_fmt( result, "%SB\n", specifiers_to_strbuilder(self->Specs) );
+			strbuilder_append_fmt( result, "%SB", specifiers_to_strbuilder(self->Specs) );
 
 		strbuilder_append_fmt( result, "%SB %S", typename_to_strbuilder(self->ValueType), self->Name );
 
@@ -3528,7 +3539,7 @@ void register_macros( s32 num, ... )
 	va_end(va);
 }
 
-void register_macros( s32 num,  Macro* macros )
+void register_macros_arr( s32 num,  Macro* macros )
 {
 	GEN_ASSERT(num > 0);
 	do
@@ -4911,7 +4922,7 @@ CodeBody def_class_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_class_body( s32 num, Code* codes )
+CodeBody def_class_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_class_body );
 
@@ -4974,7 +4985,7 @@ CodeDefineParams def_define_params( s32 num, ... )
 	return result;
 }
 
-CodeDefineParams def_define_params( s32 num, CodeDefineParams* codes )
+CodeDefineParams def_define_params_arr( s32 num, CodeDefineParams* codes )
 {
 	def_body_code_array_start( def_define_params );
 
@@ -5033,7 +5044,7 @@ CodeBody def_enum_body( s32 num, ... )
 	return (CodeBody) result;
 }
 
-CodeBody def_enum_body( s32 num, Code* codes )
+CodeBody def_enum_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_enum_body );
 
@@ -5094,7 +5105,7 @@ CodeBody def_export_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_export_body( s32 num, Code* codes )
+CodeBody def_export_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_export_body );
 
@@ -5160,7 +5171,7 @@ CodeBody def_extern_link_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_extern_link_body( s32 num, Code* codes )
+CodeBody def_extern_link_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_extern_linkage_body );
 
@@ -5227,7 +5238,7 @@ CodeBody def_function_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_function_body( s32 num, Code* codes )
+CodeBody def_function_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_function_body );
 
@@ -5298,7 +5309,7 @@ CodeBody def_global_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_global_body( s32 num, Code* codes )
+CodeBody def_global_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_global_body );
 
@@ -5369,7 +5380,7 @@ CodeBody def_namespace_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_namespace_body( s32 num, Code* codes )
+CodeBody def_namespace_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_namespace_body );
 
@@ -5431,7 +5442,7 @@ CodeParams def_params( s32 num, ... )
 	return result;
 }
 
-CodeParams def_params( s32 num, CodeParams* codes )
+CodeParams def_params_arr( s32 num, CodeParams* codes )
 {
 	def_body_code_array_start( def_params );
 
@@ -5487,7 +5498,7 @@ CodeSpecifiers def_specifiers( s32 num, ... )
 	return result;
 }
 
-CodeSpecifiers def_specifiers( s32 num, Specifier* specs )
+CodeSpecifiers def_specifiers_arr( s32 num, Specifier* specs )
 {
 	if ( num <= 0 ) {
 		log_failure("gen::def_specifiers: num cannot be zero or less");
@@ -5546,7 +5557,7 @@ CodeBody def_struct_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_struct_body( s32 num, Code* codes )
+CodeBody def_struct_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_struct_body );
 
@@ -5607,7 +5618,7 @@ CodeBody def_union_body( s32 num, ... )
 	return result;
 }
 
-CodeBody def_union_body( s32 num, Code* codes )
+CodeBody def_union_body_arr( s32 num, Code* codes )
 {
 	def_body_code_array_start( def_union_body );
 
@@ -5789,7 +5800,7 @@ s32 lex_preprocessor_define( LexContext* ctx )
 			macro.Flags |= MF_Functional;
 		}
 
-		Token opening_paren = { { ctx->scanner, 1 }, Tok_Capture_Start, ctx->line, ctx->column, TF_Preprocess };
+		Token opening_paren = { { ctx->scanner, 1 }, Tok_Paren_Open, ctx->line, ctx->column, TF_Preprocess };
 		array_append( _ctx->Lexer_Tokens, opening_paren );
 		move_forward();
 
@@ -5880,7 +5891,7 @@ s32 lex_preprocessor_define( LexContext* ctx )
 			);
 			return Lex_ReturnNull;
 		}
-		Token closing_paren = { { ctx->scanner, 1 }, Tok_Capture_End, ctx->line, ctx->column, TF_Preprocess };
+		Token closing_paren = { { ctx->scanner, 1 }, Tok_Paren_Close, ctx->line, ctx->column, TF_Preprocess };
 		array_append(_ctx->Lexer_Tokens, closing_paren);
 		move_forward();
 	}
@@ -5919,7 +5930,7 @@ s32 lex_preprocessor_directive( LexContext* ctx )
 		ctx->token.Text.Len++;
 	}
 
-	ctx->token.Type = str_to_toktype( tok_to_str(ctx->token) );
+	ctx->token.Type = str_to_toktype( ctx->token.Text );
 
 	bool   is_preprocessor = ctx->token.Type >= Tok_Preprocess_Define && ctx->token.Type <= Tok_Preprocess_Pragma;
 	if ( ! is_preprocessor )
@@ -6126,7 +6137,7 @@ void lex_found_token( LexContext* ctx )
 		return;
 	}
 
-	TokType type = str_to_toktype( tok_to_str(ctx->token) );
+	TokType type = str_to_toktype( ctx->token.Text );
 
 	if (type <= Tok_Access_Public && type >= Tok_Access_Private ) {
 		ctx->token.Flags |= TF_AccessSpecifier;
@@ -6170,7 +6181,7 @@ void lex_found_token( LexContext* ctx )
 		ctx->token.Type   = macrotype_to_toktype(macro->Type);
 		b32 is_functional = macro_is_functional(* macro);
 		resolved_to_macro = has_args ? is_functional : ! is_functional;
-		if ( ! resolved_to_macro ) {
+		if ( ! resolved_to_macro && GEN_BUILD_DEBUG ) {
 			log_fmt("Info(%d, %d): %S identified as a macro but usage here does not resolve to one (interpreting as identifier)\n"
 				, ctx->token.Line
 				, ctx->token.Line
@@ -6435,7 +6446,7 @@ TokArray lex( Str content )
 			{
 				Str text = { c.scanner, 1 };
 				c.token.Text   = text;
-				c.token.Type   = Tok_Capture_Start;
+				c.token.Type   = Tok_Paren_Open;
 
 				if (c.left)
 					move_forward();
@@ -6445,7 +6456,7 @@ TokArray lex( Str content )
 			{
 				Str text = { c.scanner, 1 };
 				c.token.Text   = text;
-				c.token.Type   = Tok_Capture_End;
+				c.token.Type   = Tok_Paren_Close;
 
 				if (c.left)
 					move_forward();
@@ -6936,7 +6947,7 @@ TokArray lex( Str content )
 #undef end_line
 // These macros are used in the swtich cases within parser.cpp
 
-#define GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_TOK_SPECIFIERS_CASES \
+#define GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_TOK_SPECIFIER_CASES \
 case Tok_Spec_Consteval:              \
 case Tok_Spec_Constexpr:              \
 case Tok_Spec_Constinit:              \
@@ -6950,7 +6961,7 @@ case Tok_Spec_Static:                 \
 case Tok_Spec_Volatile:               \
 case Tok_Spec_Virtual
 
-#define GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_SPECIFIERS_CASES \
+#define GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_SPECIFIER_CASES \
 case Spec_Constexpr:              \
 case Spec_Constinit:              \
 case Spec_Explicit:               \
@@ -6990,12 +7001,12 @@ case Spec_NeverInline:            \
 case Spec_Static:                 \
 case Spec_Volatile
 
-#define GEN_PARSER_FRIEND_ALLOWED_SPECIFIERS_CASES \
+#define GEN_PARSER_FRIEND_ALLOWED_SPECIFIER_CASES \
 case Spec_Const:       \
 case Spec_Inline:      \
 case Spec_ForceInline
 
-#define GEN_PARSER_FUNCTION_ALLOWED_SPECIFIERS_CASES \
+#define GEN_PARSER_FUNCTION_ALLOWED_SPECIFIER_CASES \
 case Spec_Const:                  \
 case Spec_Consteval:              \
 case Spec_Constexpr:              \
@@ -7007,7 +7018,7 @@ case Spec_Inline:                 \
 case Spec_NeverInline:            \
 case Spec_Static
 
-#define GEN_PARSER_OPERATOR_ALLOWED_SPECIFIERS_CASES \
+#define GEN_PARSER_OPERATOR_ALLOWED_SPECIFIER_CASES \
 case Spec_Const:       \
 case Spec_Constexpr:   \
 case Spec_ForceInline: \
@@ -7015,7 +7026,7 @@ case Spec_Inline:      \
 case Spec_NeverInline: \
 case Spec_Static
 
-#define GEN_PARSER_TEMPLATE_ALLOWED_SPECIFIERS_CASES \
+#define GEN_PARSER_TEMPLATE_ALLOWED_SPECIFIER_CASES \
 case Spec_Const:                  \
 case Spec_Constexpr:              \
 case Spec_Constinit:              \
@@ -7042,6 +7053,12 @@ case Spec_Mutable:          \
 case Spec_Static:           \
 case Spec_Thread_Local:     \
 case Spec_Volatile
+
+#define GEN_PARSER_TYPENAME_ALLOWED_SUFFIX_SPECIFIER_CASES \
+case Spec_Const:    \
+case Spec_Ptr:      \
+case Spec_Ref:      \
+case Spec_RValue
 
 // TODO(Ed) : Rename ETok_Capture_Start, ETok_Capture_End to Open_Parenthesis adn Close_Parenthesis
 
@@ -7570,7 +7587,7 @@ Code parse_array_decl()
 
 		untyped_tok.Text.Len = ( (sptr)prevtok.Text.Ptr + prevtok.Text.Len ) - (sptr)untyped_tok.Text.Ptr;
 
-		Code array_expr = untyped_str( tok_to_str(untyped_tok) );
+		Code array_expr = untyped_str( untyped_tok.Text );
 		// [ <Content>
 
 		if ( left == 0 )
@@ -7638,18 +7655,18 @@ CodeAttributes parse_attributes()
 		else if ( check( Tok_Decl_GNU_Attribute ) )
 		{
 			eat( Tok_Decl_GNU_Attribute );
-			eat( Tok_Capture_Start );
-			eat( Tok_Capture_Start );
+			eat( Tok_Paren_Open );
+			eat( Tok_Paren_Open );
 			// __attribute__((
 
-			while ( left && currtok.Type != Tok_Capture_End )
+			while ( left && currtok.Type != Tok_Paren_Close )
 			{
 				eat( currtok.Type );
 			}
 			// __attribute__(( <Content>
 
-			eat( Tok_Capture_End );
-			eat( Tok_Capture_End );
+			eat( Tok_Paren_Close );
+			eat( Tok_Paren_Close );
 			// __attribute__(( <Content> ))
 
 			len = ( ( sptr )prevtok.Text.Ptr + prevtok.Text.Len ) - ( sptr )start.Text.Ptr;
@@ -7657,16 +7674,16 @@ CodeAttributes parse_attributes()
 		else if ( check( Tok_Decl_MSVC_Attribute ) )
 		{
 			eat( Tok_Decl_MSVC_Attribute );
-			eat( Tok_Capture_Start );
+			eat( Tok_Paren_Open );
 			// __declspec(
 
-			while ( left && currtok.Type != Tok_Capture_End )
+			while ( left && currtok.Type != Tok_Paren_Close )
 			{
 				eat( currtok.Type );
 			}
 			// __declspec( <Content>
 
-			eat( Tok_Capture_End );
+			eat( Tok_Paren_Close );
 			// __declspec( <Content> )
 
 			len = ( ( sptr )prevtok.Text.Ptr + prevtok.Text.Len ) - ( sptr )start.Text.Ptr;
@@ -7677,20 +7694,20 @@ CodeAttributes parse_attributes()
 			// <Attribute>
 
 			// If its a macro based attribute, this could be a functional macro such as Unreal's UE_DEPRECATED(...)
-			if ( check( Tok_Capture_Start))
+			if ( check( Tok_Paren_Open))
 			{
-				eat( Tok_Capture_Start );
+				eat( Tok_Paren_Open );
 
 				s32 level = 0;
-				while (left && currtok.Type != Tok_Capture_End && level == 0)
+				while (left && currtok.Type != Tok_Paren_Close && level == 0)
 				{
-					if (currtok.Type == Tok_Capture_Start)
+					if (currtok.Type == Tok_Paren_Open)
 						++ level;
-					if (currtok.Type == Tok_Capture_End)
+					if (currtok.Type == Tok_Paren_Close)
 						--level;
 					eat(currtok.Type);
 				}
-				eat(Tok_Capture_End);
+				eat(Tok_Paren_Close);
 			}
 
 			len = ( ( sptr )prevtok.Text.Ptr + prevtok.Text.Len ) - ( sptr )start.Text.Ptr;
@@ -7774,7 +7791,7 @@ Code parse_class_struct( TokType which, bool inplace_def )
 		}
 
 		Token parent_tok = parse_identifier(nullptr);
-		parent = def_type( tok_to_str(parent_tok) );
+		parent = def_type( parent_tok.Text );
 		// <ModuleFlags> <class/struct> <Attributes> <Name> : <Access Specifier> <Parent/Interface Name>
 
 		while ( check(Tok_Comma) )
@@ -7787,7 +7804,7 @@ Code parse_class_struct( TokType which, bool inplace_def )
 			}
 			Token interface_tok = parse_identifier(nullptr);
 
-			array_append( interfaces, def_type( tok_to_str(interface_tok) ) );
+			array_append( interfaces, def_type( interface_tok.Text ) );
 			// <ModuleFlags> <class/struct> <Attributes> <Name> : <Access Specifier> <Name>, ...
 		}
 	}
@@ -7810,10 +7827,10 @@ Code parse_class_struct( TokType which, bool inplace_def )
 	}
 
 	if ( which == Tok_Decl_Class )
-		result = cast(Code, def_class( tok_to_str(name), def_assign( body, parent, access, attributes, interfaces, scast(s32, array_num(interfaces)), mflags ) ));
+		result = cast(Code, def_class( name.Text, def_assign( body, parent, access, attributes, interfaces, scast(s32, array_num(interfaces)), mflags ) ));
 
 	else
-		result = cast(Code, def_struct( tok_to_str(name), def_assign( body, (CodeTypename)parent, access, attributes, interfaces, scast(s32, array_num(interfaces)), mflags ) ));
+		result = cast(Code, def_struct( name.Text, def_assign( body, (CodeTypename)parent, access, attributes, interfaces, scast(s32, array_num(interfaces)), mflags ) ));
 
 	if ( inline_cmt )
 		result->InlineCmt = cast(Code, inline_cmt);
@@ -8024,20 +8041,20 @@ CodeBody parse_class_struct_body( TokType which, Token name )
 				// <Attributes>
 			}
 			//! Fallthrough intended
-			GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_TOK_SPECIFIERS_CASES:
+			GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_TOK_SPECIFIER_CASES:
 			{
 				Specifier specs_found[16] = { Spec_NumSpecifiers };
 				s32        NumSpecifiers = 0;
 
 				while ( left && tok_is_specifier(currtok) )
 				{
-					Specifier spec = str_to_specifier( tok_to_str(currtok) );
+					Specifier spec = str_to_specifier( currtok.Text );
 
 					b32 ignore_spec = false;
 
 					switch ( spec )
 					{
-						GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_SPECIFIERS_CASES:
+						GEN_PARSER_CLASS_STRUCT_BODY_ALLOWED_MEMBER_SPECIFIER_CASES:
 						break;
 
 						case Spec_Consteval:
@@ -8065,7 +8082,7 @@ CodeBody parse_class_struct_body( TokType which, Token name )
 
 				if ( NumSpecifiers )
 				{
-					specifiers = def_specifiers( NumSpecifiers, specs_found );
+					specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 				}
 				// <Attributes> <Specifiers>
 
@@ -8115,7 +8132,7 @@ CodeBody parse_class_struct_body( TokType which, Token name )
 			case Tok_Type_int:
 			case Tok_Type_double:
 			{
-				if ( nexttok.Type == Tok_Capture_Start && name.Text.Len && currtok.Type == Tok_Identifier )
+				if ( nexttok.Type == Tok_Paren_Open && name.Text.Len && currtok.Type == Tok_Identifier )
 				{
 					if ( c_str_compare_len( name.Text.Ptr, currtok.Text.Ptr, name.Text.Len ) == 0 )
 					{
@@ -8139,7 +8156,7 @@ CodeBody parse_class_struct_body( TokType which, Token name )
 					untyped_tok.Text.Len = ( (sptr)currtok.Text.Ptr + currtok.Text.Len ) - (sptr)untyped_tok.Text.Ptr;
 					eat( currtok.Type );
 				}
-				member = untyped_str( tok_to_str(untyped_tok) );
+				member = untyped_str( untyped_tok.Text );
 				// Something unknown
 			break;
 		}
@@ -8167,7 +8184,7 @@ CodeComment parse_comment()
 	CodeComment
 	result          = (CodeComment) make_code();
 	result->Type    = CT_Comment;
-	result->Content = cache_str( tok_to_str(currtok_noskip) );
+	result->Content = cache_str( currtok_noskip.Text );
 	// result->Token   = currtok_noskip;
 	eat( Tok_Comment );
 
@@ -8208,19 +8225,19 @@ Code parse_complicated_definition( TokType which )
 	}
 
 	Token tok = tokens.Arr[ idx - 1 ];
-	if ( tok_is_specifier(tok) && spec_is_trailing( str_to_specifier( tok_to_str(tok))) )
+	if ( tok_is_specifier(tok) && spec_is_trailing( str_to_specifier( tok.Text)) )
 	{
 		// <which> <type_identifier>(...) <specifier> ...;
 
 		s32   spec_idx = idx - 1;
 		Token spec     = tokens.Arr[spec_idx];
-		while ( tok_is_specifier(spec) && spec_is_trailing( str_to_specifier( tok_to_str(spec))) )
+		while ( tok_is_specifier(spec) && spec_is_trailing( str_to_specifier( spec.Text)) )
 		{
 			-- spec_idx;
 			spec = tokens.Arr[spec_idx];
 		}
 
-		if ( tokens.Arr[spec_idx].Type == Tok_Capture_End )
+		if ( tokens.Arr[spec_idx].Type == Tok_Paren_Close )
 		{
 			// Forward declaration with trailing specifiers for a procedure
 			tok = tokens.Arr[spec_idx];
@@ -8244,9 +8261,19 @@ Code parse_complicated_definition( TokType which )
 		if ( tok.Type == Tok_BraceCurly_Close )
 		{
 			// Its an inplace definition
-			// <which> <type_identifier> { ... } <identifier>;
+			// <which> <type_identifier ?> { ... } <identifier>;
 			ok_to_parse = true;
 			is_inplace  = true;
+
+			CodeTypename type = cast(CodeTypename, parse_forward_or_definition(which, is_inplace));
+
+			// Should be a name right after the type.
+			Token name = parse_identifier(nullptr);
+			_ctx->parser.Scope->Name = name.Text;
+
+			CodeVar result = parse_variable_after_name(ModuleFlag_None, NullCode, NullCode, type, name.Text);
+			parser_pop(& _ctx->parser);
+			return (Code) result;
 		}
 		else if ( tok.Type == Tok_Identifier && tokens.Arr[ idx - 3 ].Type == which )
 		{
@@ -8355,16 +8382,16 @@ Code parse_assignment_expression()
 			level++;
 		if (currtok.Type == Tok_BraceCurly_Close )
 			level--;
-		if (currtok.Type == Tok_Capture_Start)
+		if (currtok.Type == Tok_Paren_Open)
 			level++;
-		else if (currtok.Type == Tok_Capture_End)
+		else if (currtok.Type == Tok_Paren_Close)
 			level--;
 
 		eat( currtok.Type );
 	}
 
 	expr_tok.Text.Len = ( ( sptr )currtok.Text.Ptr + currtok.Text.Len ) - ( sptr )expr_tok.Text.Ptr - 1;
-	expr              = untyped_str( tok_to_str(expr_tok) );
+	expr              = untyped_str( expr_tok.Text );
 	// = <Expression>
 	return expr;
 }
@@ -8420,12 +8447,12 @@ CodeFn parse_function_after_name(
 	{
 		if ( specifiers == nullptr )
 		{
-			specifiers = def_specifier( str_to_specifier( tok_to_str(currtok)) );
+			specifiers = def_specifier( str_to_specifier( currtok.Text) );
 			eat( currtok.Type );
 			continue;
 		}
 
-		specifiers_append(specifiers, str_to_specifier( tok_to_str(currtok)) );
+		specifiers_append(specifiers, str_to_specifier( currtok.Text) );
 		eat( currtok.Type );
 	}
 	// <Attributes> <Specifiers> <ReturnType> <Name> ( <Paraemters> ) <Specifiers>
@@ -8468,7 +8495,7 @@ CodeFn parse_function_after_name(
 	}
 
 	StrBuilder
-	name_stripped = strbuilder_make_str( _ctx->Allocator_Temp, tok_to_str(name) );
+	name_stripped = strbuilder_make_str( _ctx->Allocator_Temp, name.Text );
 	strbuilder_strip_space(name_stripped);
 
 	CodeFn
@@ -8755,7 +8782,7 @@ CodeBody parse_global_nspace( CodeType which )
 
 				while ( left && tok_is_specifier(currtok) )
 				{
-					Specifier spec = str_to_specifier( tok_to_str(currtok) );
+					Specifier spec = str_to_specifier( currtok.Text );
 
 					bool ignore_spec = false;
 
@@ -8790,7 +8817,7 @@ CodeBody parse_global_nspace( CodeType which )
 
 				if ( NumSpecifiers )
 				{
-					specifiers = def_specifiers( NumSpecifiers, specs_found );
+					specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 				}
 				// <Attributes> <Specifiers>
 			}
@@ -8910,7 +8937,7 @@ Code parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers )
 				if (nav.Type == Tok_Operator && nav.Text.Ptr[1] == '>')
 					-- template_level;
 
-				if ( nav.Type == Tok_Capture_Start)
+				if ( nav.Type == Tok_Paren_Open)
 				{
 					if (template_level != 0 )
 						++ capture_level;
@@ -8918,12 +8945,12 @@ Code parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers )
 						break;
 				}
 
-				if ( template_level != 0 && nav.Type == Tok_Capture_End)
+				if ( template_level != 0 && nav.Type == Tok_Paren_Close)
 					-- capture_level;
 			}
 		}
 
-		if ( nav.Type == Tok_Capture_Start )
+		if ( nav.Type == Tok_Paren_Open )
 			break;
 	}
 
@@ -8969,10 +8996,10 @@ Code parse_global_nspace_constructor_destructor( CodeSpecifiers specifiers )
 		if (tok_left.Type == Tok_Operator && tok_left.Text.Ptr[1] == '>')
 			-- template_level;
 
-		if ( template_level != 0 && tok_left.Type == Tok_Capture_Start)
+		if ( template_level != 0 && tok_left.Type == Tok_Paren_Open)
 			++ capture_level;
 
-		if ( template_level != 0 && tok_left.Type == Tok_Capture_End)
+		if ( template_level != 0 && tok_left.Type == Tok_Paren_Close)
 			-- capture_level;
 
 		if ( capture_level == 0 && template_level == 0  && tok_left.Type == Tok_Identifier )
@@ -9096,7 +9123,7 @@ CodeInclude parse_include()
 	}
 
 	_ctx->parser.Scope->Name = currtok.Text;
-	include->Content = cache_str( tok_to_str(currtok) );
+	include->Content = cache_str( currtok.Text );
 	eat( Tok_String );
 	// #include <Path> or "Path"
 
@@ -9421,12 +9448,12 @@ CodeOperator parse_operator_after_ret_type(
 	{
 		if ( specifiers == nullptr )
 		{
-			specifiers = def_specifier( str_to_specifier( tok_to_str(currtok)) );
+			specifiers = def_specifier( str_to_specifier( currtok.Text) );
 			eat( currtok.Type );
 			continue;
 		}
 
-		specifiers_append(specifiers, str_to_specifier( tok_to_str(currtok)) );
+		specifiers_append(specifiers, str_to_specifier( currtok.Text) );
 		eat( currtok.Type );
 	}
 	// <ExportFlag> <Attributes> <Specifiers> <ReturnType> <Qualifier::...> operator <Op> ( <Parameters> ) <Specifiers>
@@ -9456,7 +9483,7 @@ CodeOperator parse_operator_after_ret_type(
 	}
 
 	// OpValidateResult check_result = operator__validate( op, params, ret_type, specifiers );
-	CodeOperator result = def_operator( op, tok_to_str(nspace), def_assign( params, ret_type, body, specifiers, attributes, mflags ) );
+	CodeOperator result = def_operator( op, nspace.Text, def_assign( params, ret_type, body, specifiers, attributes, mflags ) );
 
 	if ( inline_cmt )
 		result->InlineCmt = inline_cmt;
@@ -9520,7 +9547,7 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 		Token name = parse_identifier(nullptr);
 		_ctx->parser.Scope->Name = name.Text;
 
-		bool detected_capture = check( Tok_Capture_Start );
+		bool detected_capture = check( Tok_Paren_Open );
 
 		// Check three tokens ahead to make sure that were not dealing with a constructor initialization...
 		//                  (         350.0f    ,         <---  Could be the scenario
@@ -9545,11 +9572,11 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 			{
 				Token tok = _ctx->parser.Tokens.Arr[ idx ];
 
-				if ( tok.Type == Tok_Capture_Start )
+				if ( tok.Type == Tok_Paren_Open )
 					level++;
-				else if ( tok.Type == Tok_Capture_End && level > 0 )
+				else if ( tok.Type == Tok_Paren_Close && level > 0 )
 					level--;
-				if (level == 0 && tok.Type == Tok_Capture_End)
+				if (level == 0 && tok.Type == Tok_Paren_Close)
 					break;
 			}
 			++ idx; // Will incremnt to possible comma position
@@ -9574,7 +9601,7 @@ Code parse_operator_function_or_variable( bool expects_function, CodeAttributes 
 				return InvalidCode;
 			}
 			// Dealing with a variable
-			result = cast(Code, parse_variable_after_name( ModuleFlag_None, attributes, specifiers, type, tok_to_str(name) ));
+			result = cast(Code, parse_variable_after_name( ModuleFlag_None, attributes, specifiers, type, name.Text ));
 			// <Attributes> <Specifiers> <ValueType> <Name> ...
 		}
 	}
@@ -9632,7 +9659,7 @@ CodePragma parse_pragma()
 
 	_ctx->parser.Scope->Name = currtok.Text;
 
-	pragma->Content = cache_str( tok_to_str(currtok) );
+	pragma->Content = cache_str( currtok.Text );
 	eat( Tok_Preprocess_Content );
 	// #pragma <Content>
 
@@ -9646,7 +9673,7 @@ CodeParams parse_params( bool use_template_capture )
 	push_scope();
 
 	if ( ! use_template_capture ) {
-		eat( Tok_Capture_Start );
+		eat( Tok_Paren_Open );
 		// (
 	}
 	else {
@@ -9655,9 +9682,9 @@ CodeParams parse_params( bool use_template_capture )
 			// <
 	}
 
-	if ( ! use_template_capture && check( Tok_Capture_End ) )
+	if ( ! use_template_capture && check( Tok_Paren_Close ) )
 	{
-		eat( Tok_Capture_End );
+		eat( Tok_Paren_Close );
 		// )
 		parser_pop(& _ctx->parser);
 		return NullCode;
@@ -9688,7 +9715,7 @@ CodeParams parse_params( bool use_template_capture )
 	}
 
 	#define CheckEndParams() \
-		(use_template_capture ? (currtok.Text.Ptr[ 0 ] != '>') : (currtok.Type != Tok_Capture_End))
+		(use_template_capture ? (currtok.Text.Ptr[ 0 ] != '>') : (currtok.Type != Tok_Paren_Close))
 
 	// TODO(Ed): Use expression macros or this? macro as attribute?
 	// Ex: Unreal has this type of macro:                 vvvvvvvvv
@@ -9756,17 +9783,17 @@ CodeParams parse_params( bool use_template_capture )
 				if (currtok.Type == Tok_Operator && currtok.Text.Ptr[1] == '>')
 					-- template_level;
 
-				if ( currtok.Type == Tok_Capture_Start)
+				if ( currtok.Type == Tok_Paren_Open)
 					++ capture_level;
 
-				if ( currtok.Type == Tok_Capture_End)
+				if ( currtok.Type == Tok_Paren_Close)
 					-- capture_level;
 
 				value_tok.Text.Len = ( ( sptr )currtok.Text.Ptr + currtok.Text.Len ) - ( sptr )value_tok.Text.Ptr;
 				eat( currtok.Type );
 			}
 
-			value = untyped_str( strbuilder_to_str(parser_strip_formatting( tok_to_str(value_tok), parser_strip_formatting_dont_preserve_newlines )) );
+			value = untyped_str( strbuilder_to_str(parser_strip_formatting( value_tok.Text, parser_strip_formatting_dont_preserve_newlines )) );
 			// ( <Macro> <ValueType> <Name> = <Expression>
 		}
 	}
@@ -9777,7 +9804,7 @@ CodeParams parse_params( bool use_template_capture )
 	result->Macro = macro;
 
 	if ( name.Text.Len > 0 )
-		result->Name = cache_str( tok_to_str(name) );
+		result->Name = cache_str( name.Text );
 
 	result->ValueType = type;
 
@@ -9870,17 +9897,17 @@ CodeParams parse_params( bool use_template_capture )
 					if (currtok.Type == Tok_Operator && currtok.Text.Ptr[1] == '>')
 						-- template_level;
 
-					if ( currtok.Type == Tok_Capture_Start)
+					if ( currtok.Type == Tok_Paren_Open)
 						++ capture_level;
 
-					if ( currtok.Type == Tok_Capture_End)
+					if ( currtok.Type == Tok_Paren_Close)
 						-- capture_level;
 
 					value_tok.Text.Len = ( ( sptr )currtok.Text.Ptr + currtok.Text.Len ) - ( sptr )value_tok.Text.Ptr;
 					eat( currtok.Type );
 				}
 
-				value = untyped_str( strbuilder_to_str(parser_strip_formatting( tok_to_str(value_tok), parser_strip_formatting_dont_preserve_newlines )) );
+				value = untyped_str( strbuilder_to_str(parser_strip_formatting( value_tok.Text, parser_strip_formatting_dont_preserve_newlines )) );
 				// ( <Macro> <ValueType> <Name> = <Expression>, <Macro> <ValueType> <Name> <PostNameMacro> = <Expression>
 			}
 			// ( <Macro> <ValueType> <Name> = <Expression>, <Macro> <ValueType> <Name> <PostNameMacro> = <Expression>, ..
@@ -9892,7 +9919,7 @@ CodeParams parse_params( bool use_template_capture )
 		param->Macro = macro;
 
 		if ( name.Text.Len > 0 )
-			param->Name = cache_str( tok_to_str(name) );
+			param->Name = cache_str( name.Text );
 
 		param->PostNameMacro = post_name_macro;
 		param->ValueType     = cast(CodeTypename, type);
@@ -9905,7 +9932,7 @@ CodeParams parse_params( bool use_template_capture )
 
 	if ( ! use_template_capture )
 	{
-		eat( Tok_Capture_End );
+		eat( Tok_Paren_Close );
 		// ( <Macro> <ValueType> <Name> <PostNameMacro> = <Expression>, <Macro> <ValueType> <Name> <PostNameMacro> = <Expression>, .. )
 	}
 	else
@@ -9949,7 +9976,7 @@ CodePreprocessCond parse_preprocess_cond()
 	}
 
 	_ctx->parser.Scope->Name = currtok.Text;
-	cond->Content = cache_str( tok_to_str(currtok) );
+	cond->Content = cache_str( currtok.Text );
 	eat( Tok_Preprocess_Content );
 	// #<Conditiona> <Content>
 
@@ -9978,20 +10005,20 @@ Code parse_simple_preprocess( TokType which )
 	// TODO(Ed) : Parse this properly later (expression and statement support)
 	if ( macro && macro_is_functional(* macro) )
 	{
-		eat( Tok_Capture_Start );
+		eat( Tok_Paren_Open );
 
 		s32 level = 0;
-		while ( left && ( currtok.Type != Tok_Capture_End || level > 0 ) )
+		while ( left && ( currtok.Type != Tok_Paren_Close || level > 0 ) )
 		{
-			if ( currtok.Type == Tok_Capture_Start )
+			if ( currtok.Type == Tok_Paren_Open )
 				level++;
 
-			else if ( currtok.Type == Tok_Capture_End && level > 0 )
+			else if ( currtok.Type == Tok_Paren_Close && level > 0 )
 				level--;
 
 			eat( currtok.Type );
 		}
-		eat( Tok_Capture_End );
+		eat( Tok_Paren_Close );
 		// <Macro> ( <params> )
 
 		full_macro.Text.Len = ( (sptr)prevtok.Text.Ptr + prevtok.Text.Len ) - (sptr)full_macro.Text.Ptr;
@@ -10104,21 +10131,21 @@ Code parse_static_assert()
 	_ctx->parser.Scope->Name = content.Text;
 
 	eat( Tok_StaticAssert );
-	eat( Tok_Capture_Start );
+	eat( Tok_Paren_Open );
 	// static_assert(
 
 	// TODO(Ed) : Parse this properly.
 	s32 level = 0;
-	while ( left && ( currtok.Type != Tok_Capture_End || level > 0 ) )
+	while ( left && ( currtok.Type != Tok_Paren_Close || level > 0 ) )
 	{
-		if ( currtok.Type == Tok_Capture_Start )
+		if ( currtok.Type == Tok_Paren_Open )
 			level++;
-		else if ( currtok.Type == Tok_Capture_End )
+		else if ( currtok.Type == Tok_Paren_Close )
 			level--;
 
 		eat( currtok.Type );
 	}
-	eat( Tok_Capture_End );
+	eat( Tok_Paren_Close );
 	eat( Tok_Statement_End );
 	// static_assert( <Content> );
 
@@ -10216,13 +10243,13 @@ CodeVar parse_variable_after_name(
 		eat( Tok_BraceCurly_Close );
 
 		expr_tok.Text.Len = ( (sptr)prevtok.Text.Ptr + prevtok.Text.Len ) - (sptr)expr_tok.Text.Ptr;
-		expr              = untyped_str( tok_to_str(expr_tok) );
+		expr              = untyped_str( expr_tok.Text );
 		// <Attributes> <Specifiers> <ValueType> <Name> = { <Expression> }
 	}
 
-	if ( currtok.Type == Tok_Capture_Start )
+	if ( currtok.Type == Tok_Paren_Open )
 	{
-		eat( Tok_Capture_Start);
+		eat( Tok_Paren_Open);
 		// <Attributes> <Specifiers> <ValueType> <Name> (
 
 		Token expr_token = currtok;
@@ -10230,20 +10257,20 @@ CodeVar parse_variable_after_name(
 		using_constructor_initializer = true;
 
 		s32 level = 0;
-		while ( left && ( currtok.Type != Tok_Capture_End || level > 0 ) )
+		while ( left && ( currtok.Type != Tok_Paren_Close || level > 0 ) )
 		{
-			if ( currtok.Type == Tok_Capture_Start )
+			if ( currtok.Type == Tok_Paren_Open )
 				level++;
 
-			else if ( currtok.Type == Tok_Capture_End && level > 0 )
+			else if ( currtok.Type == Tok_Paren_Close && level > 0 )
 				level--;
 
 			eat( currtok.Type );
 		}
 
 		expr_token.Text.Len = ( (sptr)prevtok.Text.Ptr + prevtok.Text.Len ) - (sptr)expr_token.Text.Ptr;
-		expr                = untyped_str( tok_to_str(expr_token) );
-		eat( Tok_Capture_End );
+		expr                = untyped_str( expr_token.Text );
+		eat( Tok_Paren_Close );
 		// <Attributes> <Specifiers> <ValueType> <Name> ( <Expression> )
 	}
 
@@ -10265,7 +10292,7 @@ CodeVar parse_variable_after_name(
 		}
 
 		expr_tok.Text.Len = ( (sptr)prevtok.Text.Ptr + prevtok.Text.Len ) - (sptr)expr_tok.Text.Ptr;
-		bitfield_expr     = untyped_str( tok_to_str(expr_tok) );
+		bitfield_expr     = untyped_str( expr_tok.Text );
 		// <Attributes> <Specifiers> <ValueType> <Name> : <Expression>
 	}
 
@@ -10346,7 +10373,7 @@ CodeVar parse_variable_declaration_list()
 
 		while ( left && tok_is_specifier(currtok) )
 		{
-			Specifier spec = str_to_specifier( tok_to_str(currtok) );
+			Specifier spec = str_to_specifier( currtok.Text );
 
 			switch ( spec )
 			{
@@ -10370,7 +10397,7 @@ CodeVar parse_variable_declaration_list()
 				{
 					log_failure( "Error, invalid specifier '%S' proceeding comma\n"
 					"(Parser will add and continue to specifiers, but will most likely fail to compile)\n%S"
-					, tok_to_str(currtok), strbuilder_to_str( parser_to_strbuilder(_ctx->parser)) );
+					, currtok.Text, strbuilder_to_str( parser_to_strbuilder(_ctx->parser)) );
 					continue;
 				}
 				break;
@@ -10385,7 +10412,7 @@ CodeVar parse_variable_declaration_list()
 		}
 		// , <Specifiers>
 
-		Str name = tok_to_str(currtok);
+		Str name = currtok.Text;
 		eat( Tok_Identifier );
 		// , <Specifiers> <Name>
 
@@ -10443,9 +10470,9 @@ CodeConstructor parser_parse_constructor( CodeSpecifiers specifiers )
 		s32 level                  = 0;
 		while ( left && ( currtok.Type != Tok_BraceCurly_Open || level > 0 ) )
 		{
-			if (currtok.Type == Tok_Capture_Start)
+			if (currtok.Type == Tok_Paren_Open)
 				level++;
-			else if ( currtok.Type == Tok_Capture_End )
+			else if ( currtok.Type == Tok_Paren_Close )
 				level--;
 
 			eat( currtok.Type );
@@ -10454,7 +10481,7 @@ CodeConstructor parser_parse_constructor( CodeSpecifiers specifiers )
 		initializer_list_tok.Text.Len = ( ( sptr )prevtok.Text.Ptr + prevtok.Text.Len ) - ( sptr )initializer_list_tok.Text.Ptr;
 		// <Name> ( <Parameters> ) : <InitializerList>
 
-		initializer_list = untyped_str( tok_to_str(initializer_list_tok) );
+		initializer_list = untyped_str( initializer_list_tok.Text );
 
 		// TODO(Ed): Constructors can have post-fix specifiers
 
@@ -10483,7 +10510,7 @@ CodeConstructor parser_parse_constructor( CodeSpecifiers specifiers )
 
 	CodeConstructor result = ( CodeConstructor )make_code();
 
-	result->Name = cache_str( tok_to_str(identifier));
+	result->Name = cache_str( identifier.Text );
 
 	result->Specs = specifiers;
 
@@ -10529,13 +10556,13 @@ CodeDefine parser_parse_define()
 		return InvalidCode;
 	}
 	_ctx->parser.Scope->Name = currtok.Text;
-	define->Name = cache_str( tok_to_str(currtok) );
+	define->Name = cache_str( currtok.Text );
 	eat( Tok_Identifier );
 	// #define <Name>
 
 	Macro* macro = lookup_macro(define->Name);
 	if (macro_is_functional(* macro)) {
-		eat( Tok_Capture_Start );
+		eat( Tok_Paren_Open );
 		// #define <Name> (
 
 		// We provide the define params even if empty to make sure '()' are serialized.
@@ -10543,7 +10570,7 @@ CodeDefine parser_parse_define()
 		params = (CodeDefineParams) make_code();
 		params->Type = CT_Parameters_Define;
 
-		if ( left && currtok.Type != Tok_Capture_End ) {
+		if ( left && currtok.Type != Tok_Paren_Close ) {
 			params->Name = currtok.Text;
 			params->NumEntries ++;
 
@@ -10551,7 +10578,7 @@ CodeDefine parser_parse_define()
 			// #define <Name> ( <param>
 		}
 		
-		while( left && currtok.Type != Tok_Capture_End ) {
+		while( left && currtok.Type != Tok_Paren_Close ) {
 			eat( Tok_Comma );
 			// #define <Name> ( <param>, 
 
@@ -10564,7 +10591,7 @@ CodeDefine parser_parse_define()
 			eat( Tok_Preprocess_Define_Param );
 		}
 
-		eat( Tok_Capture_End );
+		eat( Tok_Paren_Close );
 		// #define <Name> ( <params> )
 
 		define->Params = params;
@@ -10587,7 +10614,7 @@ CodeDefine parser_parse_define()
 		return define;
 	}
 
-	define->Body = untyped_str( strbuilder_to_str( parser_strip_formatting( tok_to_str(currtok), parser_strip_formatting_dont_preserve_newlines )) );
+	define->Body = untyped_str( strbuilder_to_str( parser_strip_formatting( currtok.Text, parser_strip_formatting_dont_preserve_newlines )) );
 	eat( Tok_Preprocess_Content );
 	// #define <Name> ( <params> ) <Content>
 
@@ -10632,8 +10659,8 @@ CodeDestructor parser_parse_destructor( CodeSpecifiers specifiers )
 	CodeComment inline_cmt = NullCode;
 	// <Virtual Specifier> ~<Name>
 
-	eat( Tok_Capture_Start );
-	eat( Tok_Capture_End );
+	eat( Tok_Paren_Open );
+	eat( Tok_Paren_Close );
 	// <Virtual Specifier> ~<Name>()
 
 	bool pure_virtual = false;
@@ -10687,7 +10714,7 @@ CodeDestructor parser_parse_destructor( CodeSpecifiers specifiers )
 
 	if ( tok_is_valid(prefix_identifier) ) {
 		prefix_identifier.Text.Len += 1 + identifier.Text.Len;
-		result->Name = cache_str( tok_to_str(prefix_identifier) );
+		result->Name = cache_str( prefix_identifier.Text );
 	}
 
 	if ( specifiers )
@@ -10720,9 +10747,6 @@ CodeEnum parser_parse_enum( bool inplace_def )
 	Token        name       = NullToken;
 	Code         array_expr = { nullptr };
 	CodeTypename type       = { nullptr };
-
-	char  entries_code[ kilobytes(128) ] = { 0 };
-	s32   entries_length = 0;
 
 	bool is_enum_class = false;
 
@@ -10766,7 +10790,7 @@ CodeEnum parser_parse_enum( bool inplace_def )
 	else if ( currtok.Type == Tok_Preprocess_Macro_Expr )
 	{
 		// We'll support the enum_underlying macro
-		if ( str_contains( tok_to_str(currtok), enum_underlying_macro.Name) )
+		if ( str_contains( currtok.Text, enum_underlying_macro.Name) )
 		{
 			use_macro_underlying = true;
 			underlying_macro     = parse_simple_preprocess( Tok_Preprocess_Macro_Expr );
@@ -10801,7 +10825,7 @@ CodeEnum parser_parse_enum( bool inplace_def )
 			switch ( currtok_noskip.Type )
 			{
 				case Tok_NewLine:
-					member = untyped_str( tok_to_str(currtok_noskip) );
+					member = untyped_str( currtok_noskip.Text );
 					eat( Tok_NewLine );
 				break;
 
@@ -10894,7 +10918,7 @@ CodeEnum parser_parse_enum( bool inplace_def )
 					Token prev     = * lex_previous(_ctx->parser.Tokens, lex_dont_skip_formatting);
 					entry.Text.Len = ( (sptr)prev.Text.Ptr + prev.Text.Len ) - (sptr)entry.Text.Ptr;
 
-					member = untyped_str( tok_to_str(entry) );
+					member = untyped_str( entry.Text );
 				}
 				break;
 			}
@@ -10938,7 +10962,7 @@ CodeEnum parser_parse_enum( bool inplace_def )
 		result->Type = is_enum_class ? CT_Enum_Class_Fwd : CT_Enum_Fwd;
 	}
 
-	result->Name = cache_str( tok_to_str(name) );
+	result->Name = cache_str( name.Text );
 
 	if ( attributes )
 		result->Attributes = attributes;
@@ -10990,7 +11014,7 @@ CodeExtern parser_parse_extern_link()
 	CodeExtern
 	result       = (CodeExtern) make_code();
 	result->Type = CT_Extern_Linkage;
-	result->Name = cache_str( tok_to_str(name) );
+	result->Name = cache_str( name.Text );
 
 	CodeBody entry = parser_parse_extern_link_body();
 	if ( cast(Code, entry) == Code_Invalid )
@@ -11026,11 +11050,11 @@ CodeFriend parser_parse_friend()
 
 		while ( left && tok_is_specifier(currtok) )
 		{
-			Specifier spec = str_to_specifier( tok_to_str(currtok) );
+			Specifier spec = str_to_specifier( currtok.Text );
 
 			switch ( spec )
 			{
-				GEN_PARSER_FRIEND_ALLOWED_SPECIFIERS_CASES:
+				GEN_PARSER_FRIEND_ALLOWED_SPECIFIER_CASES:
 				break;
 
 				default :
@@ -11049,7 +11073,7 @@ CodeFriend parser_parse_friend()
 		}
 
 		if ( NumSpecifiers ) {
-			specifiers = def_specifiers( NumSpecifiers, specs_found );
+			specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 		}
 		// <friend> <specifiers>
 	}
@@ -11144,11 +11168,11 @@ CodeFn parser_parse_function()
 
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 
 		switch ( spec )
 		{
-			GEN_PARSER_FUNCTION_ALLOWED_SPECIFIERS_CASES:
+			GEN_PARSER_FUNCTION_ALLOWED_SPECIFIER_CASES:
 			break;
 
 			default:
@@ -11166,16 +11190,9 @@ CodeFn parser_parse_function()
 	}
 
 	if ( NumSpecifiers ) {
-		specifiers = def_specifiers( NumSpecifiers, specs_found );
+		specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 	}
 	// <export> <Attributes> <Specifiers>
-
-	// Note(Ed): We're enforcing that using this codepath requires non-macro jank.
-	// Code macro_stmt = parse_macro_as_definiton(attributes, specifiers);
-	// if (macro_stmt) {
-	// 	parser_pop(& _ctx->parser);
-	// 	return macro_stmt;
-	// }
 
 	CodeTypename ret_type = parser_parse_type(parser_not_from_template, nullptr);
 	if ( cast(Code, ret_type) == Code_Invalid ) {
@@ -11221,7 +11238,7 @@ CodeNS parser_parse_namespace()
 	CodeNS
 	result       = (CodeNS) make_code();
 	result->Type = CT_Namespace;
-	result->Name = cache_str( tok_to_str(name) );
+	result->Name = cache_str( name.Text );
 
 	result->Body = body;
 
@@ -11252,11 +11269,11 @@ CodeOperator parser_parse_operator()
 
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 
 		switch ( spec )
 		{
-			GEN_PARSER_OPERATOR_ALLOWED_SPECIFIERS_CASES:
+			GEN_PARSER_OPERATOR_ALLOWED_SPECIFIER_CASES:
 			break;
 
 			default:
@@ -11274,7 +11291,7 @@ CodeOperator parser_parse_operator()
 	}
 
 	if ( NumSpecifiers ) {
-		specifiers = def_specifiers( NumSpecifiers, specs_found );
+		specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 	}
 	// <export> <Attributes> <Specifiers>
 
@@ -11323,8 +11340,8 @@ CodeOpCast parser_parse_operator_cast( CodeSpecifiers specifiers )
 	Token scope_name_tok   = { scope_name, Tok_Identifier, 0, 0, TF_Null };
 	_ctx->parser.Scope->Name = scope_name_tok.Text;
 
-	eat( Tok_Capture_Start );
-	eat( Tok_Capture_End );
+	eat( Tok_Paren_Open );
+	eat( Tok_Paren_Close );
 	// <Specifiers> <Qualifier> :: ... operator <UnderlyingType>()
 
 	// TODO(Ed) : operator cast can have const, volatile, l-value, r-value noexecept qualifying specifiers.
@@ -11366,7 +11383,7 @@ CodeOpCast parser_parse_operator_cast( CodeSpecifiers specifiers )
 		eat( Tok_BraceCurly_Close );
 		// <Specifiers> <Qualifier> :: ... operator <UnderlyingType>() <const> { <Body> }
 
-		body = untyped_str( tok_to_str(body_str) );
+		body = untyped_str( body_str.Text );
 	}
 	else
 	{
@@ -11382,7 +11399,7 @@ CodeOpCast parser_parse_operator_cast( CodeSpecifiers specifiers )
 	CodeOpCast result = (CodeOpCast) make_code();
 
 	if ( tok_is_valid(name) )
-		result->Name = cache_str( tok_to_str(name) );
+		result->Name = cache_str( name.Text );
 
 	if (body) {
 		result->Type = CT_Operator_Cast;
@@ -11485,11 +11502,11 @@ CodeTemplate parser_parse_template()
 		{
 			while ( left && tok_is_specifier(currtok) )
 			{
-				Specifier spec = str_to_specifier( tok_to_str(currtok) );
+				Specifier spec = str_to_specifier( currtok.Text );
 
 				switch ( spec )
 				{
-					GEN_PARSER_TEMPLATE_ALLOWED_SPECIFIERS_CASES:
+					GEN_PARSER_TEMPLATE_ALLOWED_SPECIFIER_CASES:
 					break;
 
 					case Spec_Consteval :
@@ -11512,7 +11529,7 @@ CodeTemplate parser_parse_template()
 			}
 
 			if ( NumSpecifiers ) {
-				specifiers = def_specifiers( NumSpecifiers, specs_found );
+				specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 			}
 			// <export> template< <Parameters> > <Attributes> <Specifiers>
 		}
@@ -11615,10 +11632,10 @@ CodeTypename parser_parse_type( bool from_template, bool* typedef_is_function )
 	// Prefix specifiers
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 
 		if ( spec != Spec_Const ) {
-			log_failure( "Error, invalid specifier used in type definition: %S\n%SB", tok_to_str(currtok), parser_to_strbuilder(_ctx->parser) );
+			log_failure( "Error, invalid specifier used in type definition: %S\n%SB", currtok.Text, parser_to_strbuilder(_ctx->parser) );
 			parser_pop(& _ctx->parser);
 			return InvalidCode;
 		}
@@ -11675,18 +11692,18 @@ else if ( currtok.Type == Tok_DeclType )
 	eat( Tok_DeclType );
 	// <Attributes> <Specifiers> decltype
 
-	eat( Tok_Capture_Start );
-	while ( left && currtok.Type != Tok_Capture_End )
+	eat( Tok_Paren_Open );
+	while ( left && currtok.Type != Tok_Paren_Close )
 	{
-		if ( currtok.Type == Tok_Capture_Start )
+		if ( currtok.Type == Tok_Paren_Open )
 			level++;
 
-		if ( currtok.Type == Tok_Capture_End )
+		if ( currtok.Type == Tok_Paren_Close )
 			level--;
 
 		eat( currtok.Type );
 	}
-	eat( Tok_Capture_End );
+	eat( Tok_Paren_Close );
 
 	name.Length = ( (sptr)currtok.Text + currtok.Length ) - (sptr)name.Text;
 	_ctx->parser.Scope->Name = name;
@@ -11728,11 +11745,12 @@ else if ( currtok.Type == Tok_DeclType )
 			}
 		}
 	}
-	// TODO(Ed): This needs updating
 	else if ( currtok.Type == Tok_Preprocess_Macro_Typename ) {
 		// Typename is a macro
-		name = currtok;
-		eat(Tok_Preprocess_Macro_Typename);
+		// name = currtok;
+		// eat(Tok_Preprocess_Macro_Typename);
+		Code macro = parse_simple_preprocess(Tok_Preprocess_Macro_Typename);
+		name.Text = macro->Content;
 	}
 
 	// The usual Identifier type signature that may have namespace qualifiers
@@ -11753,15 +11771,18 @@ else if ( currtok.Type == Tok_DeclType )
 	// Suffix specifiers for typename.
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 
-		if ( spec != Spec_Const && spec != Spec_Ptr && spec != Spec_Ref && spec != Spec_RValue )
-		{
-			log_failure( "Error, invalid specifier used in type definition: %S\n%SB", tok_to_str(currtok), parser_to_strbuilder(_ctx->parser) );
-			parser_pop(& _ctx->parser);
-			return InvalidCode;
+		switch (spec ) {
+			GEN_PARSER_TYPENAME_ALLOWED_SUFFIX_SPECIFIER_CASES:
+			break;
+
+			default: {
+				log_failure( "Error, invalid specifier used in type definition: %S\n%SB", currtok.Text, parser_to_strbuilder(_ctx->parser) );
+				parser_pop(& _ctx->parser);
+				return InvalidCode;
+			}
 		}
-
 		specs_found[ NumSpecifiers ] = spec;
 		NumSpecifiers++;
 		eat( currtok.Type );
@@ -11770,7 +11791,7 @@ else if ( currtok.Type == Tok_DeclType )
 #ifdef GEN_USE_NEW_TYPENAME_PARSING
 	if ( NumSpecifiers )
 	{
-		specifiers    = def_specifiers( NumSpecifiers, specs_found );
+		specifiers    = def_specifiers_arr( NumSpecifiers, specs_found );
 		NumSpecifiers = 0;
 	}
 #endif
@@ -11778,7 +11799,7 @@ else if ( currtok.Type == Tok_DeclType )
 
 	// For function type signatures
 	CodeTypename return_type = NullCode;
-	CodeParams    params      = NullCode;
+	CodeParams   params      = NullCode;
 
 #ifdef GEN_USE_NEW_TYPENAME_PARSING
 	CodeParams params_nested = NullCode;
@@ -11795,7 +11816,7 @@ else if ( currtok.Type == Tok_DeclType )
 			is_function_typename = true;
 			++scanner;
 		}
-		is_function_typename = scanner->Type == Tok_Capture_Start;
+		is_function_typename = scanner->Type == Tok_Paren_Open;
 
 		Token* first_capture = scanner;
 		if ( is_function_typename )
@@ -11805,7 +11826,7 @@ else if ( currtok.Type == Tok_DeclType )
 				++scanner;
 
 			// Go back to the first capture start found
-			while ( scanner->Type != Tok_Capture_Start )
+			while ( scanner->Type != Tok_Paren_Open )
 				--scanner;
 
 			last_capture = scanner;
@@ -11839,7 +11860,7 @@ else if ( currtok.Type == Tok_DeclType )
 		// StrBuilder
 		// name_stripped = StrBuilder::make( FallbackAllocator, name );
 		// name_stripped.strip_space();
-		return_type->Name = cache_str( tok_to_str(name) );
+		return_type->Name = cache_str( name.Text );
 
 #ifdef GEN_USE_NEW_TYPENAME_PARSING
 		if ( specifiers )
@@ -11850,7 +11871,7 @@ else if ( currtok.Type == Tok_DeclType )
 
 #else
 		if ( NumSpecifiers )
-			return_type->Specs = def_specifiers( NumSpecifiers, ( Specifier* )specs_found );
+			return_type->Specs = def_specifiers_arr( NumSpecifiers, ( Specifier* )specs_found );
 
 		// Reset specifiers, the function itself will have its own suffix specifiers possibly.
 		NumSpecifiers = 0;
@@ -11859,7 +11880,7 @@ else if ( currtok.Type == Tok_DeclType )
 		name = NullToken;
 
 		// The next token can either be a capture for the identifier or it could be the identifier exposed.
-		if ( ! check( Tok_Capture_Start ) )
+		if ( ! check( Tok_Paren_Open ) )
 		{
 			// Started with an identifier immeidately, which means its of the format: <ReturnType> <identifier> <capture>;
 			name = parse_identifier(nullptr);
@@ -11879,7 +11900,7 @@ else if ( currtok.Type == Tok_DeclType )
 			// Parse immeidate capture which would be with parse_params()
 			// Eat Capture End
 #ifdef GEN_USE_NEW_TYPENAME_PARSING
-			eat( Tok_Capture_Start );
+			eat( Tok_Paren_Open );
 			// <Attributes> <ReturnType> (
 
 			// Binding specifiers
@@ -11901,7 +11922,7 @@ else if ( currtok.Type == Tok_DeclType )
 
 			if ( NumSpecifiers )
 			{
-				specifiers = def_specifiers( NumSpecifiers, specs_found );
+				specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 			}
 			NumSpecifiers = 0;
 			// <Attributes> <ReturnType> ( <Specifiers>
@@ -11912,11 +11933,11 @@ else if ( currtok.Type == Tok_DeclType )
 
 			// Immeidate parameters
 
-			if ( check( Tok_Capture_Start ) )
+			if ( check( Tok_Paren_Open ) )
 				params_nested = parse_params();
 			// <Attributes> <ReturnType> ( <Specifiers> <Identifier> ( <Parameters> )
 
-			eat( Tok_Capture_End );
+			eat( Tok_Paren_Close );
 			// <Attributes> <ReturnType> ( <Specifiers> <Identifier> ( <Parameters> ) )
 
 #else
@@ -11924,21 +11945,21 @@ else if ( currtok.Type == Tok_DeclType )
 			// Everything within this capture will just be shoved into the name field including the capture tokens themselves.
 			name = currtok;
 
-			eat( Tok_Capture_Start );
+			eat( Tok_Paren_Open );
 			// <Attributes> <ReturnType> (
 
 			s32 level = 0;
-			while ( left && ( currtok.Type != Tok_Capture_End || level > 0 ) )
+			while ( left && ( currtok.Type != Tok_Paren_Close || level > 0 ) )
 			{
-				if ( currtok.Type == Tok_Capture_Start )
+				if ( currtok.Type == Tok_Paren_Open )
 					level++;
 
-				if ( currtok.Type == Tok_Capture_End )
+				if ( currtok.Type == Tok_Paren_Close )
 					level--;
 
 				eat( currtok.Type );
 			}
-			eat( Tok_Capture_End );
+			eat( Tok_Paren_Close );
 			// <Attributes> <ReturnType> ( <Expression> )
 
 			name.Text.Len = ( ( sptr )prevtok.Text.Ptr + prevtok.Text.Len ) - ( sptr )name.Text.Ptr;
@@ -11952,14 +11973,14 @@ else if ( currtok.Type == Tok_DeclType )
 		// Look for suffix specifiers for the function
 		while ( left && tok_is_specifier(currtok) )
 		{
-			Specifier spec = str_to_specifier( tok_to_str(currtok) );
+			Specifier spec = str_to_specifier( currtok.Text );
 
 			if ( spec != Spec_Const
 					// TODO : Add support for NoExcept, l-value, volatile, l-value, etc
 					// && spec != Spec_NoExcept
 					&& spec != Spec_RValue )
 			{
-				log_failure( "Error, invalid specifier used in type definition: %S\n%S", tok_to_str(currtok), strbuilder_to_str( parser_to_strbuilder(_ctx->parser)) );
+				log_failure( "Error, invalid specifier used in type definition: %S\n%S", currtok.Text, strbuilder_to_str( parser_to_strbuilder(_ctx->parser)) );
 				parser_pop(& _ctx->parser);
 				return InvalidCode;
 			}
@@ -11972,7 +11993,7 @@ else if ( currtok.Type == Tok_DeclType )
 #ifdef GEN_USE_NEW_TYPENAME_PARSING
 		if ( NumSpecifiers )
 		{
-			func_suffix_specs = def_specifiers( NumSpecifiers, specs_found );
+			func_suffix_specs = def_specifiers_arr( NumSpecifiers, specs_found );
 			NumSpecifiers     = 0;
 		}
 #endif
@@ -11993,7 +12014,7 @@ else if ( currtok.Type == Tok_DeclType )
 	// result->Token = _ctx->parser.Scope->Start;
 
 	// Need to wait until were using the new parsing method to do this.
-	StrBuilder name_stripped = parser_strip_formatting( tok_to_str(name), parser_strip_formatting_dont_preserve_newlines );
+	StrBuilder name_stripped = parser_strip_formatting( name.Text, parser_strip_formatting_dont_preserve_newlines );
 
 	// name_stripped.strip_space();
 
@@ -12022,7 +12043,7 @@ else if ( currtok.Type == Tok_DeclType )
 #else
 	if ( NumSpecifiers )
 	{
-		CodeSpecifiers specifiers = def_specifiers( NumSpecifiers, ( Specifier* )specs_found );
+		CodeSpecifiers specifiers = def_specifiers_arr( NumSpecifiers, ( Specifier* )specs_found );
 		result->Specs   = specifiers;
 	}
 #endif
@@ -12252,7 +12273,7 @@ CodeTypedef parser_parse_typedef()
 	}
 	else
 	{
-		result->Name       = cache_str( tok_to_str(name) );
+		result->Name       = cache_str( name.Text );
 		result->IsFunction = false;
 	}
 
@@ -12296,7 +12317,7 @@ CodeUnion parser_parse_union( bool inplace_def )
 	Str name = { nullptr, 0 };
 	if ( check( Tok_Identifier ) )
 	{
-		name = tok_to_str(currtok);
+		name = currtok.Text;
 		_ctx->parser.Scope->Name = currtok.Text;
 		eat( Tok_Identifier );
 	}
@@ -12487,7 +12508,7 @@ CodeUsing parser_parse_using()
 
 	CodeUsing
 	result              = (CodeUsing) make_code();
-	result->Name        = cache_str( tok_to_str(name) );
+	result->Name        = cache_str( name.Text );
 	result->ModuleFlags = mflags;
 
 	if ( is_namespace)
@@ -12538,7 +12559,7 @@ CodeVar parser_parse_variable()
 
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 		switch  ( spec )
 		{
 			GEN_PARSER_VARIABLE_ALLOWED_SPECIFIER_CASES:
@@ -12560,16 +12581,9 @@ CodeVar parser_parse_variable()
 	}
 
 	if ( NumSpecifiers ) {
-		specifiers = def_specifiers( NumSpecifiers, specs_found );
+		specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 	}
 	// <ModuleFlags> <Attributes> <Specifiers>
-
-	// Note(Ed): We're enforcing that using this codepath requires non-macro jank.
-	// Code macro_stmt = parse_macro_as_definiton(attributes, specifiers);
-	// if (macro_stmt) {
-	// 	parser_pop(& _ctx->parser);
-	// 	return macro_stmt;
-	// }
 
 	CodeTypename type = parser_parse_type(parser_not_from_template, nullptr);
 	// <ModuleFlags> <Attributes> <Specifiers> <ValueType>
@@ -12631,7 +12645,7 @@ CodeConstructor parse_constructor( Str def )
 
 	while ( left && tok_is_specifier(currtok) )
 	{
-		Specifier spec = str_to_specifier( tok_to_str(currtok) );
+		Specifier spec = str_to_specifier( currtok.Text );
 
 		b32 ignore_spec = false;
 
@@ -12665,7 +12679,7 @@ CodeConstructor parse_constructor( Str def )
 
 	if ( NumSpecifiers )
 	{
-		specifiers = def_specifiers( NumSpecifiers, specs_found );
+		specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
 		// <specifiers> ...
 	}
 

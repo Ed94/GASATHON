@@ -128,8 +128,8 @@ void Execute_GasaModule_Codegen()
 		generate_AttributeSets();
 		generate_DevOptionsCache();
 		// generate_HostWidgetController();
-		change_SBlueprintActionMenu_Construct();
-		change_EditorContentList();
+		// change_SBlueprintActionMenu_Construct();
+		// change_EditorContentList();
 		
 		gen::deinit( & gen_ctx);
 	});

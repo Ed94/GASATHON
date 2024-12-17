@@ -12,7 +12,9 @@ gencpp uses a hand-written recursive descent parser. Both the lexer and parser c
 
 ### Lexer
 
-The lex procedure does the lexical pass of content provided as a `Str` type.  
+File: [lexer.cpp](../base/components/lexer.cpp)
+
+The `lex` procedure does the lexical pass of content provided as a `Str` type.  
 The tokens are stored (for now) in `Lexer_Tokens`.
 
 Fields:
@@ -24,17 +26,15 @@ s32          Idx;
 
 What token types are supported can be found in [ETokType.csv](../base/enums/ETokType.csv) you can also find the token types in [ETokType.h](../base/components/gen/etoktype.cpp) , which is the generated enum from the csv file.
 
-Tokens are defined with the struct `gen::parser::Token`:
-
-Fields:
-
 ```cpp
-char const* Text;
-sptr        Length;
-TokType     Type;
-s32         Line;
-s32         Column;
-u32         Flags;
+struct Token
+{
+    Str     Text;
+    TokType Type;
+    s32     Line;
+    s32     Column;
+    u32     Flags;
+}
 ```
 
 Flags is a bitfield made up of TokFlags (Token Flags):
@@ -52,25 +52,17 @@ Flags is a bitfield made up of TokFlags (Token Flags):
 * `TF_EndDefinition` : Can be interpreted as an end definition for a scope.
 * `TF_Formatting` : Considered a part of the formatting
 * `TF_Literal` : Anything considered a literal by C++.
-
-I plan to replace IsAssign with a general flags field and properly keep track of all operator types instead of abstracting it away to `ETokType::Operator`.
-
-Traversing the tokens is done with the following interface macros:
-
-| Macro | Description |
-| --- | --- |
-| `currtok_noskip` | Get the current token without skipping whitespace |
-| `currtok` | Get the current token, skip any whitespace tokens |
-| `prevtok` | Get the previous token (does not skip whitespace) |
-| `nexttok` | Get the next token (does not skip whitespace) |
-| `eat( Token Type )` | Check to see if the current token is of the given type, if so, advance Token's index to the next token |
-| `left` | Get the number of tokens left in the token array |
-| `check_noskip` | Check to see if the current token is of the given type, without skipping whitespace |
-| `check` | Check to see if the current token is of the given type, skip any whitespace tokens |
+* `TF_Macro_Functional` : Used to indicate macro token is flagged as `MF_Functional`.
+* `TF_Macro_Expects_Body` : Used to indicate macro token is flagged as `MF_Expects_Body`.
 
 ### Parser
 
-The parser has a limited user interface, only specific types of definitions or statements are expected to be provided by the user directly when using to construct an AST dynamically (See SOA for example). It however does attempt to provide capability to parse a full C/C++ from production codebases.
+Files:
+
+* [interface.parsering.cpp](../base/components/interface.parsing.cpp)
+* [parser.cpp](../base/components/parser.cpp)
+
+The parser has a limited user interface, only specific types of definitions or statements are expected to be provided by the user directly when using to construct an AST dynamically. It however does attempt to provide capability to parse a full C/C++ from production codebases.
 
 Each public user interface procedure has the following format:
 
@@ -89,8 +81,7 @@ Each public user interface procedure has the following format:
 }
 ```
 
-The most top-level parsing procedure used for C/C++ file parsing is `parse_global_body`:
-
+The most top-level parsing procedure used for C/C++ file parsing is `parse_global_body`.  
 It uses a helper procedure called `parse_global_nspace`.
 
 Each internal procedure will have the following format:
@@ -111,126 +102,300 @@ internal
 }
 ```
 
+The parsing implementation contains throughut the codeapths to indicate how far their contextual AST node has been resolved.
+
+Example:
+
+```c
+internal
+CodeFn parser_parse_function()
+{
+    push_scope();
+
+    Specifier specs_found[16] = { Spec_NumSpecifiers };
+    s32        NumSpecifiers = 0;
+
+    CodeAttributes attributes = { nullptr };
+    CodeSpecifiers specifiers = { nullptr };
+    ModuleFlag     mflags     = ModuleFlag_None;
+
+    if ( check(Tok_Module_Export) ) {
+        mflags = ModuleFlag_Export;
+        eat( Tok_Module_Export );
+    }
+    // <export>
+
+    attributes = parse_attributes();
+    // <export> <Attributes>
+
+    while ( left && tok_is_specifier(currtok) )
+    {
+        Specifier spec = str_to_specifier( tok_to_str(currtok) );
+
+        switch ( spec )
+        {
+            GEN_PARSER_FUNCTION_ALLOWED_SPECIFIER_CASES:
+            break;
+
+            default:
+                log_failure( "Invalid specifier %S for functon\n%SB", spec_to_str(spec), parser_to_strbuilder(_ctx->parser) );
+                parser_pop(& _ctx->parser);
+                return InvalidCode;
+        }
+
+        if ( spec == Spec_Const )
+            continue;
+
+        specs_found[NumSpecifiers] = spec;
+        NumSpecifiers++;
+        eat( currtok.Type );
+    }
+
+    if ( NumSpecifiers ) {
+        specifiers = def_specifiers_arr( NumSpecifiers, specs_found );
+    }
+    // <export> <Attributes> <Specifiers>
+
+    CodeTypename ret_type = parser_parse_type(parser_not_from_template, nullptr);
+    if ( cast(Code, ret_type) == Code_Invalid ) {
+        parser_pop(& _ctx->parser);
+        return InvalidCode;
+    }
+    // <export> <Attributes> <Specifiers> <ReturnType>
+
+    Token name = parse_identifier(nullptr);
+    _ctx->parser.Scope->Name = name.Text;
+    if ( ! tok_is_valid(name) ) {
+        parser_pop(& _ctx->parser);
+        return InvalidCode;
+    }
+    // <export> <Attributes> <Specifiers> <ReturnType> <Name>
+
+    CodeFn result = parse_function_after_name( mflags, attributes, specifiers, ret_type, name );
+    // <export> <Attributes> <Specifiers> <ReturnType> <Name> ...
+
+    parser_pop(& _ctx->parser);
+    return result;
+}
+```
+
+In the above `parse_function` implementation:
+
+`// <intutive expression of AST component> ...`
+
+Will be conventionlly used where by that point in time for the codepath: `<intutive expression of AST component>` should be resolved for the AST.
+
+## Outline of parsing codepaths
+
 Below is an outline of the general alogirithim used for these internal procedures. The intention is to provide a basic briefing to aid the user in traversing the actual code definitions. These appear in the same order as they are in the `parser.cpp` file
 
 ***NOTE: This is still heavily in an alpha state. A large swaph of this can change, make sure these docs are up to date before considering them 1:1 with the repo commit your considering.***
 
 ## `parse_array_decl`
 
-1. Check if its an array declaration with no expression.
-    1. Consume and return empty array declaration
-2. Opening square bracket
-3. Consume expression
-4. Closing square bracket
-5. If adjacent opening bracket
-    1. Repeat array declaration parse until no brackets remain
-
-## `parse_assignment_expression`
-
-1. Eat the assignment operator
-2. Make sure there is content or at least an end statement after.
-3. Flatten the assignment expression to an untyped Code string.
+1. Push parser scope
+2. Check for empty array `[]`
+   1. Return untyped string with single space if found
+3. Check for opening bracket `[`
+   1. Validate parser not at EOF
+   2. Reject empty array expression
+   3. Capture expression tokens until closing bracket
+   4. Calculate expression span length
+   5. Convert to untyped string
+4. Validate and consume closing bracket `]`
+5. Handle multi-dimensional case
+   1. If adjacent `[` detected, recursively parse
+   2. Link array expressions via Next pointer
+6. Pop parser scope
+7. Return array expression or NullCode on failure
 
 ## `parse_attributes`
 
-1. Check for standard attribute
-2. Check for GNU attribute
-3. Check for MSVC attribute
-4. Check for a token registered as an attribute
-  a. Check and grab the arguments of a token registered of an attribute if it has any.
-5. Repeat for chained attributes. Flatten them to a single attribute AST node.
+1. Push parser scope and initialize tracking
+   1. Store initial token position
+   2. Initialize length counter
+2. Process attributes while available 
+   1. Handle C++ style attributes `[[...]]`
+       1. Consume opening `[[`
+       2. Capture content until closing `]]`
+       3. Calculate attribute span length
+   2. Handle GNU style `__attribute__((...))`
+       1. Consume `__attribute__` keyword and opening `((`
+       2. Capture content until closing `))`
+       3. Calculate attribute span length
+   3. Handle MSVC style `__declspec(...)`
+       1. Consume `__declspec` and opening `(`
+       2. Capture content until closing `)`
+       3. Calculate attribute span length
+   4. Handle macro-style attributes
+       1. Consume attribute token
+       2. If followed by parentheses
+           1. Handle nested parentheses tracking
+           2. Capture content maintaining paren balance
+       3. Calculate attribute span length
+3. Generate attribute code if content captured
+   1. Create attribute text span from start position and length
+   2. Strip formatting from attribute text
+   3. Construct Code node
+       1. Set type to `CT_PlatformAttributes`
+       2. Cache and set Name and Content fields
+   4. Return as CodeAttributes
+4. Pop parser scope
+5. Return NullCode if no attributes found
 
 ## `parse_class_struct`
 
-1. Check for export module specifier
-2. class or struct keyword
-3. `parse_attributes`
-4. If identifier : `parse_identifier`
-5. Parse inherited parent or interfaces
-6. If opening curly brace : `parse_class_struct_body`
-7. If not an inplace definition
-    1. End statement
-    2. Check for inline comment
+1. Validate token type is class or struct
+   1. Return InvalidCode if validation fails
+2. Initialize class/struct metadata
+   1. Access specifier (default)
+   2. Parent class/struct reference
+   3. Class/struct body
+   4. Attributes
+   5. Module flags
+3. Parse module export flag if present
+   1. Set ModuleFlag_Export
+   2. Consume export token
+4. Consume class/struct token
+5. Parse attributes via `parse_attributes()`
+6. Parse class/struct identifier
+   1. Update parser scope name
+7. Initialize interface array (4KB arena)
+8. Parse inheritance/implementation
+   1. If classifier token (`:`) present
+       1. Parse access specifier if exists
+       2. Parse parent class/struct name
+       3. Parse additional interfaces
+           1. Separated by commas
+           2. Optional access specifiers
+           3. Store in interface array
+9. Parse class body if present
+   1. Triggered by opening brace
+   2. Parse via `parse_class_struct_body`
+10. Handle statement termination
+    1. Skip for inplace definitions
+    2. Consume semicolon
+    3. Parse inline comment if present
+11. Construct result node
+    1. Create class definition if Tok_Decl_Class
+    2. Create struct definition if Tok_Decl_Struct
+    3. Attach inline comment if exists
+12. Cleanup interface array and return result
 
 ## `parse_class_struct_body`
 
-1. Opening curly brace
-2. Parse the body (Possible options):
-    1. Ignore dangling end statements
-    2. Newline : ast constant
-    3. Comment : `parse_comment`
-    4. Access_Public : ast constant
-    5. Access_Protected : ast constant
-    6. Access_Private : ast constant
-    7. Decl_Class : `parse_complicated_definition`
-    8. Decl_Enum : `parse_complicated_definition`
-    9. Decl_Friend : `parse_friend`
-    10. Decl_Operator : `parse_operator_cast`
-    11. Decl_Struct : `parse_complicated_definition`
-    12. Decl_Template : `parse_template`
-    13. Decl_Typedef : `parse_typedef`
-    14. Decl_Union : `parse_complicated_definition`
-    15. Decl_Using : `parse_using`
-    16. Operator == '~'
-        1. `parse_destructor`
-    17. Preprocess_Define : `parse_define`
-    18. Preprocess_Include : `parse_include`
-    19. Preprocess_Conditional (if, ifdef, ifndef, elif, else, endif) : `parse_preprocess_cond` or else/endif ast constant
-    20. Preprocess_Macro : `parse_simple_preprocess`
-    21. Preprocess_Pragma : `parse_pragma`
-    22. Preprocess_Unsupported : `parse_simple_preprocess`
-    23. StaticAssert : `parse_static_assert`
-    24. The following compound into a resolved definition or declaration:
-        1. Attributes (Standard, GNU, MSVC) : `parse_attributes`
-        2. Specifiers (consteval, constexpr, constinit, explicit, forceinline, inline, mutable, neverinline, static, volatile, virtual)
-        3. Possible Destructor : `parse_destructor`
-        4. Possible User defined operator cast : `parse_operator_cast`
-        5. Possible Constructor : `parse_constructor`
-        6. Something that has the following: (identifier, const, unsigned, signed, short, long, bool, char, int, double)
-            1. Possible Constructor `parse_constructor`
-            2. Possible Operator, Function, or varaible : `parse_operator_function_or_variable`
-    25. Something completely unknown (will just make untyped...) : `parse_untyped`
+1. Initialize scope and body structure
+   1. Push parser scope
+   2. Consume opening brace
+   3. Create code node with `CT_Class_Body` or `CT_Struct_Body` type
+2. Parse body members while not at closing brace
+   1. Initialize member parsing state
+       1. Code member (InvalidCode)
+       2. Attributes (null)
+       3. Specifiers (null)
+       4. Function expectation flag
+   2. Handle preprocessor hash if present
+   3. Process member by token type in switch statement
+       1. Statement termination - warn and skip
+       2. Newline - format member
+       3. Comments - parse comment
+       4. Access specifiers - `public/protected/private`
+       5. Declarations - `class/enum/struct/union/typedef/using`
+       6. Operators - `destructors/casts`
+       7. Preprocessor directives - `define/include/conditionals/pragmas`
+       8. Preprocessor statement macros
+       9. Report naked preprocossor expression macros detected as an error.
+       10. Static assertions
+       11. Attributes and specifiers
+           1. Parse attributes
+           2. Parse valid member specifiers
+           3. Handle `attribute-specifier-attribute` case
+       12. Identifiers and types
+           1. Check for constructors
+           2. Parse `operator/function/variable`
+       13. Default - capture unknown content until closing brace
+   4. Validate member parsing
+       1. Return InvalidCode if member invalid
+       2. Append valid member to body
+3. Finalize body
+   1. Consume closing brace
+   2. Pop parser scope
+   3. Return completed CodeBody
 
 ## `parse_comment`
 
 1. Just wrap the token into a cached string ( the lexer did the processing )
 
-## `parse_compilcated_definition`
+## `parse_complicated_definition`
 
-This is a helper function used by the following functions to help resolve a declaration or definition:
+1. Initialize parsing context
+   1. Push scope
+   2. Set inplace flag false
+   3. Get token array reference
+2. Scan ahead for statement termination
+   1. Track brace nesting level
+   2. Find first semicolon at level 0
+3. Handle declaration variants
+   1. Forward declaration case
+       1. Check if only 2 tokens before semicolon
+       2. Parse via `parse_forward_or_definition`
+   2. Function with trailing specifiers
+       1. Identify trailing specifiers
+       2. Check for function pattern
+       3. Parse as `operator/function/variable`
+       4. Return `InvalidCode` if pattern invalid
+   3. Identifier-based declarations
+       1. Check identifier patterns
+           1. Inplace definition `{...} id;`
+           2. Namespace type variable `which id id;`
+           3. Enum with class qualifier
+           4. `Pointer/reference` types
+       2. Parse as `operator/function/variable` if valid
+       3. Return `InvalidCode` if pattern invalid
+   4. Basic type declarations
+       1. Validate enum class pattern
+       2. Parse via `parser_parse_enum`
+       3. Return `InvalidCode` if invalid
+   5. Direct definitions
+       1. Handle closing brace - `parse_forward_or_definition`
+       2. Handle array definitions - `parse_operator_function_or_variable`
+       3. Return InvalidCode for unknown patterns
 
-* `parse_class_struct_body`
-* `parse_global_nspace`
-* `parse_union`
+## `parse_assignment_expression`
 
-A portion of the code in `parse_typedef` is very similar to this as both have to resolve a similar issue.
-
-1. Look ahead to the termination token (End statement)
-2. Check to see if it fits the pattern for a forward declare
-3. If the previous token was an identifier ( `token[-1]` ):
-    1. Look back one more token : `[-2]`
-    2. If the token has a closing brace its an inplace definition
-    3. If the `token[-2]` is an identifier & `token[-3]` is the declaration type, its a variable using a namespaced type.
-    4. If the `token[-2]` is an indirection, then its a variable using a namespaced/forwarded type.
-    5. If the `token[-2]` is an assign classifier, and the starting tokens were the which type with possible `class` token after, its an enum forward declaration.
-    6. If any of the above is the case, `parse_operator_function_or_variable`
-4. If the `token[2]` is a vendor fundamental type (builtin) then it is an enum forward declaration.
-5. If the previous token was a closing curly brace, its a definition : `parse_forward_or_definition`
-6. If the previous token was a closing square brace, its an array definition : `parse_operator_function_or_variable`
-
-## `parse_define`
-
-1. Define directive
-2. Get identifier
-3. Get Content (Optional)
+1. Initialize expression parsing
+   1. Null expression pointer
+   2. Consume assignment operator token
+   3. Capture initial expression token
+2. Validate expression presence
+   1. Check for immediate termination
+   2. Return `InvalidCode` if missing expression
+3. Parse balanced expression
+   1. Track nesting level for
+       1. Curly braces
+       2. Parentheses
+   2. Continue until
+       1. End of input, or
+       2. Statement terminator, or
+       3. Unnested comma
+   3. Consume tokens sequentially
+4. Generate expression code
+   1. Calculate expression span length
+   2. Convert to untyped string
+   3. Return expression node
 
 ## `parse_forward_or_definition`
 
-* Parse any of the following for either a forward declaration or definition:
-    1. Decl_Class : `parse_class`
-    2. Decl_Enum : `parse_enum`
-    3. Decl_Struct : `parse_struct`
-    4. Decl_Union : `parse_union`
+1. Declaration type routing
+   1. Class (`Tok_Decl_Class`) -> `parser_parse_class`
+   2. Enum (`Tok_Decl_Enum`) -> `parser_parse_enum` 
+   3. Struct (`Tok_Decl_Struct`) -> `parser_parse_struct`
+   4. Union (`Tok_Decl_Union`) -> `parser_parse_union`
+2. Error handling
+   1. Return `InvalidCode` for unsupported token types
+   2. Log failure with parser context
+
+`is_inplace` flag propagates to specialized codepaths to maintain parsing context.
 
 ## `parse_function_after_name`
 
@@ -239,80 +404,189 @@ after its been made ceratin that the type of declaration or definition is indeed
 
 By the point this function is called the following are known : export module flag, attributes, specifiers, return type, & name
 
-1. `parse_parameters`
-2. parse postfix specifiers (we do not check if the specifier here is correct or not to be here... yet)
-3. If there is a body : `parse_body`
-4. Otherwise :
-     1. Statment end
-     2. Check for inline comment
+1. Parameter parsing
+   1. Push scope
+   2. Parse parameter list with parentheses
+2. Post-parameter specifier processing
+   1. Collect trailing specifiers
+   2. Initialize or append to existing specifiers
+3. Parse function termination
+   1. Function body case
+       1. Parse body if open brace found
+       2. Validate body type (`CT_Function_Body` or `CT_Untyped`)
+   2. Pure virtual case
+       1. Handle "`= 0`" syntax
+       2. Append pure specifier
+   3. Forward declaration case
+       1. Consume statement terminator
+   4. Handle inline comments for all cases
+4. Construct function node
+   1. Strip whitespace from name
+   2. Initialize `CodeFn` with base properties
+       1. Name (cached, stripped)
+       2. Module flags
+   3. Set node type
+       1. `CT_Function` if body present
+       2. `CT_Function_Fwd` if declaration only
+   4. Attach components
+       1. Attributes if present
+       2. Specifiers if present
+       3. Return type
+       4. Parameters if present
+       5. Inline comment if present
+5. Cleanup and return
+   1. Pop scope
+   2. Return completed function node
 
 ## `parse_function_body`
 
 Currently there is no actual parsing of the function body. Any content with the braces is shoved into an execution AST node.
 In the future statements and expressions will be parsed.
 
-1. Open curly brace
-2. Grab all tokens between the brace and the closing brace, shove them in a execution AST node.
-3. Closing curly brace
+1. Initialize body parsing
+   1. Push scope
+   2. Consume opening brace
+   3. Create CodeBody with CT_Function_Body type
+2. Capture function content
+   1. Record start token position
+   2. Track brace nesting level
+   3. Consume tokens while
+       1. Input remains AND
+       2. Not at unmatched closing brace
+   4. Update level counters
+       1. Increment on open brace
+       2. Decrement on closing brace when level > 0
+3. Process captured content
+   1. Calculate content length via pointer arithmetic
+   2. Create execution block if content exists
+       1. Construct string span from start position and length
+       2. Wrap in execution node
+       3. Append to body
+4. Finalize
+   1. Consume closing brace
+   2. Pop scope
+   3. Return cast body node
 
 ## `parse_global_nspace`
 
-1. Make sure this is being called for a valid type (namespace, global body, export body, linkage body)
-2. If its not a global body, consume the opening curly brace
-3. Parse the body (Possible options):
-    1. Ignore dangling end statements
-    2. NewLine : ast constant
-    3. Comment : `parse_comment`
-    4. Decl_Cass : `parse_complicated_definition`
-    5. Decl_Enum : `parse_complicated_definition`
-    6. Decl_Extern_Linkage : `parse_extern_link`
-    7. Decl_Namespace : `parse_namespace`
-    8. Decl_Struct : `parse_complicated_definition`
-    9. Decl_Template : `parse_template`
-    10. Decl_Typedef : `parse_typedef`
-    11. Decl_Union : `parse_complicated_definition`
-    12. Decl_Using : `parse_using`
-    13. Preprocess_Define : `parse_define`
-    14. Preprocess_Include : `parse_include`
-    15. Preprocess_If, IfDef, IfNotDef, Elif : `parse_preprocess_cond`
-    16. Preprocess_Else : ast constant
-    17. Preprocess_Endif : ast constant
-    18. Preprocess_Macro : `parse_simple_preprocess`
-    19. Preprocess_Pragma : `parse_pragma`
-    20. Preprocess_Unsupported : `parse_simple_preprocess`
-    21. StaticAssert : `parse_static_assert`
-    22. Module_Export : `parse_export_body`
-    23. Module_Import : NOT_IMPLEMENTED
-    24. The following compound into a resolved definition or declaration:
-        1. Attributes ( Standard, GNU, MSVC, Macro ) : `parse_attributes`
-        2. Specifiers ( consteval, constexpr, constinit, extern, forceinline, global, inline, internal_linkage, neverinline, static )
-        3. Is either ( identifier, const specifier, long, short, signed, unsigned, bool, char, double, int)
-            1. Attempt to parse as construtor or destructor : `parse_global_nspace_constructor_destructor`
-            2. If its an operator cast (definition outside class) : `parse_operator_cast`
-            3. Its an operator, function, or varaible : `parse_operator_function_or_varaible`
-4. If its not a global body, consume the closing curly brace
+1. State initialization
+   1. Push parser scope
+   2. Validate namespace type (Global, Namespace, Export, Extern Linkage)
+   3. Consume opening brace for non-global scopes
+   4. Initialize `CodeBody` with specified body type: `which`
+2. Member parsing loop (while not at closing brace)
+   1. Reset parse state
+       * Member code
+       * Attributes
+       * Specifiers
+       * Function expectation flag
+   2. Member type handling
+       1. Declarations
+           * `Class/Struct/Union/Enum` via `parse_complicated_definition`
+           * `Template/Typedef/Using` via dedicated parsers
+           * `Namespace/Export/Extern` declarations
+       2. Preprocessor directivess
+           * Include/Define
+           * Conditionals `(if / ifdef / ifndef / elif / else / endif)`
+           * Pragmas
+           * Preprocessor statement macros
+           * Report naked preprocossor expression macros detected as an error.
+       3. Comments/Formatting
+           * Newlines
+           * Comments
+       4. Static assertions
+   3. Attributes and specifiers
+       1. Parse attributes if present
+       2. Collect valid specifiers (max 16)
+       3. Handle `consteval` for function expectation
+   4. Identifier resolution
+       1. Check `constructor/destructor` implementation
+       2. Look ahead for user defined operator implementation outside of class
+       3. Default to `operator/function/variable` parse
+3. Member validation/storage
+   1. Validate parsed member
+   2. Append to body if valid
+   3. Return `InvalidCode` on parse failure
+4. Scope finalization
+   1. Consume closing brace for non-global scopes
+   2. Pop parser scope
+   3. Return completed body
 
 ## `parse_global_nspace_constructor_destructor`
 
-1. Look ahead for the start of the arguments for a possible constructor/destructor
-2. Go back past the identifier
-3. Check to see if its a destructor by checking for the `~`
-4. Continue the next token should be a `::`
-5. Determine if the next valid identifier (ignoring possible template parameters) is the same as the first identifier of the function.
-6. If it is we have either a constructor or destructor so parse using their respective functions (`parse_constructor`, `parse_destructor`).
+1. Forward Token Analysis
+   1. Scan for parameter list opening parenthesis
+   2. Template Expression Handling
+      * Track template nesting depth
+      * Account for nested parentheses within templates
+      * Skip until template closure or parameter start
+
+```cpp
+      // Valid patterns:
+      ClassName          ::  ClassName(...)
+      ClassName          :: ~ClassName(...)
+      ClassName< T ... > ::  ClassName(...)
+```
+
+2. Constructor/Destructor Identification
+   1. Token Validation Sequence
+      * Verify identifier preceding parameters
+      * Check for destructor indicator (`~`)
+      * Validate scope resolution operator (`::`)
+   2. Left-side Token Analysis
+      * Process nested template expressions
+      * Maintain template/capture level tracking
+      * Locate matching identifier token
+3. Parser Resolution
+   1. Name Pattern Validation
+      * Compare identifier tokens for exact match
+   2. Specialized Parsing
+      * Route to `parser_parse_destructor` for '~' prefix
+      * Route to `parser_parse_constructor` for direct match
+   3. Apply specifiers to resulting node
+4. Return result (`NullCode` on pattern mismatch)
+
+### Implementation Constraints
+
+* Cannot definitively distinguish nested namespaces with identical names
+* Return type detection requires parser enhancement
+* Template parameter validation is syntax-based only
+* Future enhancement: Implement type parsing with rollback capability
 
 ## `parse_identifier`
 
 This is going to get heavily changed down the line to have a more broken down "identifier expression" so that the qualifier, template args, etc, can be distinguished between the targeted identifier.  
 The function can parse all of them, however the AST node compresses them all into a string.
 
-1. Consume first identifier
-2. `parse_template_args`
-3. While there is a static symbol accessor ( `::` )
-    1. Consume `::`
-    2. Consume member identifier
-    3. `parse_template args` (for member identifier)
-    4. If a `~` is encounted and the scope is for a destructor's identifier, do not consume it and return with what parsed.
+1. Initialize identifier context
+   1. Push parser scope
+   2. Capture initial token as name
+   3. Set scope name from token text
+2. Process initial identifier component
+   1. Consume identifier token
+   2. Parse template arguments if present
+3. Handle qualified identifiers (loop while `::` found)
+   1. Consume static access operator
+   2. Validate token sequence:
+       1. Handle destructor operator (`~`)
+           * Validate destructor parsing context
+           * Update name span if valid
+           * Return invalid on context mismatch
+       2. Process member function pointer (`*`)
+           * Set possible_member_function flag if context allows
+           * Return invalid if pointer unexpected
+       3. Verify identifier token follows
+   3. Update identifier span
+       1. Extend name length to include new qualifier
+       2. Consume identifier token
+       3. Parse additional template arguments
+4. Return completed identifier token
+
+Notes:
+
+* Current implementation treats identifier as single token span
+* TODO: Refactor to AST-based identifier representation for:
+  * Better support for nested symbol resolution
 
 ## `parse_include`
 
@@ -323,29 +597,100 @@ The function can parse all of them, however the AST node compresses them all int
 
 This is needed as a operator defintion is not easily resolvable early on, as such this function handles resolving a operator after its been made ceratin that the type of declaration or definition is indeed for a operator signature.
 
-By the point this function is called the following are known : export module flag, attributes, specifiers, return type
+By the point this function is called the following are known : export module flag, attributes, specifiers, and return type
 
-1. If there is any qualifiers for the operator, parse them
-2. Consume operator keyword
-3. Determine the operator type (This will be offloaded to the lexer moreso than how it is now) & consume
-4. `parse_params`
-5. If there is no parameters this is operator is a member of pointer if its symbols is a *.
-6. Parse postfix specifiers
-7. If there is a opening curly brace, `parse function_body`
-8. Otherwise: consume end statement, check for inline comment.
+1. Initialize operator context
+   1. Push scope
+   2. Parse qualified namespace identifier
+   3. Consume `operator` keyword
+2. Operator identification
+   1. Validate operator token presence
+   2. Set scope name from operator token
+   3. Map operator token to internal operator enum:
+       * Arithmetic: `+, -, *, /, %`
+       * Assignment: `+=, -=, *=, /=, %=, =`
+       * Bitwise: `&, |, ^, ~, >>`
+       * Logical: `&&, ||, !, ==`
+       * Comparison: `<, >, <=, >=`
+       * Member access: `->, ->*`
+       * Special: `(), [], new, delete`
+   4. Handle array variants for new/delete
+3. Parameter and specifier processing
+   1. Parse parameter list
+   2. Handle multiply/member-pointer ambiguity
+   3. Collect trailing specifiers
+   4. Merge with existing specifiers
+4. Function body handling
+   1. Parse implementation if present
+   2. Otherwise consume statement terminator
+   3. Capture inline comments
+5. Result construction
+   1. Create operator node with:
+       * Operator type
+       * Namespace qualification
+       * Parameters
+       * Return type
+       * Implementation body
+       * Specifiers
+       * Attributes
+       * Module flags
+   2. Attach inline comments
+6. Pop scope
 
 ## `parse_operator_function_or_variable`
 
 When this function is called, attribute and specifiers may have been resolved, however what comes next can still be either an operator, function, or varaible.
 
-1. Check for preprocessor macro, if there is one : `parse_simple_preprocess`
-2. `parse_type` (Does the bulk of the work)
-3. Begin lookahead to see if we get qualifiers or we eventually find the operator declaration
-4. If we find an operator keyword : `parse_operator_after_ret_type`
-5. otherwise :
-    1. `parse_identifier`
-    2. If we se a opening parenthesis (capture start), its a function : `parse_function_after_name`
-    3. Its a variable : `parse_variable_after_name`
+1. Initial Type Resolution
+   1. Push parsing scope
+   2. Handle macro definitions via `parse_macro_as_definition`
+   3. Parse base type, validate result
+   4. Exit on invalid type
+2. Declaration Classification
+   1. Scan token stream for `operator` keyword
+   2. Track static symbol access
+   3. Branch handling:
+       * Operator overload: Forward to `parse_operator_after_ret_type`
+       * Function/variable: Parse identifier and analyze context
+3. Function/Variable Disambiguation
+   1. Parse identifier
+   2. Analyze token patterns:
+       * Detect parameter capture via parenthesis
+       * Check for constructor initialization pattern
+       * Handle variadic argument cases
+   3. Macro Expression Analysis:
+       * Validate functional macros
+       * Track parenthesis balance
+       * Detect comma patterns
+4. Declaration Parsing
+   1. Function path
+       * Verify function expectation (`consteval`)
+       * Delegate to `parse_function_after_name`
+   2. Variable path
+       * Validate against function expectation
+       * Forward to `parse_variable_after_name`
+
+## `parse_macro_as_definition`
+
+1. Validation
+   1. Check token type (Tok_Preprocess_Macro_Stmt)
+   2. Retrieve macro from lookup
+   3. Verify `MF_Allow_As_Definition` flag
+2. Macro Processing
+   1. Parse via `parse_simple_preprocess`
+   2. Maintain original token categorization
+3. Definition Construction
+   1. Format components:
+       * Attributes (if present)
+       * Specifiers (if present)
+       * Macro content
+   2. Build unified string representation
+   3. Convert to untyped code node
+
+Notes:
+
+* Early exits return NullCode for non-qualifying macros
+* TODO: Pending AST_Macro implementation for proper attribute/specifier support
 
 ## `parse_pragma`
 
@@ -354,21 +699,38 @@ When this function is called, attribute and specifiers may have been resolved, h
 
 ## `parse_params`
 
-1. Consume either a `(` or `<` based on `use_template_capture` arg
-2. If the we immdiately find a closing token, consume it and finish.
-3. If we encounter a varadic argument, consume it and return a `param_varadic` ast constant
-4. `parse_type`
-5. If we have a macro, parse it (Unreal has macros as tags to parameters and or as entire arguments).
-6. So long as next token isn't a comma
-  a. If we have an identifier
-    1. Consume it
-    2. Check for assignment:
-      a. Consume assign operator
-      b. Parse the expression
-7. While we continue to encounter commas
-    a. Consume them
-    b. Repeat steps 3 to 6.2.b
-8. Consume the closing token
+1. Parameter List Initialization
+   1. Delimiter handling based on context
+       * Parentheses: `(...)` for standard parameters
+       * Angle brackets: `<...>` for template parameters
+   2. Early return for empty parameter lists
+   3. Initial parameter component initialization
+       * Macro reference
+       * Type information
+       * Parameter value
+       * Identifier token
+2. Primary Parameter Processing
+   1. Handle varadic arguments
+   2. Process preprocessor macros (`UPARAM` style)
+   3. Parse parameter sequence
+       * Type information
+       * Optional identifier
+       * Post-name macro expressions
+       * Default value expressions
+   4. Value expression capture with nested structure tracking
+       * Template depth counting
+       * Parentheses balance
+       * Text span calculation
+3. Multi-Parameter Handling
+   1. Parse comma-separated entries
+   2. Maintain parameter structure
+       * Macro context
+       * Type information
+       * Identifier caching
+       * Post-name macro persistence
+       * Value assignments
+   3. Parameter list construction via `params_append`
+4. Consume params capture termination token & return result.
 
 ## `parse_preprocess_cond`
 
@@ -377,18 +739,40 @@ When this function is called, attribute and specifiers may have been resolved, h
 
 ## `parse_simple_preprocess`
 
-There is still decent room for improvement in this setup. Right now the entire macro's relevant tokens are shoved into an untyped AST. It would be better to store it instead in an `AST_Macro` node instead down the line.
+1. Basic Setup
+   1. Push scope
+   2. Capture initial macro token
+   3. Validate macro registration
+       * Lookup in macro registry
+       * Skip validation for unsupported macros
+2. Functional Macro Processing
+   1. Handle macro invocation
+       * Parse opening parenthesis 
+       * Track nested parenthesis level
+       * Capture parameter content
+       * Update macro span length
+3. Macro Body Handling
+   1. Process associated block if macro expects body
+       * Parse curly brace delimited content
+       * Track nesting level
+       * Capture body content
+   2. Handle statement termination
+       * Context-specific semicolon handling
+       * Process inline comments
+       * Update macro span
+4. Context-Specific Termination
+   1. Special case handling
+       * Enum context bypass
+       * Typedef context validation
+       * Global/class scope handling
+   2. Statement termination rules
+       * Process semicolons based on context
+       * Update token span accordingly
 
-1. Consume the macro token
-2. Check for an opening curly brace
-    1. Consume opening curly brace
-    2. Until the closing curly is encountered consume all tokens.
-    3. If the parent context is a typedef
-        1. Check for end stement
-            1. Consume it
-            2. Consume potential inline comment
-3. Otherwise do steps 3 to 3.1.2
-4. Shove it all in an untyped string
+Notes:
+
+* Pending AST_Macro implementation for improved structure
+* Current implementation uses simple token span capture
 
 ## `parse_static_assert`
 
@@ -408,127 +792,244 @@ This will get changed heavily once we have better support for typename expressio
 
 ## `parse_variable_after_name`
 
-This is needed as a variable defintion is not easily resolvable early on, it takes a long evaluation period before its known that the declaration or definition is a variable. As such this function handles resolving a variable.
-
+This is needed as a variable defintion is not easily resolvable early on, it takes a long evaluation period before its known that the declaration or definition is a variable. As such this function handles resolving a variable.  
 By the point this function is called the following are known : export module flag, attributes, specifiers, value type, name
 
-1. If its an assignment, parse the assignment expression (currently to an untyped string)
-2. If its an opening curly brace, parse the expression within (currnelty to an untyped stirng).
-    1. Consume the closing curly brace
-3. If its a `:`, we're dealing with bitfield definition:
-    1. Consume the assign classifier
-    2. Consume the expression (currently to an untyped string)
-4. If a comma is encountered : `parse_variable declaration_list`
-5. Consume statement end
-6. Check for inline comment
+1. Initialization Processing
+   1. Array dimension parsing
+   2. Expression capture
+       * Assignment expressions
+       * Constructor initializations
+       * Bitfield specifications
+2. Expression Pattern Handling
+   1. Direct assignment (`=`)
+       * Parse assignment expression
+   2. Brace initialization (`{}`)
+       * Track nested braces
+       * Capture initialization list
+   3. Constructor initialization (`()`)
+       * Track parenthesis nesting
+       * Update initialization flag
+   4. Bitfield specification (`:`)
+       * Validate non-empty expression
+       * Capture bitfield size
+3. Multi-Variable Processing
+   1. Handle comma-separated declarations
+   2. Statement termination
+       * Process semicolon
+       * Capture inline comments
+   3. Link variable chain via NextVar
+4. AST Node Construction
+   1. Core properties
+       * Type (`CT_Variable`)
+       * Name caching
+       * Module flags
+       * Value type
+   2. Optional components
+       * Array expression
+       * Bitfield size
+       * Attributes/Specifiers
+       * Initialization value
+       * Constructor flag
+       * Parent/Next linkage
 
 ## `parse_variable_declaration_list`
 
-1. Consume the comma
-2. Parse specifiers
-3. `parse_variable_after_name`
+1. Chain Initialization
+   1. Initialize null variable chain head and tail
+   2. Process while comma token present
+2. Per-Variable Processing
+   1. Specifier Collection
+       * Validate specifier ordering (const after pointer)
+       * Handle core specifiers: `ptr, ref, rvalue`
+       * Maintain specifier chain integrity
+       * Log invalid specifier usage but continue parsing
+   2. Variable Declaration
+       * Extract identifier name
+       * Parse remainder via `parse_variable_after_name`
+       * Note: Function pointers unsupported
+3. Chain Management
+   1. First Variable
+       * Set as chain head and tail
+   2. Subsequent Variables
+       * Link to previous via NextVar
+       * Establish parent reference
+       * Update tail pointer
 
-## `parse_class`
+Limitations:
+
+* No function pointer support
+
+## `parser_parse_class`
 
 1. `parse_class_struct`
 
-## `parse_constructor`
+## `parser_parse_constructor`
 
-This currently doesn't support postfix specifiers (planning to in the future)
+1. Core Parse Sequence
+   1. Identifier extraction and parameter list capture
+   2. Handle construction variants:
+       * Colon-prefixed member initializer lists
+       * Direct body implementation
+       * Default/delete assignment forms
+       * Forward declarations
+2. Initializer List Processing
+   1. Track nested parentheses balance
+   2. Capture full initializer span
+   3. Convert to untyped string representation
+3. Implementation Variants
+   1. Body implementation
+       * Parse full function body
+       * Set `CT_Constructor` type
+   2. Forward declaration
+       * Process terminator and comments
+       * Set `CT_Constructor_Fwd` type
+   3. Special forms
+       * Handle assignment operator cases
+       * Capture inline comments for declarations
+4. AST Construction
+   1. Core node attributes
+       * Cached identifier name
+       * Parameter list linkage
+       * Specifier chain
+   2. Optional components
+       * Initializer list
+       * Implementation body
+       * Inline comments
 
-1. `parse_identifier`
-2. `parse_parameters`
-3. If currtok is a `:`
-    1. Consume `:`
-    2. Parse the initializer list
-    3. `parse_function_body`
-4. If currtok is an opening curly brace
-    1. `parse_function_body`
-5. Otherwise:
-    1. Consume statement end
-    2. Check for inline comment
+## `parser_parse_define`
 
-## `parse_destructor`
+1. Token Stream Preparation
+   1. Handle optional preprocessor hash
+   2. Consume define directive
+   3. Validate identifier presence
+2. Define Node Initialization
+   1. Construct CodeDefine with `CT_Preprocess_Define` type
+   2. Cache identifier name
+   3. Update scope context
+3. Parameter Processing (Functional Macros)
+   1. Initial parameter detection
+       * Verify macro functionality
+       * Initialize parameter list node (`CT_Parameters_Define`)
+   2. Parameter chain construction
+4. Content Handling
+   1. Content validation
+       * Verify presence
+       * Handle empty content case with newline
+   2. Content processing
+       * Strip formatting
+       * Preserve line termination
+       * Create untyped node
 
-1. Check for and consume virtual specifier
-2. Check for the `~` operator
-3. `parse_identifier`
-4. Consume opening and closing parenthesis
-5. Check for assignment operator:
-    1. Consume assignment op
-    2. Consume pure specifier `0`
-6. If not pure virtual & currtok is opening curly brace:
-    1. `parse_function_body`
-7. Otherwise:
-    1. Consume end statement
-    2. If currtok is comment : `parse_comment`
+## `parser_parse_destructor`
 
-## `parse_enum`
+1. Context Validation
+   1. Verify parser scope hierarchy
+   2. Check global namespace context
+   3. Process `virtual` specifier if present
+2. Identifier Resolution
+   1. Parse prefix identifier in global scope
+   2. Validate destructor operator (`~`)
+   3. Capture destructor name
+   4. Enforce empty parameter list
+3. Specifier Processing
+   1. Handle pure virtual case (`= 0`)
+       * Append `Spec_Pure` to specifiers
+       * Set `pure_virtual` flag
+   2. Process default specifier (= default)
+       * Parse as assignment expression
+   3. Validate specifier syntax
+4. Implementation Processing
+   1. Function body (non-pure case)
+       * Parse complete body
+       * Set `CT_Destructor` type
+   2. Forward declaration
+       * Handle statement termination
+       * Process inline comments
+       * Set `CT_Destructor_Fwd` type
+5. AST Construction
+   1. Build destructor node
+   2. Handle qualified names
+       * Concatenate prefix and identifier
+   3. Attach components
+       * Specifiers
+       * Implementation body
+       * Inline comments
 
-1. Consume enum token
-2. Check for and consume class token
-3. `parse_attributes`
-4. If there is an identifier consume it
-5. Check for a `:`
-    1. Consume `:`
-    2. `parse_type`
-6. If there is a body parse it (Consume `{`):
-    1. Newline : ast constant
-    2. Comment : `parse_comment`
-    3. Preprocess_Define : `parse_define`
-    4. Preprocess_Conditional (if, ifdef, ifndef, elif ) : `parse_preprocess_cond`
-    5. Preprocess_Else : ast constant
-    6. Preprocess_Endif : ast constant
-    7. Preprocess_Macro : `parse_simple_preprocess`
-    8. Preprocess_Pragma : `parse_pragma`
-    9. Preprocess_Unsupported : `parse_smple_preprocess`
-    10. An actual enum entry
-        1. Consume identifier
-        2. If there is an assignment operator:
-            1. Consume operator
-            2. Consume the expression (assigned to untyped string for now)
-            3. If a macro is encountered consume it (Unreal UMETA macro support)
-        3. If there is a comma, consume it
+## `parser_parse_enum`
 
-## `parse_export_body`
+1. Declaration Components
+   1. Basic structure processing
+       * Enum type detection (`enum/enum class`)
+       * Attributes parsing
+       * Identifier capture
+   2. Underlying type resolution
+       * Standard type parsing
+       * Macro-based underlying type handling
+       * Classifier token validation
+2. Body Processing
+   1. Entry parsing loop
+       * Preprocessor directives (`#define, #if, #pragma`)
+       * Enum member declarations
+       * Comment preservation
+       * Formatting tokens
+   2. Entry value handling
+       * Assignment expressions
+       * `UMETA` macro support
+       * Entry termination (commas)
+   3. Token span calculation for entries
+3. AST Construction
+   1. Node type determination
+       * `CT_Enum/CT_Enum_Class` for definitions
+       * `CT_Enum_Fwd/CT_Enum_Class_Fwd` for declarations
+   2. Component attachment
+       * Name caching
+       * Body linkage
+       * Underlying type/macro
+       * Attributes
+       * Inline comments
+
+## `parser_parse_export_body`
 
 1. `parse_global_nspace`
 
-## `parse_extern_link_body`
+## `parser_parse_extern_link_body`
 
 1. `parse_global_nspace`
 
-## `parse_extern_link`
+## `parser_parse_extern_link`
 
-1. Consume Decl_Extern_Linkage
+1. Consume `Tok_Decl_Extern_Linkage`
 2. Consume the linkage identifier
 3. `parse_extern_link_body`
 
-## `parse_friend`
+## `parser_parse_friend`
 
 1. Consume `friend`
-2. `parse_type`
-3. If the currok is an identifier its a function declaration or definition
+2. Parse specifiers
+3. `parse_type`
+4. If the currok is an identifier its a function declaration or definition
    1. `parse_function_after_name`
-4. Consume end statement so long as its not a function definion
-5. Check for inline comment, `parse_comment` if exists
+5. Otherwise its a operator: `parse_operator_after_ret_type`
+6. Consume end statement so long as its not a function definion
+7. Check for inline comment, `parse_comment` if exists
 
-## `parse_function`
+## `parser_parse_function`
 
 1. Check and parse for `export`
 2. `parse_attributes`
 3. Parse specifiers
-4. `parse_type`
+4. `parse_type` for return type
 5. `parse_identifier`
 6. `parse_function_after_name`
 
-## `parse_namespace`
+## `parser_parse_namespace`
 
 1. Consume namespace declaration
 2. Parse identifier
 3. `parse_global_namespace`
 
-## `parse_operator`
+## `parser_parse_operator`
 
 1. Check for and parse export declaration
 2. `parse_attributes`
@@ -536,7 +1037,7 @@ This currently doesn't support postfix specifiers (planning to in the future)
 4. `parse_type`
 5. `parse_operator_after_ret_type`
 
-## `parse_operator_cast`
+## `parser_parse_operator_cast`
 
 1. Look for and parse a qualifier namespace for the cast (in-case this is defined outside the class's scope)
 2. Consume operator declaration
@@ -551,33 +1052,43 @@ This currently doesn't support postfix specifiers (planning to in the future)
     1. Consume end statement
     2. Check for and consume comment : `parse_comment`
 
-
-## `parse_struct`
+## `parser_parse_struct`
 
 1. `parse_class_struct`
 
-## `parse_template`
+## `parser_parse_template`
 
-Note: This currently doesn't support templated operator casts (going to need to add support for it)
+1. Initial State Configuration
+   1. Module flag handling (`export` keyword)
+   2. Template parameter parsing via `parse_params`
+       * Uses specialized template capture mode
+       * Validates parameter list integrity
+2. Declaration Type Resolution
+   1. Primary type dispatch
+       * `Class/Struct/Union` declarations
+       * Using declarations
+   2. Function/Variable handling
+       * Attribute collection
+       * Specifier validation (16 max)
+       * Function expectation detection
+3. Special Case Processing
+   1. Global namespace constructors/destructors
+       * Context validation
+       * Delegation to `parse_global_nspace_constructor_destructor`
+   2. Operator cast implementations
+       * Token lookahead for operator detection
+       * Static symbol access validation
+       * Cast parsing delegation
+4. AST Construction
+   1. Template node composition
+       * `CT_Template` type assignment
+       * Parameter linkage
+       * Declaration binding
+       * Module flag preservation
 
-1. Check for and parse export declaration
-2. Consume template declaration
-3. `parse_params`
-4. Parse for any of the following:
-   1. Decl_Class : `parse_class`
-   2. Decl_Struct : `parse_struct`
-   3. Decl_Union : `parse_union`
-   4. Decl_Using : `parse_using`
-   5. The following compound into a resolved definition or declaration:
-       1. `parse_attributes`
-       2. Parse specifiers
-       3. Attempt to parse as constructor or destructor: `parse_global_nspace_constructor_destructor`
-       4. Otherwise: `parse_operator_function_or_variable`
+## `parser_parse_type`
 
-## `parse_type`
-
-This function's implementation is awful and not done correctly. It will most likely be overhauled in the future as I plan to segement the AST_Type into several AST varaints along with sub-types to help produce robust type expressions.  
-Hopefully I won't need to make authentic type expressions as I was hopeing to avoid that...
+This implementatin will be updated in the future to properly handle functional typename signatures.
 
 ### Current Algorithim
 
@@ -590,7 +1101,8 @@ Anything that is in the qualifier capture of the function typename is treated as
     1. If its an in-place definition of a class, enum, struct, or union:
     2. If its a decltype (Not supported yet but draft impl there)
     3. If its a compound native type expression (unsigned, char, short, long, int, float, dobule, etc )
-    4. Ends up being a regular type alias of an identifier
+    4. If its a typename amcro
+    5. A regular type alias of an identifier
 5. Parse specifiers (postfix)
 6. We need to now look ahead to see If we're dealing with a function typename
 7. If wer're dealing with a function typename:
@@ -618,7 +1130,8 @@ Anything that is in the qualifier capture of the function typename is treated as
     1. If its an in-place definition of a class, enum, struct, or union:
     2. If its a decltype (Not supported yet but draft impl there)
     3. If its a compound native type expression (unsigned, char, short, long, int, float, dobule, etc )
-    4. Ends up being a regular type alias of an identifier
+    4. If its a typename amcro
+    5. A regular type alias of an identifier
 4. Parse specifiers (postfix)
     1. If any specifiers are found populate specifiers code with them.
 5. We need to now look ahead to see If we're dealing with a function typename
@@ -679,7 +1192,7 @@ Anything that is in the qualifier capture of the function typename is treated as
     6. Decl_Union
     7. Preprocess_Define
     8. Preprocess_Conditional (if, ifdef, ifndef, elif, else, endif)
-    9. Preprocess_Macro
+    9. Preprocess_Macro (`MT_Statement` or `MT_Typename`)
     10. Preprocess_Pragma
     11. Unsupported preprocess directive
     12. Variable
